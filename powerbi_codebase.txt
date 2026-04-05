@@ -1,5 +1,5 @@
-=== POWER BI TMDL CODEBASE EXPORT ===
-This file contains the complete M queries, DAX measures, and relationships for the data model.
+=== POWER BI PROJECT FULL EXPORT ===
+This file contains the complete TMDL data model, project documentation, and automation scripts.
 ================================================================================
 
 // --------------------------------------------------------------------------
@@ -148,6 +148,19 @@ expression Staging_EDGE = ```
 
 	annotation PBI_ResultType = Exception
 
+expression game =
+		let
+		    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game.csv"),[Delimiter=",", Columns=15, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+		    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+		    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"game_id", Int64.Type}, {"season", Int64.Type}, {"type", type text}, {"date_time_GMT", type datetime}, {"away_team_id", Int64.Type}, {"home_team_id", Int64.Type}, {"away_goals", Int64.Type}, {"home_goals", Int64.Type}, {"outcome", type text}, {"home_rink_side_start", type text}, {"venue", type text}, {"venue_link", type text}, {"venue_time_zone_id", type text}, {"venue_time_zone_offset", Int64.Type}, {"venue_time_zone_tz", type text}})
+		in
+		    #"Changed Type"
+	lineageTag: db2029b9-16ba-4b52-99d8-111f569d30c2
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
 
 
 
@@ -164,23 +177,19 @@ model Model
 		legacyRedirects
 		returnErrorValuesAsNull
 
-annotation __PBI_TimeIntelligenceEnabled = 1
+annotation __PBI_TimeIntelligenceEnabled = 0
 
 annotation PBI_QueryOrder = ["DimGames","fxGetPlayByPlay","FactLivePlays","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","Query1","FactEdgeSkatingSpeeds","FactEdgeBurstDetails","game","FactHistoricalPlays"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
 ref table DimGames
-ref table DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362
-ref table LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9
 ref table FactLivePlays
 ref table DimTeams
 ref table DimPlayers
 ref table Query1
 ref table FactEdgeSkatingSpeeds
 ref table FactEdgeBurstDetails
-ref table game
-ref table LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6
 ref table FactHistoricalPlays
 ref table FactPlayByPlay
 
@@ -193,24 +202,6 @@ ref cultureInfo en-US
 // FILE: NHL.SemanticModel\definition\relationships.tmdl
 // --------------------------------------------------------------------------
 
-relationship 438c941c-4f27-4051-8e8d-788ad42822ca
-	joinOnDateBehavior: datePartOnly
-	fromColumn: DimGames.GameDate
-	toColumn: LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.Date
-
-relationship e83e66e5-116a-a4a1-be41-05723191ca81
-	fromColumn: FactLivePlays.EventTeamID
-	toColumn: DimTeams.TeamID
-
-relationship fcb728e0-a916-ab52-d7df-77c1a8e9eed1
-	fromColumn: FactLivePlays.ShootingPlayerID
-	toColumn: DimPlayers.PlayerID
-
-relationship eae0cd1e-acc3-4027-ace6-bd7b3bc64d7b
-	joinOnDateBehavior: datePartOnly
-	fromColumn: game.date_time_GMT
-	toColumn: LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6.Date
-
 relationship 47f7d708-1e5b-f043-da62-4845cd607c76
 	fromColumn: FactEdgeSkatingSpeeds.PlayerID
 	toColumn: DimPlayers.PlayerID
@@ -220,6 +211,22 @@ relationship 325d0399-fed9-bbe8-655f-eed4bbd9da31
 	fromColumn: FactEdgeBurstDetails.PlayerID
 	toColumn: DimPlayers.PlayerID
 
+relationship e937b057-45e9-e8ad-92ca-4a9a7bf9fb47
+	fromColumn: FactPlayByPlay.GameID
+	toColumn: DimGames.GameID
+
+relationship 26489267-7581-bf1e-9b34-768d33527645
+	fromColumn: FactPlayByPlay.EventTeamID
+	toColumn: DimTeams.TeamID
+
+relationship 4705664c-842c-2872-e80b-00ac6b534b9c
+	fromColumn: FactPlayByPlay.ShootingPlayerID
+	toColumn: DimPlayers.PlayerID
+
+relationship 7de5cb31-0665-f4c1-27ae-2da6b6ea180e
+	fromColumn: FactEdgeSkatingSpeeds.'homeTeam.abbrev'
+	toColumn: DimTeams.TeamAbbrev
+
 
 
 
@@ -228,131 +235,6 @@ relationship 325d0399-fed9-bbe8-655f-eed4bbd9da31
 // --------------------------------------------------------------------------
 
 cultureInfo en-US
-
-
-
-
-// --------------------------------------------------------------------------
-// FILE: NHL.SemanticModel\definition\tables\DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362.tmdl
-// --------------------------------------------------------------------------
-
-table DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362
-	isHidden
-	isPrivate
-	lineageTag: e9c84f27-68b1-49be-969e-bd620c8526e2
-
-	column Date
-		dataType: dateTime
-		isHidden
-		formatString: General Date
-		lineageTag: 9f604bba-c5d6-495a-83d1-ddf2ff2bba46
-		dataCategory: PaddedDateTableDates
-		summarizeBy: none
-		isNameInferred
-		sourceColumn: [Date]
-
-		annotation SummarizationSetBy = User
-
-	column Year = YEAR([Date])
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: dd3e81e5-f358-47f8-8f71-4807391bccfb
-		dataCategory: Years
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Year
-
-	column MonthNo = MONTH([Date])
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: 9dc37f04-aa6f-42e8-ad62-4bfe5e1f380a
-		dataCategory: MonthOfYear
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = MonthNumber
-
-	column Month = FORMAT([Date], "MMMM")
-		dataType: string
-		isHidden
-		lineageTag: ba4a7b9e-597f-4619-b05c-144e6275b30f
-		dataCategory: Months
-		summarizeBy: none
-		sortByColumn: MonthNo
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Month
-
-	column QuarterNo = INT(([MonthNo] + 2) / 3)
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: d848ebda-e79b-4a27-b112-ca2ba3105869
-		dataCategory: QuarterOfYear
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = QuarterNumber
-
-	column Quarter = "Qtr " & [QuarterNo]
-		dataType: string
-		isHidden
-		lineageTag: 55ff6121-4a30-4515-b42f-7da4ef1e5ac3
-		dataCategory: Quarters
-		summarizeBy: none
-		sortByColumn: QuarterNo
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Quarter
-
-	column Day = DAY([Date])
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: 8e0b0abd-88cd-48dc-9bdc-2ae0f5c0ba4f
-		dataCategory: DayOfMonth
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Day
-
-	hierarchy 'Date Hierarchy'
-		lineageTag: 9af30d87-2fdb-4a30-bc45-8701843b8a51
-
-		level Year
-			lineageTag: 1640d81a-b990-4d38-a7d2-c83e82c83a0c
-			column: Year
-
-		level Quarter
-			lineageTag: 00e37e71-2bc5-4df3-9997-a84f000f0a8a
-			column: Quarter
-
-		level Month
-			lineageTag: 6d6b95a0-3aa6-46be-a726-92c1594885b2
-			column: Month
-
-		level Day
-			lineageTag: a714bb01-7cef-45e4-a2b7-0549a2758365
-			column: Day
-
-		annotation TemplateId = DateHierarchy
-
-	partition DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362 = calculated
-		mode: import
-		source = Calendar(Date(2015,1,1), Date(2015,1,1))
-
-	annotation __PBI_TemplateDateTable = true
-
-	annotation DefaultItem = DateHierarchy
 
 
 
@@ -368,7 +250,7 @@ table DimGames
 		dataType: int64
 		formatString: 0
 		lineageTag: 1535b46e-829f-4566-9454-5ab5e6d014c0
-		summarizeBy: count
+		summarizeBy: none
 		sourceColumn: GameID
 
 		annotation SummarizationSetBy = Automatic
@@ -396,11 +278,6 @@ table DimGames
 		lineageTag: c23d9f0b-bdd1-4042-8d64-cd2c559cced3
 		summarizeBy: none
 		sourceColumn: GameDate
-
-		variation Variation
-			isDefault
-			relationship: 438c941c-4f27-4051-8e8d-788ad42822ca
-			defaultHierarchy: LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.'Date Hierarchy'
 
 		annotation SummarizationSetBy = Automatic
 
@@ -507,9 +384,14 @@ table DimGames
 				        {"GameDate", type date},
 				        {"HomeTeamID", Int64.Type},
 				        {"AwayTeamID", Int64.Type}
-				    })
+				    }),
+				    
+				    // --- THE FIX: ENFORCE PRIMARY KEY UNIQUENESS ---
+				    // This physically removes any duplicate rows generated by dirty historical Kaggle data,
+				    // ensuring DimGames acts as a flawless 1-to-Many Dimension table.
+				    RemovedDuplicates = Table.Distinct(TypedData, {"GameID"})
 				in
-				    TypedData
+				    RemovedDuplicates
 				```
 
 	annotation PBI_NavigationStepName = Navigation
@@ -647,7 +529,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 95969f73-9e20-4df9-be9a-b96cbfe4e950
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: FranchiseID
 
 		annotation SummarizationSetBy = Automatic
@@ -696,7 +578,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 0c749489-1516-4081-a033-1e36e22b2657
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: LeagueRank
 
 		annotation SummarizationSetBy = Automatic
@@ -705,7 +587,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 88df7391-7ef5-4810-ab1a-a3ba296aec85
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Points
 
 		annotation SummarizationSetBy = Automatic
@@ -722,7 +604,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 12c8623c-ff9b-44af-a885-10e9c6345ea5
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: StreakCount
 
 		annotation SummarizationSetBy = Automatic
@@ -731,7 +613,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: d8617501-88e8-41be-b225-e104440564a0
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: GoalDifferential
 
 		annotation SummarizationSetBy = Automatic
@@ -796,9 +678,14 @@ table DimTeams
 				        {"StreakCount", Int64.Type},
 				        {"GoalDifferential", Int64.Type},
 				        {"TeamLogoURL", type text}
-				    })
+				    }),
+				
+				    // --- THE FIX: ENFORCE UNIQUE ABBREVIATIONS ---
+				    // The NHL stats API returns legacy duplicates for some abbreviations.
+				    // We must remove duplicates so this column can act as a 1-side key in the Star Schema.
+				    RemovedDuplicates = Table.Distinct(TypedData, {"TeamAbbrev"})
 				in
-				    TypedData
+				    RemovedDuplicates
 				```
 
 	annotation PBI_NavigationStepName = Navigation
@@ -1144,65 +1031,87 @@ table FactEdgeSkatingSpeeds
 // --------------------------------------------------------------------------
 
 table FactHistoricalPlays
+	isHidden
 	lineageTag: 4a6798c8-9c08-4583-a603-29e4867b3fd8
 
 	column GameID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 840de4fc-11ec-433a-a4e6-125fc68f00ab
 		summarizeBy: count
 		sourceColumn: GameID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column EventID
 		dataType: string
+		isHidden
 		lineageTag: 78b7c776-d56b-43ae-a69a-160b74665db9
 		summarizeBy: none
 		sourceColumn: EventID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column PeriodNumber
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: e94b8d7f-6b48-4bde-a5e6-3c08709310ae
 		summarizeBy: sum
 		sourceColumn: PeriodNumber
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column TimeInPeriod_Seconds
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 2664c6c4-d332-41d1-ac8d-720bc9319ec3
 		summarizeBy: sum
 		sourceColumn: TimeInPeriod_Seconds
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column EventType
 		dataType: string
+		isHidden
 		lineageTag: 084ccec7-d9ad-431a-81ff-508fc05e00a3
 		summarizeBy: none
 		sourceColumn: EventType
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column EventTeamID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 9df4da19-890a-4274-bf68-6d119f4673f0
 		summarizeBy: count
 		sourceColumn: EventTeamID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column X_Coord
 		dataType: double
+		isHidden
 		lineageTag: 5e5d4b86-6b0f-4ef2-8a63-85dbe53ef43c
 		summarizeBy: sum
 		sourceColumn: X_Coord
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -1210,9 +1119,12 @@ table FactHistoricalPlays
 
 	column Y_Coord
 		dataType: double
+		isHidden
 		lineageTag: 69d7630c-2ec3-4f72-abc1-06b1f2311979
 		summarizeBy: sum
 		sourceColumn: Y_Coord
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -1220,37 +1132,49 @@ table FactHistoricalPlays
 
 	column ScoringPlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 96a90bc3-a5bf-4b4d-95c8-a5d89af83de4
 		summarizeBy: count
 		sourceColumn: ScoringPlayerID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column ShootingPlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 090c16f7-97a3-435e-8198-bcebde8733e3
 		summarizeBy: count
 		sourceColumn: ShootingPlayerID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column HittingPlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 6888e66f-abfe-4c2a-bdda-b26912beff32
 		summarizeBy: count
 		sourceColumn: HittingPlayerID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column HitteePlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 4223e683-abb2-4b77-a545-86e4241ffce8
 		summarizeBy: count
 		sourceColumn: HitteePlayerID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -1320,6 +1244,8 @@ table FactHistoricalPlays
 				    TypedData
 				```
 
+	changedProperty = IsHidden
+
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
@@ -1332,65 +1258,87 @@ table FactHistoricalPlays
 // --------------------------------------------------------------------------
 
 table FactLivePlays
+	isHidden
 	lineageTag: d0614fb1-16a1-4409-80b3-445d64a7efb1
 
 	column GameID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: ec0f0b51-61e7-4888-b18e-b0e54d4c8489
 		summarizeBy: count
 		sourceColumn: GameID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column PeriodNumber
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 718de994-ad28-4d42-a466-e65911895fda
 		summarizeBy: sum
 		sourceColumn: PeriodNumber
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column EventID
 		dataType: string
+		isHidden
 		lineageTag: 20b4e09e-4b8b-4caf-934d-272a0c64c3c8
 		summarizeBy: none
 		sourceColumn: EventID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column TimeInPeriod_Seconds
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 43793c61-9333-4a3a-a017-0cf9a7e87a89
 		summarizeBy: sum
 		sourceColumn: TimeInPeriod_Seconds
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column EventType
 		dataType: string
+		isHidden
 		lineageTag: 4b57095e-1732-4ecf-8fce-972f01ae7696
 		summarizeBy: none
 		sourceColumn: EventType
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column EventTeamID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: f62325bd-01cd-4693-b781-a1e91ac08b21
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: EventTeamID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column X_Coord
 		dataType: double
+		isHidden
 		lineageTag: e685cfc2-ef52-490b-b663-44441787a7cc
 		summarizeBy: sum
 		sourceColumn: X_Coord
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -1398,9 +1346,12 @@ table FactLivePlays
 
 	column Y_Coord
 		dataType: double
+		isHidden
 		lineageTag: 23f52815-8963-4b68-b998-b4fa039bc996
 		summarizeBy: sum
 		sourceColumn: Y_Coord
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -1408,37 +1359,49 @@ table FactLivePlays
 
 	column ScoringPlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 35e1d17b-b7ae-4673-a74c-d8796f50aa9d
 		summarizeBy: count
 		sourceColumn: ScoringPlayerID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column ShootingPlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: a0657267-5dde-4e7d-af88-bef6ef4f7c62
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: ShootingPlayerID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column HittingPlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: fe796bfb-05de-4ec5-853f-d72f392afe75
 		summarizeBy: count
 		sourceColumn: HittingPlayerID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column HitteePlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: b0d7c320-38df-4b5b-9513-18fa65474036
 		summarizeBy: count
 		sourceColumn: HitteePlayerID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -1477,6 +1440,8 @@ table FactLivePlays
 				    TypedData
 				```
 
+	changedProperty = IsHidden
+
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
@@ -1493,472 +1458,105 @@ table FactPlayByPlay
 
 	column GameID
 		lineageTag: 3eea4485-09c6-4c5f-bd5e-897bfaafe933
+		summarizeBy: none
 		isNameInferred
 		sourceColumn: FactLivePlays[GameID]
 
+		annotation SummarizationSetBy = Automatic
+
 	column PeriodNumber
 		lineageTag: d275a017-b39c-4a4e-a794-674cbd4fc0b0
+		summarizeBy: none
 		isNameInferred
 		sourceColumn: FactLivePlays[PeriodNumber]
 
+		annotation SummarizationSetBy = Automatic
+
 	column EventID
 		lineageTag: b320c3c4-61f4-40da-bc64-d1875f277308
+		summarizeBy: none
 		isNameInferred
 		sourceColumn: FactLivePlays[EventID]
 
+		annotation SummarizationSetBy = Automatic
+
 	column TimeInPeriod_Seconds
 		lineageTag: 46dbe54f-e1bb-4ca8-9d36-c0498202677f
+		summarizeBy: sum
 		isNameInferred
 		sourceColumn: FactLivePlays[TimeInPeriod_Seconds]
 
+		annotation SummarizationSetBy = Automatic
+
 	column EventType
 		lineageTag: f7502139-db1e-411e-8ace-6b36588f490b
+		summarizeBy: none
 		isNameInferred
 		sourceColumn: FactLivePlays[EventType]
 
+		annotation SummarizationSetBy = Automatic
+
 	column EventTeamID
 		lineageTag: 78ed37db-7b35-40b2-add8-96c662279283
+		summarizeBy: none
 		isNameInferred
 		sourceColumn: FactLivePlays[EventTeamID]
 
+		annotation SummarizationSetBy = Automatic
+
 	column X_Coord
 		lineageTag: 141e3b41-9381-42c4-bffb-d104facbb330
+		summarizeBy: sum
 		isNameInferred
 		sourceColumn: FactLivePlays[X_Coord]
 
+		annotation SummarizationSetBy = Automatic
+
 	column Y_Coord
 		lineageTag: b6deb19d-b3ef-47be-ae64-11013ab9f364
+		summarizeBy: sum
 		isNameInferred
 		sourceColumn: FactLivePlays[Y_Coord]
 
+		annotation SummarizationSetBy = Automatic
+
 	column ScoringPlayerID
 		lineageTag: 63dbd3f7-329d-44bb-baf5-50c3ff52c55f
+		summarizeBy: count
 		isNameInferred
 		sourceColumn: FactLivePlays[ScoringPlayerID]
 
+		annotation SummarizationSetBy = Automatic
+
 	column ShootingPlayerID
 		lineageTag: 552c1567-1c14-437e-9522-a22b3770e3d3
+		summarizeBy: none
 		isNameInferred
 		sourceColumn: FactLivePlays[ShootingPlayerID]
 
+		annotation SummarizationSetBy = Automatic
+
 	column HittingPlayerID
 		lineageTag: f9af5d46-e9b5-4c78-8d96-871a97d3d855
+		summarizeBy: count
 		isNameInferred
 		sourceColumn: FactLivePlays[HittingPlayerID]
 
+		annotation SummarizationSetBy = Automatic
+
 	column HitteePlayerID
 		lineageTag: edb2e3b3-da1c-4e06-b9f1-830f55bcb71e
+		summarizeBy: count
 		isNameInferred
 		sourceColumn: FactLivePlays[HitteePlayerID]
+
+		annotation SummarizationSetBy = Automatic
 
 	partition FactPlayByPlay = calculated
 		mode: import
 		source = UNION('FactLivePlays', 'FactHistoricalPlays')
 
 	annotation PBI_Id = 88a25703504849dda771e1429e17cc43
-
-
-
-
-// --------------------------------------------------------------------------
-// FILE: NHL.SemanticModel\definition\tables\game.tmdl
-// --------------------------------------------------------------------------
-
-table game
-	lineageTag: 83c01804-d746-4743-b3ed-5ef1e5f4b124
-
-	column game_id
-		dataType: int64
-		formatString: 0
-		lineageTag: 1453ac07-fa8c-4622-ae1d-22b7e05f6995
-		summarizeBy: sum
-		sourceColumn: game_id
-
-		annotation SummarizationSetBy = Automatic
-
-	column season
-		dataType: int64
-		formatString: 0
-		lineageTag: e61aa487-ed31-4d69-8e89-4d1d37fcf755
-		summarizeBy: sum
-		sourceColumn: season
-
-		annotation SummarizationSetBy = Automatic
-
-	column type
-		dataType: string
-		lineageTag: adccb095-be6e-4ea6-b96f-e13cf01a57bf
-		summarizeBy: none
-		sourceColumn: type
-
-		annotation SummarizationSetBy = Automatic
-
-	column date_time_GMT
-		dataType: dateTime
-		formatString: General Date
-		lineageTag: 6f77ed48-907e-4b98-920b-d86d914c4a38
-		summarizeBy: none
-		sourceColumn: date_time_GMT
-
-		variation Variation
-			isDefault
-			relationship: eae0cd1e-acc3-4027-ace6-bd7b3bc64d7b
-			defaultHierarchy: LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6.'Date Hierarchy'
-
-		annotation SummarizationSetBy = Automatic
-
-	column away_team_id
-		dataType: int64
-		formatString: 0
-		lineageTag: e37df7dd-bc70-41ce-8d35-a57dfa8f8ace
-		summarizeBy: sum
-		sourceColumn: away_team_id
-
-		annotation SummarizationSetBy = Automatic
-
-	column home_team_id
-		dataType: int64
-		formatString: 0
-		lineageTag: 105e004f-c660-4369-a717-b4a748774055
-		summarizeBy: sum
-		sourceColumn: home_team_id
-
-		annotation SummarizationSetBy = Automatic
-
-	column away_goals
-		dataType: int64
-		formatString: 0
-		lineageTag: f636d4a7-1347-4dae-85d5-fbfdcedc2f7f
-		summarizeBy: sum
-		sourceColumn: away_goals
-
-		annotation SummarizationSetBy = Automatic
-
-	column home_goals
-		dataType: int64
-		formatString: 0
-		lineageTag: e557fdf5-89f9-4e0c-b7ee-a0f4d7c4d93b
-		summarizeBy: sum
-		sourceColumn: home_goals
-
-		annotation SummarizationSetBy = Automatic
-
-	column outcome
-		dataType: string
-		lineageTag: 89c49dcd-c097-450b-a822-8660143cecd8
-		summarizeBy: none
-		sourceColumn: outcome
-
-		annotation SummarizationSetBy = Automatic
-
-	column home_rink_side_start
-		dataType: string
-		lineageTag: a2a47409-0b04-4fb4-b226-695b8fdef6d3
-		summarizeBy: none
-		sourceColumn: home_rink_side_start
-
-		annotation SummarizationSetBy = Automatic
-
-	column venue
-		dataType: string
-		lineageTag: aa7b5496-1590-46fc-80b5-129509b2f291
-		summarizeBy: none
-		sourceColumn: venue
-
-		annotation SummarizationSetBy = Automatic
-
-	column venue_link
-		dataType: string
-		lineageTag: 0dca0987-d831-4cc9-8237-81eeb4431ec1
-		summarizeBy: none
-		sourceColumn: venue_link
-
-		annotation SummarizationSetBy = Automatic
-
-	column venue_time_zone_id
-		dataType: string
-		lineageTag: 5d0230ad-ac07-4d76-8f02-d24d92ca99a5
-		summarizeBy: none
-		sourceColumn: venue_time_zone_id
-
-		annotation SummarizationSetBy = Automatic
-
-	column venue_time_zone_offset
-		dataType: int64
-		formatString: 0
-		lineageTag: 3aef7cb0-03e9-49a6-9813-4025c0ed8c20
-		summarizeBy: sum
-		sourceColumn: venue_time_zone_offset
-
-		annotation SummarizationSetBy = Automatic
-
-	column venue_time_zone_tz
-		dataType: string
-		lineageTag: feb3c726-e8d8-4101-b8e0-5298b7091be2
-		summarizeBy: none
-		sourceColumn: venue_time_zone_tz
-
-		annotation SummarizationSetBy = Automatic
-
-	partition game = m
-		mode: import
-		source =
-				let
-				    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game.csv"),[Delimiter=",", Columns=15, Encoding=1252, QuoteStyle=QuoteStyle.None]),
-				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"game_id", Int64.Type}, {"season", Int64.Type}, {"type", type text}, {"date_time_GMT", type datetime}, {"away_team_id", Int64.Type}, {"home_team_id", Int64.Type}, {"away_goals", Int64.Type}, {"home_goals", Int64.Type}, {"outcome", type text}, {"home_rink_side_start", type text}, {"venue", type text}, {"venue_link", type text}, {"venue_time_zone_id", type text}, {"venue_time_zone_offset", Int64.Type}, {"venue_time_zone_tz", type text}})
-				in
-				    #"Changed Type"
-
-	annotation PBI_NavigationStepName = Navigation
-
-	annotation PBI_ResultType = Table
-
-
-
-
-// --------------------------------------------------------------------------
-// FILE: NHL.SemanticModel\definition\tables\LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6.tmdl
-// --------------------------------------------------------------------------
-
-table LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6
-	isHidden
-	showAsVariationsOnly
-	lineageTag: 20cd77c0-8790-4c74-a4c3-57f68a0713d9
-
-	column Date
-		dataType: dateTime
-		isHidden
-		formatString: General Date
-		lineageTag: afd23888-5678-4c60-a7e1-fa2689abf68e
-		dataCategory: PaddedDateTableDates
-		summarizeBy: none
-		isNameInferred
-		sourceColumn: [Date]
-
-		annotation SummarizationSetBy = User
-
-	column Year = YEAR([Date])
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: b75fbe09-4414-433b-95ab-acf67680b9bf
-		dataCategory: Years
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Year
-
-	column MonthNo = MONTH([Date])
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: 6cb7758e-12e4-429b-a2d2-1f3fa84c4cad
-		dataCategory: MonthOfYear
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = MonthNumber
-
-	column Month = FORMAT([Date], "MMMM")
-		dataType: string
-		isHidden
-		lineageTag: 54fd4fd2-fcd0-4baf-9798-850754ff2748
-		dataCategory: Months
-		summarizeBy: none
-		sortByColumn: MonthNo
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Month
-
-	column QuarterNo = INT(([MonthNo] + 2) / 3)
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: c5897b30-5348-410c-a04d-e1f04a277cb0
-		dataCategory: QuarterOfYear
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = QuarterNumber
-
-	column Quarter = "Qtr " & [QuarterNo]
-		dataType: string
-		isHidden
-		lineageTag: 4ae79789-dc01-461d-ae18-51a0198c4827
-		dataCategory: Quarters
-		summarizeBy: none
-		sortByColumn: QuarterNo
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Quarter
-
-	column Day = DAY([Date])
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: 7a6f2267-05de-4894-8f0e-0637f7dc6a81
-		dataCategory: DayOfMonth
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Day
-
-	hierarchy 'Date Hierarchy'
-		lineageTag: 57260d1f-3ae7-4067-b7db-9fd5880ec1ca
-
-		level Year
-			lineageTag: 9f376776-6187-41e7-9245-97bfdd7a4165
-			column: Year
-
-		level Quarter
-			lineageTag: 80d5d052-9aec-46ef-8800-ffbf73cc04c4
-			column: Quarter
-
-		level Month
-			lineageTag: 04a6fbc4-65af-4ee8-9523-e19e9cb4b4c6
-			column: Month
-
-		level Day
-			lineageTag: 4288a225-a46f-43d9-adba-3c5bc35c8fa8
-			column: Day
-
-		annotation TemplateId = DateHierarchy
-
-	partition LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6 = calculated
-		mode: import
-		source = Calendar(Date(Year(MIN('game'[date_time_GMT])), 1, 1), Date(Year(MAX('game'[date_time_GMT])), 12, 31))
-
-	annotation __PBI_LocalDateTable = true
-
-
-
-
-// --------------------------------------------------------------------------
-// FILE: NHL.SemanticModel\definition\tables\LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.tmdl
-// --------------------------------------------------------------------------
-
-table LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9
-	isHidden
-	showAsVariationsOnly
-	lineageTag: bcb6e326-55de-407b-b7c4-348f7daf0606
-
-	column Date
-		dataType: dateTime
-		isHidden
-		formatString: General Date
-		lineageTag: 67d3513a-de10-4d80-bbed-86932cb2b7a8
-		dataCategory: PaddedDateTableDates
-		summarizeBy: none
-		isNameInferred
-		sourceColumn: [Date]
-
-		annotation SummarizationSetBy = User
-
-	column Year = YEAR([Date])
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: 94a9b41f-f4a0-4b6c-a433-28a4c3a5945f
-		dataCategory: Years
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Year
-
-	column MonthNo = MONTH([Date])
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: 77995e33-04f7-47b5-87aa-4ff6158beaf7
-		dataCategory: MonthOfYear
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = MonthNumber
-
-	column Month = FORMAT([Date], "MMMM")
-		dataType: string
-		isHidden
-		lineageTag: 8474611a-0f29-4017-a98d-2cada56d079b
-		dataCategory: Months
-		summarizeBy: none
-		sortByColumn: MonthNo
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Month
-
-	column QuarterNo = INT(([MonthNo] + 2) / 3)
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: 73b2fe73-f189-47ad-a93c-061a0c950ab8
-		dataCategory: QuarterOfYear
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = QuarterNumber
-
-	column Quarter = "Qtr " & [QuarterNo]
-		dataType: string
-		isHidden
-		lineageTag: cdc2df77-705b-4539-aace-93b60499ba11
-		dataCategory: Quarters
-		summarizeBy: none
-		sortByColumn: QuarterNo
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Quarter
-
-	column Day = DAY([Date])
-		dataType: int64
-		isHidden
-		formatString: 0
-		lineageTag: 15543d73-206d-41ec-bd24-871e98591a28
-		dataCategory: DayOfMonth
-		summarizeBy: none
-
-		annotation SummarizationSetBy = User
-
-		annotation TemplateId = Day
-
-	hierarchy 'Date Hierarchy'
-		lineageTag: 4d8eaf6b-2530-4452-9599-51169e98416a
-
-		level Year
-			lineageTag: 436176c4-853a-49cb-8116-415f3fb7f188
-			column: Year
-
-		level Quarter
-			lineageTag: e42f4bab-90d5-40d0-a4fb-0f9661ad7598
-			column: Quarter
-
-		level Month
-			lineageTag: a6798650-33db-4513-a815-b875289a2e1b
-			column: Month
-
-		level Day
-			lineageTag: f46806f6-60f1-4296-a6f9-bc6d872a4e80
-			column: Day
-
-		annotation TemplateId = DateHierarchy
-
-	partition LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9 = calculated
-		mode: import
-		source = Calendar(Date(Year(MIN('DimGames'[GameDate])), 1, 1), Date(Year(MAX('DimGames'[GameDate])), 12, 31))
-
-	annotation __PBI_LocalDateTable = true
 
 
 
@@ -2009,5 +1607,490 @@ table Query1
 	annotation PBI_ResultType = Table
 
 
+
+
+// --------------------------------------------------------------------------
+// FILE: docs\CONTEXT_DUMP.md
+// --------------------------------------------------------------------------
+
+# 🧠 NHL 2026: Platform Context
+
+**Stack:** Power BI Desktop (TMDL Format) + Python (Code Extraction) + DAX + Power Query (M)
+**Data Sources:** Live NHL Web API (`v1/gamecenter`, `v1/edge`, `v1/standings`) + Historical Kaggle Datasets (`game_plays.csv`, `game.csv`).
+**Version:** v1.0.0 (Development)
+
+## 🏗️ Architectural Pillars
+
+### 1. The Lambda Architecture (Y-Intersection)
+* **Rule:** We never force Power Query to stitch massive historical local files with live web APIs. 
+* **Mechanism:** Live data (`FactLivePlays`) and Historical data (`FactHistoricalPlays`) are extracted independently in Power Query. They are merged instantly in RAM using the DAX `UNION` function (`FactPlayByPlay = UNION('FactLivePlays', 'FactHistoricalPlays')`).
+
+### 2. Strict Star Schema
+* **Rule:** Fact tables NEVER connect to other Fact tables.
+* **Mechanism:** All relationships must flow strictly from Dimension tables (`DimGames`, `DimTeams`, `DimPlayers`) downstream to Fact tables (1-to-Many). Cross-filtering is single-directional unless explicitly required for a complex measure.
+
+### 3. Memory & Performance Efficiency
+* **Rule:** Keep the VertiPaq engine lean.
+* **Mechanism:** * "Auto Date/Time" is strictly disabled globally.
+    * All Staging queries (e.g., `Staging_EDGE`) have "Enable Load" unchecked.
+    * The massive 750MB Kaggle CSV utilizes Early Filtering (>= 2021 season) to prevent RAM timeouts during development.
+
+### 4. Explicit Data Typing
+* **Rule:** No implicit type conversions. No `any` types in the final model.
+* **Mechanism:** Every column in Power Query terminates with a strict `Table.TransformColumnTypes` step. IDs are `Int64.Type`, coordinates/speeds are `type number` (Decimal), and text strings are `type text`.
+
+
+
+// --------------------------------------------------------------------------
+// FILE: docs\PERSONAS.md
+// --------------------------------------------------------------------------
+
+# 👥 Persona-Based Dashboard Design
+
+Visuals and measures must pass the "Persona Check" based on the user's analytical goals and technical literacy.
+
+## 1. The Casual Fan (High-Level)
+* **Goal:** Wants to see the score, who scored, and basic team standings instantly.
+* **Pain Point:** Overwhelmed by spreadsheets and complex scatter plots.
+* **UX Constraint:** Big KPIs, prominent SVG team logos, simple bar charts, and clear conditional formatting (Win/Loss).
+
+## 2. The Fantasy Manager (Mid-Level)
+* **Goal:** Needs actionable intelligence to make roster decisions. Cares about player streaks, power-play time, and physical telemetry.
+* **Pain Point:** Needs to compare multiple players simultaneously against a baseline.
+* **UX Constraint:** Dense matrix tables, player headshots, and comparative Radar Plots (Player vs. League Average).
+
+## 3. The Coach / Scout (Deep-Dive)
+* **Goal:** Advanced tactical analysis. Wants to see spatial data, shooting tendencies, and expected goals (xG).
+* **Pain Point:** Needs to filter by highly specific game states (e.g., 3rd period, down by 1 goal).
+* **UX Constraint:** Rink-map SVG scatter plots, heatmaps, and complex spatial DAX filtering. Touch targets must allow for precise coordinate selection.
+
+
+
+// --------------------------------------------------------------------------
+// FILE: docs\SCHEMA_ARCHITECTURE.md
+// --------------------------------------------------------------------------
+
+# 🗄️ Schema Architecture & Data Graph
+
+**Storage Engine:** Power BI VertiPaq (In-Memory Columnar Database)
+**Format:** TMDL (Tabular Model Definition Language)
+
+## 1. High-Level Topology
+
+```mermaid
+graph TD
+    DimGames --> FactPlayByPlay
+    DimTeams --> FactPlayByPlay
+    DimPlayers --> FactPlayByPlay
+    
+    DimTeams --> FactEdgeSkatingSpeeds
+    DimPlayers --> FactEdgeSkatingSpeeds
+    
+    DimPlayers --> FactEdgeBurstDetails
+    DimGames --> FactEdgeSkatingSpeeds
+```
+
+## 2. Dimension Tables (Lookups)
+
+### `DimGames`
+* **Purpose:** Unified tracking of all games (Live API + Historical Kaggle).
+* **Fields:** `GameID` (PK), `Season`, `GameType`, `GameDate`, `HomeTeamID`, `AwayTeamID`.
+
+### `DimTeams`
+* **Purpose:** The Digital Rolodex for franchises. Built via a Left Outer Join of the legacy Stats API (for historical IDs) and the live Standings API.
+* **Fields:** `TeamID` (PK), `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`.
+
+### `DimPlayers`
+* **Purpose:** Active roster dictionary.
+* **Fields:** `PlayerID` (PK), `PlayerName`, `Position`, `ShootsCatches`, `HeadshotURL`.
+
+## 3. Fact Tables (Events & Telemetry)
+
+### `FactPlayByPlay` (DAX UNION Table)
+* **Purpose:** The core event ledger. Unifies `FactLivePlays` and `FactHistoricalPlays`.
+* **Fields:** `GameID` (FK), `EventID`, `PeriodNumber`, `TimeInPeriod_Seconds`, `EventType`, `EventTeamID` (FK), `X_Coord`, `Y_Coord`, `ScoringPlayerID` (FK), `ShootingPlayerID` (FK).
+
+### `FactEdgeSkatingSpeeds`
+* **Purpose:** Player telemetry for top speeds.
+* **Fields:** `PlayerID` (FK), `skatingSpeed.imperial`, `skatingSpeed.metric`, `periodDescriptor.number`.
+
+### `FactEdgeBurstDetails`
+* **Purpose:** Player telemetry for acceleration and league comparisons.
+* **Fields:** `PlayerID` (FK), `max.imperial`, `max.percentile`, `leagueAvg.imperial`, `burstsOver22`.
+
+
+
+// --------------------------------------------------------------------------
+// FILE: docs\SPRINT_BOARD.md
+// --------------------------------------------------------------------------
+
+# 🏃 Active Sprint Board
+
+**Current Phase:** Sprint 1.0 (The Visual Foundation)
+
+## ✅ Completed Sprints
+- [x] **Sprint 0.1:** Core API connections established (Plays, Teams, Players, EDGE).
+- [x] **Sprint 0.2:** Lambda Architecture deployed. Historical Kaggle CSV successfully appended via DAX UNION to bypass Mashup Engine memory limits.
+- [x] **Sprint 0.3:** Schema hardening. `DimTeams` enriched with live standings. All fact tables strictly typed (Int64, Decimal).
+
+## 🟡 Sprint 1.0: The Visual Foundation (Active)
+- [ ] **PROJ-01:** The Radar Plot. Build DAX measures to calculate Player EDGE metrics vs. League Averages for Fantasy Manager comparisons.
+- [ ] **PROJ-02:** Spatial Mapping. Translate `X_Coord` and `Y_Coord` onto a custom SVG hockey rink background.
+- [ ] **PROJ-03:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the unified `DimTeams` table.
+
+## 🧊 Product Backlog (Future Epics)
+- [ ] **PROJ-04:** Expected Goals (xG) Model. Implement a DAX algorithm calculating shot danger based on distance and angle from the net.
+- [ ] **PROJ-05:** Automated Daily Refresh. Migrate the Power BI Desktop file to the Power BI Service and configure scheduled refreshes via a personal gateway.
+
+
+
+// --------------------------------------------------------------------------
+// FILE: docs\prompts\APPROVAL.md
+// --------------------------------------------------------------------------
+
+# ✅ Execution Prompt (The DAX Master)
+
+**Decision:** I approve the plan. Proceed with Phase Execution.
+
+**Strict Constraints:**
+1. **The "Complete File" Rule:** You MUST provide the ENTIRE TMDL file or complete DAX measure from top to bottom. No placeholders.
+2. **Strict Data Typing:** In Power Query, explicitly type every column (`Int64.Type`, `type text`). No implicit 'any'.
+3. **DAX Formatting:** Use standard DAX formatting (variables on new lines, proper indentation) for readability.
+4. **Deliverable:** Output the exact M-code or DAX required.
+
+
+
+// --------------------------------------------------------------------------
+// FILE: docs\prompts\FIX.md
+// --------------------------------------------------------------------------
+
+# 🚑 Error Resolution Prompt (The Data Engineer)
+
+**Role:** Senior Power BI SRE.
+**Objective:** Restore model stability with ZERO collateral damage.
+
+**INPUT:**
+* **Error Message:** [PASTE POWER BI ERROR DIALOG OR DAX ERROR HERE]
+* **Target Table/Measure:** [NAME OF FAILED ITEM]
+
+**PROTOCOL:**
+1. **Root Cause Analysis:** Why did the engine fail? (e.g., Circular dependency, text-to-number type mismatch, blank values in 1:Many relationship).
+2. **Surgical Fix:** Provide the exact corrected, complete M-Code or DAX. Do not refactor unrelated logic.
+3. **Verification:** Tell me what to check in the Model View to ensure the fix worked.
+
+
+
+// --------------------------------------------------------------------------
+// FILE: docs\prompts\PLANNING.md
+// --------------------------------------------------------------------------
+
+# 📐 Power BI Planning Prompt (The Architect)
+
+**Role:** Senior Data Architect.
+**Objective:** Provide a structural plan before writing any M-Code or DAX.
+
+**Phase 1: Ingestion & Mapping**
+1. Analyze the provided `powerbi_codebase.txt`.
+2. Identify the Fact and Dimension tables impacted by the request.
+
+**Phase 2: Strategy**
+Provide the plan.
+* **Power Query (M):** Detail the extraction, transformation, and load steps. Address query folding and performance.
+* **Data Modeling:** Define the relationships, cardinality (1:Many), and cross-filter direction.
+* **DAX:** Outline the measure logic (Calculate, Filter, Variables).
+
+**Phase 3: Anti-Regression**
+* Will this break the Star Schema?
+* Will this inflate VertiPaq memory?
+* STOP and wait for approval.
+
+
+
+// --------------------------------------------------------------------------
+// FILE: scripts\extract_pbi_code.py
+// --------------------------------------------------------------------------
+
+import os
+import glob
+
+def main():
+    # 1. Define paths relative to this script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(script_dir, '..'))
+    output_file = os.path.join(project_root, 'powerbi_codebase.txt')
+
+    files_to_export = []
+
+    # 2. Dynamically find the SemanticModel directory for TMDL files
+    semantic_model_dirs = glob.glob(os.path.join(project_root, '*.SemanticModel'))
+    if semantic_model_dirs:
+        semantic_model_dir = semantic_model_dirs[0]
+        definition_dir = os.path.join(semantic_model_dir, 'definition')
+        if os.path.exists(definition_dir):
+            tmdl_files = glob.glob(os.path.join(definition_dir, '**', '*.tmdl'), recursive=True)
+            files_to_export.extend(tmdl_files)
+            print(f"🔍 Found {len(tmdl_files)} TMDL files.")
+        else:
+            print(f"⚠️ Warning: 'definition' folder not found inside {os.path.basename(semantic_model_dir)}.")
+    else:
+        print("⚠️ Warning: No .SemanticModel directory found. Ensure this is a .pbip project.")
+
+    # 3. Collect Documentation Files
+    docs_dir = os.path.join(project_root, 'docs')
+    if os.path.exists(docs_dir):
+        doc_files = glob.glob(os.path.join(docs_dir, '**', '*.md'), recursive=True)
+        doc_files.extend(glob.glob(os.path.join(docs_dir, '**', '*.txt'), recursive=True))
+        files_to_export.extend(doc_files)
+        print(f"🔍 Found {len(doc_files)} Documentation files.")
+    else:
+        print("⚠️ Warning: 'docs' directory not found.")
+
+    # 4. Collect Script Files
+    scripts_dir = os.path.join(project_root, 'scripts')
+    if os.path.exists(scripts_dir):
+        script_files = glob.glob(os.path.join(scripts_dir, '**', '*.py'), recursive=True)
+        # Exclude the output file if it accidentally gets caught or placed here
+        script_files = [f for f in script_files if not f.endswith('powerbi_codebase.txt')]
+        files_to_export.extend(script_files)
+        print(f"🔍 Found {len(script_files)} Script files.")
+    else:
+        print("⚠️ Warning: 'scripts' directory not found.")
+
+    if not files_to_export:
+        print("❌ Error: No files found to export.")
+        return
+
+    # 5. Read and stitch files together
+    print(f"\n📦 Compiling {len(files_to_export)} total files into {os.path.basename(output_file)}...")
+    
+    with open(output_file, 'w', encoding='utf-8') as outfile:
+        outfile.write("=== POWER BI PROJECT FULL EXPORT ===\n")
+        outfile.write("This file contains the complete TMDL data model, project documentation, and automation scripts.\n")
+        outfile.write("=" * 80 + "\n\n")
+
+        for file_path in files_to_export:
+            # Get a clean relative path to use as the file header
+            relative_path = os.path.relpath(file_path, project_root)
+            
+            outfile.write(f"// {'-' * 74}\n")
+            outfile.write(f"// FILE: {relative_path}\n")
+            outfile.write(f"// {'-' * 74}\n\n")
+            
+            try:
+                # 'utf-8-sig' handles the Byte Order Mark (BOM) that Microsoft tools often add
+                with open(file_path, 'r', encoding='utf-8-sig') as infile:
+                    content = infile.read()
+                    outfile.write(content)
+            except Exception as e:
+                outfile.write(f"// [ERROR READING FILE: {e}]\n")
+            
+            outfile.write("\n\n\n")
+
+    print(f"✅ Success! Full codebase exported to: {output_file}")
+
+if __name__ == "__main__":
+    main()
+
+
+// --------------------------------------------------------------------------
+// FILE: scripts\init_docs.py
+// --------------------------------------------------------------------------
+
+import os
+
+def create_docs():
+    # 1. Define paths relative to this script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(script_dir, '..'))
+    
+    # 2. The FENCE variable protects markdown code blocks during writing
+    FENCE = chr(96) * 3
+
+    files_to_create = {}
+
+    # --- FILE 1: CONTEXT DUMP ---
+    files_to_create['docs/CONTEXT_DUMP.md'] = r"""# 🧠 NHL 2026: Platform Context
+
+**Stack:** Power BI Desktop (TMDL Format) + Python (Code Extraction) + DAX + Power Query (M)
+**Data Sources:** Live NHL Web API (`v1/gamecenter`, `v1/edge`, `v1/standings`) + Historical Kaggle Datasets (`game_plays.csv`, `game.csv`).
+**Version:** v1.0.0 (Development)
+
+## 🏗️ Architectural Pillars
+
+### 1. The Lambda Architecture (Y-Intersection)
+* **Rule:** We never force Power Query to stitch massive historical local files with live web APIs. 
+* **Mechanism:** Live data (`FactLivePlays`) and Historical data (`FactHistoricalPlays`) are extracted independently in Power Query. They are merged instantly in RAM using the DAX `UNION` function (`FactPlayByPlay = UNION('FactLivePlays', 'FactHistoricalPlays')`).
+
+### 2. Strict Star Schema
+* **Rule:** Fact tables NEVER connect to other Fact tables.
+* **Mechanism:** All relationships must flow strictly from Dimension tables (`DimGames`, `DimTeams`, `DimPlayers`) downstream to Fact tables (1-to-Many). Cross-filtering is single-directional unless explicitly required for a complex measure.
+
+### 3. Memory & Performance Efficiency
+* **Rule:** Keep the VertiPaq engine lean.
+* **Mechanism:** * "Auto Date/Time" is strictly disabled globally.
+    * All Staging queries (e.g., `Staging_EDGE`) have "Enable Load" unchecked.
+    * The massive 750MB Kaggle CSV utilizes Early Filtering (>= 2021 season) to prevent RAM timeouts during development.
+
+### 4. Explicit Data Typing
+* **Rule:** No implicit type conversions. No `any` types in the final model.
+* **Mechanism:** Every column in Power Query terminates with a strict `Table.TransformColumnTypes` step. IDs are `Int64.Type`, coordinates/speeds are `type number` (Decimal), and text strings are `type text`.
+"""
+
+    # --- FILE 2: SCHEMA ARCHITECTURE ---
+    files_to_create['docs/SCHEMA_ARCHITECTURE.md'] = r"""# 🗄️ Schema Architecture & Data Graph
+
+**Storage Engine:** Power BI VertiPaq (In-Memory Columnar Database)
+**Format:** TMDL (Tabular Model Definition Language)
+
+## 1. High-Level Topology
+
+__FENCE__mermaid
+graph TD
+    DimGames --> FactPlayByPlay
+    DimTeams --> FactPlayByPlay
+    DimPlayers --> FactPlayByPlay
+    
+    DimTeams --> FactEdgeSkatingSpeeds
+    DimPlayers --> FactEdgeSkatingSpeeds
+    
+    DimPlayers --> FactEdgeBurstDetails
+    DimGames --> FactEdgeSkatingSpeeds
+__FENCE__
+
+## 2. Dimension Tables (Lookups)
+
+### `DimGames`
+* **Purpose:** Unified tracking of all games (Live API + Historical Kaggle).
+* **Fields:** `GameID` (PK), `Season`, `GameType`, `GameDate`, `HomeTeamID`, `AwayTeamID`.
+
+### `DimTeams`
+* **Purpose:** The Digital Rolodex for franchises. Built via a Left Outer Join of the legacy Stats API (for historical IDs) and the live Standings API.
+* **Fields:** `TeamID` (PK), `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`.
+
+### `DimPlayers`
+* **Purpose:** Active roster dictionary.
+* **Fields:** `PlayerID` (PK), `PlayerName`, `Position`, `ShootsCatches`, `HeadshotURL`.
+
+## 3. Fact Tables (Events & Telemetry)
+
+### `FactPlayByPlay` (DAX UNION Table)
+* **Purpose:** The core event ledger. Unifies `FactLivePlays` and `FactHistoricalPlays`.
+* **Fields:** `GameID` (FK), `EventID`, `PeriodNumber`, `TimeInPeriod_Seconds`, `EventType`, `EventTeamID` (FK), `X_Coord`, `Y_Coord`, `ScoringPlayerID` (FK), `ShootingPlayerID` (FK).
+
+### `FactEdgeSkatingSpeeds`
+* **Purpose:** Player telemetry for top speeds.
+* **Fields:** `PlayerID` (FK), `skatingSpeed.imperial`, `skatingSpeed.metric`, `periodDescriptor.number`.
+
+### `FactEdgeBurstDetails`
+* **Purpose:** Player telemetry for acceleration and league comparisons.
+* **Fields:** `PlayerID` (FK), `max.imperial`, `max.percentile`, `leagueAvg.imperial`, `burstsOver22`.
+"""
+
+    # --- FILE 3: PERSONAS ---
+    files_to_create['docs/PERSONAS.md'] = r"""# 👥 Persona-Based Dashboard Design
+
+Visuals and measures must pass the "Persona Check" based on the user's analytical goals and technical literacy.
+
+## 1. The Casual Fan (High-Level)
+* **Goal:** Wants to see the score, who scored, and basic team standings instantly.
+* **Pain Point:** Overwhelmed by spreadsheets and complex scatter plots.
+* **UX Constraint:** Big KPIs, prominent SVG team logos, simple bar charts, and clear conditional formatting (Win/Loss).
+
+## 2. The Fantasy Manager (Mid-Level)
+* **Goal:** Needs actionable intelligence to make roster decisions. Cares about player streaks, power-play time, and physical telemetry.
+* **Pain Point:** Needs to compare multiple players simultaneously against a baseline.
+* **UX Constraint:** Dense matrix tables, player headshots, and comparative Radar Plots (Player vs. League Average).
+
+## 3. The Coach / Scout (Deep-Dive)
+* **Goal:** Advanced tactical analysis. Wants to see spatial data, shooting tendencies, and expected goals (xG).
+* **Pain Point:** Needs to filter by highly specific game states (e.g., 3rd period, down by 1 goal).
+* **UX Constraint:** Rink-map SVG scatter plots, heatmaps, and complex spatial DAX filtering. Touch targets must allow for precise coordinate selection.
+"""
+
+    # --- FILE 4: SPRINT BOARD ---
+    files_to_create['docs/SPRINT_BOARD.md'] = r"""# 🏃 Active Sprint Board
+
+**Current Phase:** Sprint 1.0 (The Visual Foundation)
+
+## ✅ Completed Sprints
+- [x] **Sprint 0.1:** Core API connections established (Plays, Teams, Players, EDGE).
+- [x] **Sprint 0.2:** Lambda Architecture deployed. Historical Kaggle CSV successfully appended via DAX UNION to bypass Mashup Engine memory limits.
+- [x] **Sprint 0.3:** Schema hardening. `DimTeams` enriched with live standings. All fact tables strictly typed (Int64, Decimal).
+
+## 🟡 Sprint 1.0: The Visual Foundation (Active)
+- [ ] **PROJ-01:** The Radar Plot. Build DAX measures to calculate Player EDGE metrics vs. League Averages for Fantasy Manager comparisons.
+- [ ] **PROJ-02:** Spatial Mapping. Translate `X_Coord` and `Y_Coord` onto a custom SVG hockey rink background.
+- [ ] **PROJ-03:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the unified `DimTeams` table.
+
+## 🧊 Product Backlog (Future Epics)
+- [ ] **PROJ-04:** Expected Goals (xG) Model. Implement a DAX algorithm calculating shot danger based on distance and angle from the net.
+- [ ] **PROJ-05:** Automated Daily Refresh. Migrate the Power BI Desktop file to the Power BI Service and configure scheduled refreshes via a personal gateway.
+"""
+
+    # --- FILE 5: PLANNING PROMPT ---
+    files_to_create['docs/prompts/PLANNING.md'] = r"""# 📐 Power BI Planning Prompt (The Architect)
+
+**Role:** Senior Data Architect.
+**Objective:** Provide a structural plan before writing any M-Code or DAX.
+
+**Phase 1: Ingestion & Mapping**
+1. Analyze the provided `powerbi_codebase.txt`.
+2. Identify the Fact and Dimension tables impacted by the request.
+
+**Phase 2: Strategy**
+Provide the plan.
+* **Power Query (M):** Detail the extraction, transformation, and load steps. Address query folding and performance.
+* **Data Modeling:** Define the relationships, cardinality (1:Many), and cross-filter direction.
+* **DAX:** Outline the measure logic (Calculate, Filter, Variables).
+
+**Phase 3: Anti-Regression**
+* Will this break the Star Schema?
+* Will this inflate VertiPaq memory?
+* STOP and wait for approval.
+"""
+
+    # --- FILE 6: APPROVAL PROMPT ---
+    files_to_create['docs/prompts/APPROVAL.md'] = r"""# ✅ Execution Prompt (The DAX Master)
+
+**Decision:** I approve the plan. Proceed with Phase Execution.
+
+**Strict Constraints:**
+1. **The "Complete File" Rule:** You MUST provide the ENTIRE TMDL file or complete DAX measure from top to bottom. No placeholders.
+2. **Strict Data Typing:** In Power Query, explicitly type every column (`Int64.Type`, `type text`). No implicit 'any'.
+3. **DAX Formatting:** Use standard DAX formatting (variables on new lines, proper indentation) for readability.
+4. **Deliverable:** Output the exact M-code or DAX required.
+"""
+
+    # --- FILE 7: FIX PROMPT ---
+    files_to_create['docs/prompts/FIX.md'] = r"""# 🚑 Error Resolution Prompt (The Data Engineer)
+
+**Role:** Senior Power BI SRE.
+**Objective:** Restore model stability with ZERO collateral damage.
+
+**INPUT:**
+* **Error Message:** [PASTE POWER BI ERROR DIALOG OR DAX ERROR HERE]
+* **Target Table/Measure:** [NAME OF FAILED ITEM]
+
+**PROTOCOL:**
+1. **Root Cause Analysis:** Why did the engine fail? (e.g., Circular dependency, text-to-number type mismatch, blank values in 1:Many relationship).
+2. **Surgical Fix:** Provide the exact corrected, complete M-Code or DAX. Do not refactor unrelated logic.
+3. **Verification:** Tell me what to check in the Model View to ensure the fix worked.
+"""
+
+    # 3. Write files to disk, swapping __FENCE__ for ```
+    for relative_path, content in files_to_create.items():
+        full_path = os.path.join(project_root, relative_path)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        
+        safe_content = content.replace('__FENCE__', FENCE)
+        
+        with open(full_path, 'w', encoding='utf-8') as f:
+            f.write(safe_content)
+        print(f"✅ Created: {relative_path}")
+
+    print("\n🚀 Documentation architecture generated successfully!")
+
+if __name__ == "__main__":
+    create_docs()
 
 
