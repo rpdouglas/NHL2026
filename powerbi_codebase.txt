@@ -86,7 +86,9 @@ expression fxGetPlayerEDGE = ```
 		let
 		    // 1. Static Base URL and RelativePath configuration
 		    BaseUrl = "https://api-web.nhle.com",
-		    Path = "v1/edge/skater-skating-speed-detail/" & InputPlayerID & "/20242025/2",
+		    
+		    // FIX: Update URL path to 20252026
+		    Path = "v1/edge/skater-skating-speed-detail/" & InputPlayerID & "/20252026/2",
 		
 		    // 2. API Governance: Implement implicit rate limiting
 		    SourceData = Function.InvokeAfter(
@@ -94,11 +96,11 @@ expression fxGetPlayerEDGE = ```
 		        #duration(0, 0, 0, 0.3)
 		    ),
 		
-		    // 3. Extract the exact parent nodes discovered in the diagnostic test
+		    // 3. Extract the exact parent nodes
 		    TopSpeedsNode = try SourceData[topSkatingSpeeds] otherwise null,
 		    SpeedDetailsNode = try SourceData[skatingSpeedDetails] otherwise null,
 		
-		    // 4. Create a clean, flat record containing these nodes
+		    // 4. Create a clean, flat record
 		    FlatRecord = [
 		        PlayerID = InputPlayerID, 
 		        TopSkatingSpeeds = TopSpeedsNode,
@@ -108,7 +110,7 @@ expression fxGetPlayerEDGE = ```
 		    // 5. Convert to Table
 		    DataTable = Table.FromRecords({FlatRecord}),
 		
-		    // 6. Data Typing: Type the ID, but leave the nested data as 'any' so it can be expanded in the UI
+		    // 6. Data Typing
 		    TypedData = Table.TransformColumnTypes(DataTable, {
 		        {"PlayerID", Int64.Type}
 		    })
@@ -146,64 +148,6 @@ expression Staging_EDGE = ```
 
 	annotation PBI_ResultType = Exception
 
-expression Staging_HistoricalPlays = ```
-		let
-		    // 1. Source the local Kaggle CSV file
-		    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game_plays.csv"),[Delimiter=",", Columns=18, Encoding=1252, QuoteStyle=QuoteStyle.None]),
-		    
-		    // 2. Promote headers
-		    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-		    
-		    // 3. MEMORY OPTIMIZATION: Early Filtering
-		    // This keeps only games from the 2021-2022 season onwards to prevent memory exhaustion. 
-		    // (Change 2021000000 to a lower number if you want more history, e.g., 2015000000)
-		    FilteredHistory = Table.SelectRows(PromotedHeaders, each try Number.From([game_id]) >= 2021000000 otherwise false),
-		    
-		    // 4. Rename columns to perfectly match the live API output
-		    RenamedColumns = Table.RenameColumns(FilteredHistory,{
-		        {"game_id", "GameID"}, 
-		        {"play_id", "EventID"}, 
-		        {"period", "PeriodNumber"}, 
-		        {"event", "EventType"}, 
-		        {"team_id_for", "EventTeamID"}, 
-		        {"x", "X_Coord"}, 
-		        {"y", "Y_Coord"}
-		    }, MissingField.Ignore),
-		    
-		    // 5. Time Conversion
-		    SplitTime = Table.SplitColumn(RenamedColumns, "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
-		    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
-		    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", each try ([Minute] * 60) + [Second] otherwise null, Int64.Type),
-		    
-		    // 6. Select only the unified columns
-		    FinalColumns = Table.SelectColumns(AddSeconds, 
-		        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"},
-		        MissingField.Ignore
-		    ),
-		
-		    // 7. ERROR PREVENTION: Scrub the "NA" strings from the Kaggle dataset and replace with true nulls
-		    CleanedNAs = Table.ReplaceValue(FinalColumns, "NA", null, Replacer.ReplaceValue, {"EventTeamID", "X_Coord", "Y_Coord"}),
-		    
-		    // 8. Base Data Typing (Leave IDs as text temporarily before the append)
-		    TypedData = Table.TransformColumnTypes(CleanedNAs,{
-		        {"GameID", type text}, 
-		        {"EventID", type text}, 
-		        {"PeriodNumber", Int64.Type}, 
-		        {"TimeInPeriod_Seconds", Int64.Type}, 
-		        {"EventType", type text}, 
-		        {"EventTeamID", type text}, 
-		        {"X_Coord", type number}, 
-		        {"Y_Coord", type number}
-		    })
-		in
-		    TypedData
-		```
-	lineageTag: 0aae4968-e517-40aa-b9f1-d63549c7a11f
-
-	annotation PBI_NavigationStepName = Navigation
-
-	annotation PBI_ResultType = Exception
-
 
 
 
@@ -222,14 +166,14 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_QueryOrder = ["DimGameTracker","fxGetPlayByPlay","FactPlayByPlay","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","Query1","FactEdgeSkatingSpeeds","FactEdgeBurstDetails","game","Staging_HistoricalPlays"]
+annotation PBI_QueryOrder = ["DimGames","fxGetPlayByPlay","FactLivePlays","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","Query1","FactEdgeSkatingSpeeds","FactEdgeBurstDetails","game","FactHistoricalPlays"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
-ref table DimGameTracker
+ref table DimGames
 ref table DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362
 ref table LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9
-ref table FactPlayByPlay
+ref table FactLivePlays
 ref table DimTeams
 ref table DimPlayers
 ref table Query1
@@ -237,6 +181,8 @@ ref table FactEdgeSkatingSpeeds
 ref table FactEdgeBurstDetails
 ref table game
 ref table LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6
+ref table FactHistoricalPlays
+ref table FactPlayByPlay
 
 ref cultureInfo en-US
 
@@ -249,20 +195,16 @@ ref cultureInfo en-US
 
 relationship 438c941c-4f27-4051-8e8d-788ad42822ca
 	joinOnDateBehavior: datePartOnly
-	fromColumn: DimGameTracker.GameDate
+	fromColumn: DimGames.GameDate
 	toColumn: LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.Date
 
 relationship e83e66e5-116a-a4a1-be41-05723191ca81
-	fromColumn: FactPlayByPlay.EventTeamID
+	fromColumn: FactLivePlays.EventTeamID
 	toColumn: DimTeams.TeamID
 
 relationship fcb728e0-a916-ab52-d7df-77c1a8e9eed1
-	fromColumn: FactPlayByPlay.ShootingPlayerID
+	fromColumn: FactLivePlays.ShootingPlayerID
 	toColumn: DimPlayers.PlayerID
-
-relationship AutoDetected_004b9faa-2e6c-47fe-a84f-58a59c1817f4
-	fromColumn: FactEdgeSkatingSpeeds.'homeTeam.abbrev'
-	toColumn: DimGameTracker.HomeTeamAbbrev
 
 relationship eae0cd1e-acc3-4027-ace6-bd7b3bc64d7b
 	joinOnDateBehavior: datePartOnly
@@ -416,10 +358,10 @@ table DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362
 
 
 // --------------------------------------------------------------------------
-// FILE: NHL.SemanticModel\definition\tables\DimGameTracker.tmdl
+// FILE: NHL.SemanticModel\definition\tables\DimGames.tmdl
 // --------------------------------------------------------------------------
 
-table DimGameTracker
+table DimGames
 	lineageTag: bbd493a1-8060-4baa-bbb9-66318297a19c
 
 	column GameID
@@ -441,10 +383,9 @@ table DimGameTracker
 		annotation SummarizationSetBy = Automatic
 
 	column GameType
-		dataType: int64
-		formatString: 0
+		dataType: string
 		lineageTag: 6821dd76-31c8-4dbe-be5f-9058d66b4b75
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: GameType
 
 		annotation SummarizationSetBy = Automatic
@@ -491,10 +432,9 @@ table DimGameTracker
 		annotation SummarizationSetBy = Automatic
 
 	column HomeScore
-		dataType: int64
-		formatString: 0
+		dataType: string
 		lineageTag: 3aa7a795-6416-404f-b3eb-d7143542999e
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: HomeScore
 
 		annotation SummarizationSetBy = Automatic
@@ -517,98 +457,56 @@ table DimGameTracker
 		annotation SummarizationSetBy = Automatic
 
 	column AwayScore
-		dataType: int64
-		formatString: 0
+		dataType: string
 		lineageTag: 14f6319e-9d48-4d51-9d2f-a91db59d513b
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: AwayScore
 
 		annotation SummarizationSetBy = Automatic
 
-	column PeriodNumber
-		dataType: int64
-		formatString: 0
-		lineageTag: feb22b66-9b4c-4646-be91-ea155ef1587b
-		summarizeBy: sum
-		sourceColumn: PeriodNumber
-
-		annotation SummarizationSetBy = Automatic
-
-	column TimeRemaining
-		dataType: string
-		lineageTag: f417a3b0-6446-4bc9-a5a9-14c08984344c
-		summarizeBy: none
-		sourceColumn: TimeRemaining
-
-		annotation SummarizationSetBy = Automatic
-
-	partition DimGameTracker = m
+	partition DimGames = m
 		mode: import
 		source = ```
 				let
-				    // 1. Static Base URL and RelativePath configuration (Refresh Safety Requirement)
+				    // --- BRANCH A: LIVE GAMES ---
 				    BaseUrl = "https://api-web.nhle.com",
 				    Path = "v1/score/now",
-				
-				    // 2. Error Resilience: Fetch and parse JSON with try...otherwise
 				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
-				
-				    // Extract the list of games, providing an empty list fallback if the node doesn't exist
 				    GamesList = try Source[games] otherwise {},
-				
-				    // Convert the list to a table
 				    GamesTable = Table.FromList(GamesList, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
-				
-				    // 3. Data Flattening: Expand the root game record
 				    ExpandedGames = Table.ExpandRecordColumn(GamesTable, "Column1", 
-				        {"id", "season", "gameType", "gameDate", "venue", "gameState", "homeTeam", "awayTeam", "periodDescriptor", "clock"}, 
-				        {"GameID", "Season", "GameType", "GameDate", "Venue", "GameState", "HomeTeamRecord", "AwayTeamRecord", "PeriodRecord", "ClockRecord"}
+				        {"id", "season", "gameType", "gameDate", "gameState", "homeTeam", "awayTeam"}, 
+				        {"GameID", "Season", "GameType", "GameDate", "GameState", "HomeTeamRecord", "AwayTeamRecord"}
 				    ),
+				    ExpandedHome = try Table.ExpandRecordColumn(ExpandedGames, "HomeTeamRecord", {"id", "abbrev", "score"}, {"HomeTeamID", "HomeTeamAbbrev", "HomeScore"}) otherwise ExpandedGames,
+				    ExpandedAway = try Table.ExpandRecordColumn(ExpandedHome, "AwayTeamRecord", {"id", "abbrev", "score"}, {"AwayTeamID", "AwayTeamAbbrev", "AwayScore"}) otherwise ExpandedHome,
+				    
+				    // Select and type the live data. GameType is cast to text because Kaggle stores it as text ("R", "P", etc.)
+				    LiveGames = Table.SelectColumns(ExpandedAway, {"GameID", "Season", "GameType", "GameDate", "GameState", "HomeTeamID", "HomeTeamAbbrev", "HomeScore", "AwayTeamID", "AwayTeamAbbrev", "AwayScore"}, MissingField.Ignore),
+				    CleanedLive = Table.TransformColumnTypes(LiveGames, {
+				        {"GameID", Int64.Type}, {"Season", Int64.Type}, {"GameType", type text}, {"GameDate", type date}, 
+				        {"GameState", type text}, {"HomeTeamID", Int64.Type}, {"AwayTeamID", Int64.Type}
+				    }),
 				
-				    // Expand Home Team Data
-				    ExpandedHome = try Table.ExpandRecordColumn(ExpandedGames, "HomeTeamRecord", 
-				        {"id", "abbrev", "score"}, 
-				        {"HomeTeamID", "HomeTeamAbbrev", "HomeScore"}
-				    ) otherwise ExpandedGames,
-				
-				    // Expand Away Team Data
-				    ExpandedAway = try Table.ExpandRecordColumn(ExpandedHome, "AwayTeamRecord", 
-				        {"id", "abbrev", "score"}, 
-				        {"AwayTeamID", "AwayTeamAbbrev", "AwayScore"}
-				    ) otherwise ExpandedHome,
-				
-				    // Expand Period Data (Crucial for LIVE tracking)
-				    ExpandedPeriod = try Table.ExpandRecordColumn(ExpandedAway, "PeriodRecord", 
-				        {"number", "periodType"}, 
-				        {"PeriodNumber", "PeriodType"}
-				    ) otherwise ExpandedAway,
-				
-				    // Expand Clock Data (Crucial for LIVE tracking)
-				    ExpandedClock = try Table.ExpandRecordColumn(ExpandedPeriod, "ClockRecord", 
-				        {"timeRemaining", "inIntermission"}, 
-				        {"TimeRemaining", "InIntermission"}
-				    ) otherwise ExpandedPeriod,
-				
-				    // 4. Memory Efficiency: Select only necessary dimensions and facts for the Star Schema
-				    FinalColumns = Table.SelectColumns(ExpandedClock, 
-				        {"GameID", "Season", "GameType", "GameDate", "GameState", "HomeTeamID", "HomeTeamAbbrev", "HomeScore", "AwayTeamID", "AwayTeamAbbrev", "AwayScore", "PeriodNumber", "TimeRemaining"}
+				    // --- BRANCH B: HISTORICAL GAMES (KAGGLE) ---
+				    // Extract only the necessary columns from the 'game' table and rename them to match the API
+				    HistoricalGames = Table.RenameColumns(
+				        Table.SelectColumns(game, {"game_id", "season", "type", "date_time_GMT", "home_team_id", "away_team_id"}, MissingField.Ignore), 
+				        {{"game_id", "GameID"}, {"season", "Season"}, {"type", "GameType"}, {"date_time_GMT", "GameDate"}, {"home_team_id", "HomeTeamID"}, {"away_team_id", "AwayTeamID"}},
+				        MissingField.Ignore
 				    ),
+				    CleanedHist = Table.TransformColumnTypes(HistoricalGames, {{"GameDate", type date}}),
 				
-				    // 5. Data Typing: Cast to strong types for DAX engine optimization
-				    TypedData = Table.TransformColumnTypes(FinalColumns, {
-				        {"GameID", Int64.Type}, 
-				        {"Season", Int64.Type}, 
-				        {"GameType", Int64.Type}, 
-				        {"GameDate", type date}, 
-				        {"GameState", type text}, 
-				        {"HomeTeamID", Int64.Type}, 
-				        {"HomeTeamAbbrev", type text}, 
-				        {"HomeScore", Int64.Type}, 
-				        {"AwayTeamID", Int64.Type}, 
-				        {"AwayTeamAbbrev", type text}, 
-				        {"AwayScore", Int64.Type}, 
-				        {"PeriodNumber", Int64.Type}, 
-				        {"TimeRemaining", type text}
+				    // --- THE UNION ---
+				    AppendedGames = try Table.Combine({CleanedLive, CleanedHist}) otherwise CleanedLive,
+				
+				    // Ensure final strict typing for relationships
+				    TypedData = Table.TransformColumnTypes(AppendedGames, {
+				        {"GameID", Int64.Type},
+				        {"Season", Int64.Type},
+				        {"GameDate", type date},
+				        {"HomeTeamID", Int64.Type},
+				        {"AwayTeamID", Int64.Type}
 				    })
 				in
 				    TypedData
@@ -677,10 +575,10 @@ table DimPlayers
 				    BaseUrl = "https://api.nhle.com",
 				    Path = "stats/rest/en/skater/summary",
 				    
-				    // 2. API Governance: Use limit=-1 and cayenneExp to pull all active skaters for the current season in one call
+				    // 2. API Governance: Pull active skaters for the current 2025-2026 season
 				    QueryParams = [
 				        limit = "-1",
-				        cayenneExp = "seasonId=20242025"
+				        cayenneExp = "seasonId=20252026"
 				    ],
 				
 				    // 3. Error Resilience: Fetch JSON
@@ -778,53 +676,125 @@ table DimTeams
 
 		annotation SummarizationSetBy = Automatic
 
+	column Conference
+		dataType: string
+		lineageTag: 20aac74a-34ad-486c-897a-7f5e76cfcb1e
+		summarizeBy: none
+		sourceColumn: Conference
+
+		annotation SummarizationSetBy = Automatic
+
+	column Division
+		dataType: string
+		lineageTag: edb3c2d6-8ba1-4bac-8e90-f607d1ad653c
+		summarizeBy: none
+		sourceColumn: Division
+
+		annotation SummarizationSetBy = Automatic
+
+	column LeagueRank
+		dataType: int64
+		formatString: 0
+		lineageTag: 0c749489-1516-4081-a033-1e36e22b2657
+		summarizeBy: none
+		sourceColumn: LeagueRank
+
+		annotation SummarizationSetBy = Automatic
+
+	column Points
+		dataType: int64
+		formatString: 0
+		lineageTag: 88df7391-7ef5-4810-ab1a-a3ba296aec85
+		summarizeBy: none
+		sourceColumn: Points
+
+		annotation SummarizationSetBy = Automatic
+
+	column StreakType
+		dataType: string
+		lineageTag: 4d28175b-c56a-47af-a6b4-eb65d6ec2a58
+		summarizeBy: none
+		sourceColumn: StreakType
+
+		annotation SummarizationSetBy = Automatic
+
+	column StreakCount
+		dataType: int64
+		formatString: 0
+		lineageTag: 12c8623c-ff9b-44af-a885-10e9c6345ea5
+		summarizeBy: none
+		sourceColumn: StreakCount
+
+		annotation SummarizationSetBy = Automatic
+
+	column GoalDifferential
+		dataType: int64
+		formatString: 0
+		lineageTag: d8617501-88e8-41be-b225-e104440564a0
+		summarizeBy: none
+		sourceColumn: GoalDifferential
+
+		annotation SummarizationSetBy = Automatic
+
 	partition DimTeams = m
 		mode: import
 		source = ```
 				let
-				    // 1. Static Base URL and RelativePath configuration (Refresh Safety Requirement)
-				    BaseUrl = "https://api.nhle.com",
-				    Path = "stats/rest/en/team",
-				    
-				    // 2. API Governance: Use the limit parameter to ensure we get all records
-				    QueryParams = [
-				        limit = "-1"
-				    ],
-				
-				    // 3. Error Resilience: Fetch JSON and handle potential connection issues
-				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path, Query=QueryParams])) otherwise null,
-				    
-				    // Extract the 'data' array
-				    DataList = try Source[data] otherwise {},
-				    
-				    // Convert to Table
-				    TeamsTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
-				    
-				    // 4. Data Flattening: Expand the team records
-				    ExpandedTeams = try Table.ExpandRecordColumn(TeamsTable, "Column1", 
+				    // --- 1. CORE TEAM IDs (Required for mapping Kaggle historical IDs) ---
+				    CoreUrl = "https://api.nhle.com",
+				    CorePath = "stats/rest/en/team",
+				    CoreParams = [limit = "-1"],
+				    CoreSource = try Json.Document(Web.Contents(CoreUrl, [RelativePath=CorePath, Query=CoreParams])) otherwise null,
+				    CoreList = try CoreSource[data] otherwise {},
+				    CoreTable = Table.FromList(CoreList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
+				    ExpandedCore = try Table.ExpandRecordColumn(CoreTable, "Column1", 
 				        {"id", "franchiseId", "fullName", "triCode"}, 
 				        {"TeamID", "FranchiseID", "TeamName", "TeamAbbrev"}
-				    ) otherwise TeamsTable,
+				    ) otherwise CoreTable,
+				    
+				    // --- 2. RICH STANDINGS DATA (Live Conference, Division, Rank, Streaks) ---
+				    StandUrl = "https://api-web.nhle.com",
+				    StandPath = "v1/standings/now",
+				    StandSource = try Json.Document(Web.Contents(StandUrl, [RelativePath=StandPath])) otherwise null,
+				    StandList = try StandSource[standings] otherwise {},
+				    StandTable = Table.FromList(StandList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
+				    
+				    ExpandedStandings = try Table.ExpandRecordColumn(StandTable, "Column1", 
+				        {"teamAbbrev", "conferenceName", "divisionName", "leagueSequence", "points", "streakCode", "streakCount", "goalDifferential"}, 
+				        {"teamAbbrevRec", "Conference", "Division", "LeagueRank", "Points", "StreakType", "StreakCount", "GoalDifferential"}
+				    ) otherwise StandTable,
+				    
+				    // Extract the text abbreviation from the nested record {"default": "BOS"}
+				    ExtractStandingsAbbrev = try Table.ExpandRecordColumn(ExpandedStandings, "teamAbbrevRec", {"default"}, {"TeamAbbrev"}) otherwise ExpandedStandings,
+				    
+				    // --- 3. THE MERGE (Stitching the two APIs together) ---
+				    // LeftOuter Join ensures defunct/relocated teams still exist for historical game mapping
+				    MergedTeams = Table.NestedJoin(ExpandedCore, {"TeamAbbrev"}, ExtractStandingsAbbrev, {"TeamAbbrev"}, "StandingsData", JoinKind.LeftOuter),
+				    ExpandedMerge = Table.ExpandTableColumn(MergedTeams, "StandingsData", 
+				        {"Conference", "Division", "LeagueRank", "Points", "StreakType", "StreakCount", "GoalDifferential"}, 
+				        {"Conference", "Division", "LeagueRank", "Points", "StreakType", "StreakCount", "GoalDifferential"}
+				    ),
 				
-				    // 5. Data Enhancement: Synthesize the official NHL SVG Logo URL
-				    // The NHL asset server relies on the 3-letter abbreviation to serve logos.
-				    AddLogoURL = Table.AddColumn(ExpandedTeams, "TeamLogoURL", 
+				    // --- 4. DATA ENHANCEMENT & TYPING ---
+				    // Synthesize the official NHL SVG Logo URL
+				    AddLogoURL = Table.AddColumn(ExpandedMerge, "TeamLogoURL", 
 				        each "https://assets.nhle.com/logos/nhl/svg/" & [TeamAbbrev] & "_light.svg", 
 				        type text
 				    ),
-				
-				    // 6. Memory Efficiency: Select only necessary columns
-				    FinalColumns = Table.SelectColumns(AddLogoURL, 
-				        {"TeamID", "FranchiseID", "TeamName", "TeamAbbrev", "TeamLogoURL"}, 
-				        MissingField.Ignore
-				    ),
-				
-				    // 7. Data Typing: Cast for DAX engine optimization
-				    TypedData = Table.TransformColumnTypes(FinalColumns, {
+				    
+				    // Cast for optimal DAX engine performance
+				    TypedData = Table.TransformColumnTypes(AddLogoURL, {
 				        {"TeamID", Int64.Type}, 
 				        {"FranchiseID", Int64.Type}, 
 				        {"TeamName", type text}, 
 				        {"TeamAbbrev", type text},
+				        {"Conference", type text},
+				        {"Division", type text},
+				        {"LeagueRank", Int64.Type},
+				        {"Points", Int64.Type},
+				        {"StreakType", type text},
+				        {"StreakCount", Int64.Type},
+				        {"GoalDifferential", Int64.Type},
 				        {"TeamLogoURL", type text}
 				    })
 				in
@@ -1006,7 +976,7 @@ table FactEdgeBurstDetails
 
 	annotation PBI_NavigationStepName = Navigation
 
-	annotation PBI_ResultType = Table
+	annotation PBI_ResultType = Exception
 
 
 
@@ -1170,10 +1140,198 @@ table FactEdgeSkatingSpeeds
 
 
 // --------------------------------------------------------------------------
-// FILE: NHL.SemanticModel\definition\tables\FactPlayByPlay.tmdl
+// FILE: NHL.SemanticModel\definition\tables\FactHistoricalPlays.tmdl
 // --------------------------------------------------------------------------
 
-table FactPlayByPlay
+table FactHistoricalPlays
+	lineageTag: 4a6798c8-9c08-4583-a603-29e4867b3fd8
+
+	column GameID
+		dataType: int64
+		formatString: 0
+		lineageTag: 840de4fc-11ec-433a-a4e6-125fc68f00ab
+		summarizeBy: count
+		sourceColumn: GameID
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventID
+		dataType: string
+		lineageTag: 78b7c776-d56b-43ae-a69a-160b74665db9
+		summarizeBy: none
+		sourceColumn: EventID
+
+		annotation SummarizationSetBy = Automatic
+
+	column PeriodNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: e94b8d7f-6b48-4bde-a5e6-3c08709310ae
+		summarizeBy: sum
+		sourceColumn: PeriodNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column TimeInPeriod_Seconds
+		dataType: int64
+		formatString: 0
+		lineageTag: 2664c6c4-d332-41d1-ac8d-720bc9319ec3
+		summarizeBy: sum
+		sourceColumn: TimeInPeriod_Seconds
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventType
+		dataType: string
+		lineageTag: 084ccec7-d9ad-431a-81ff-508fc05e00a3
+		summarizeBy: none
+		sourceColumn: EventType
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventTeamID
+		dataType: int64
+		formatString: 0
+		lineageTag: 9df4da19-890a-4274-bf68-6d119f4673f0
+		summarizeBy: count
+		sourceColumn: EventTeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column X_Coord
+		dataType: double
+		lineageTag: 5e5d4b86-6b0f-4ef2-8a63-85dbe53ef43c
+		summarizeBy: sum
+		sourceColumn: X_Coord
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Y_Coord
+		dataType: double
+		lineageTag: 69d7630c-2ec3-4f72-abc1-06b1f2311979
+		summarizeBy: sum
+		sourceColumn: Y_Coord
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ScoringPlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: 96a90bc3-a5bf-4b4d-95c8-a5d89af83de4
+		summarizeBy: count
+		sourceColumn: ScoringPlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column ShootingPlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: 090c16f7-97a3-435e-8198-bcebde8733e3
+		summarizeBy: count
+		sourceColumn: ShootingPlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column HittingPlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: 6888e66f-abfe-4c2a-bdda-b26912beff32
+		summarizeBy: count
+		sourceColumn: HittingPlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column HitteePlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: 4223e683-abb2-4b77-a545-86e4241ffce8
+		summarizeBy: count
+		sourceColumn: HitteePlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FactHistoricalPlays = m
+		mode: import
+		source = ```
+				let
+				    // 1. Source the local Kaggle CSV file
+				    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game_plays.csv"),[Delimiter=",", Columns=18, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    
+				    // 2. Early Filtering (Keeps 2021 season onwards)
+				    FilteredHistory = Table.SelectRows(PromotedHeaders, each try Number.From([game_id]) >= 2021000000 otherwise false),
+				    
+				    // 3. Rename columns
+				    RenamedColumns = Table.RenameColumns(FilteredHistory,{
+				        {"game_id", "GameID"}, 
+				        {"play_id", "EventID"}, 
+				        {"period", "PeriodNumber"}, 
+				        {"event", "EventType"}, 
+				        {"team_id_for", "EventTeamID"}, 
+				        {"x", "X_Coord"}, 
+				        {"y", "Y_Coord"}
+				    }, MissingField.Ignore),
+				    
+				    // 4. Time Conversion
+				    SplitTime = Table.SplitColumn(RenamedColumns, "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
+				    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
+				    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", each try ([Minute] * 60) + [Second] otherwise null, Int64.Type),
+				    
+				    // 5. Select unified columns
+				    FinalColumns = Table.SelectColumns(AddSeconds, 
+				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"},
+				        MissingField.Ignore
+				    ),
+				
+				    // 6. Scrub "NA"
+				    CleanedNAs = Table.ReplaceValue(FinalColumns, "NA", null, Replacer.ReplaceValue, {"EventTeamID", "X_Coord", "Y_Coord"}),
+				    
+				    // 7. FIX: Inject the 4 missing Player ID columns so the count matches FactLivePlays (12 columns)
+				    AddScoring = Table.AddColumn(CleanedNAs, "ScoringPlayerID", each null, Int64.Type),
+				    AddShooting = Table.AddColumn(AddScoring, "ShootingPlayerID", each null, Int64.Type),
+				    AddHitting = Table.AddColumn(AddShooting, "HittingPlayerID", each null, Int64.Type),
+				    AddHittee = Table.AddColumn(AddHitting, "HitteePlayerID", each null, Int64.Type),
+				
+				    // 8. FIX: Force the exact column order so DAX UNION aligns them perfectly
+				    ReorderedColumns = Table.ReorderColumns(AddHittee, 
+				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
+				    ),
+				
+				    // 9. Strict Data Typing (Matching FactLivePlays exactly)
+				    TypedData = Table.TransformColumnTypes(ReorderedColumns,{
+				        {"GameID", Int64.Type}, 
+				        {"EventID", type text}, 
+				        {"PeriodNumber", Int64.Type}, 
+				        {"TimeInPeriod_Seconds", Int64.Type}, 
+				        {"EventType", type text}, 
+				        {"EventTeamID", Int64.Type}, 
+				        {"X_Coord", type number}, 
+				        {"Y_Coord", type number},
+				        {"ScoringPlayerID", Int64.Type},
+				        {"ShootingPlayerID", Int64.Type},
+				        {"HittingPlayerID", Int64.Type},
+				        {"HitteePlayerID", Int64.Type}
+				    })
+				in
+				    TypedData
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\FactLivePlays.tmdl
+// --------------------------------------------------------------------------
+
+table FactLivePlays
 	lineageTag: d0614fb1-16a1-4409-80b3-445d64a7efb1
 
 	column GameID
@@ -1284,42 +1442,30 @@ table FactPlayByPlay
 
 		annotation SummarizationSetBy = Automatic
 
-	partition FactPlayByPlay = m
+	partition FactLivePlays = m
 		mode: import
 		source = ```
 				let
-				    // --- BRANCH A: LIVE API DATA ---
-				    SourceTracker = DimGameTracker,
+				    SourceTracker = DimGames,
 				    
-				    // Keep ONLY the GameID before invoking the function
-				    IsolatedGameID = Table.SelectColumns(SourceTracker, {"GameID"}),
+				    // FIX: Filter to ONLY the 2025-2026 season games
+				    FilteredCurrentSeason = Table.SelectRows(SourceTracker, each ([Season] = 20252026)),
+				    
+				    IsolatedGameID = Table.SelectColumns(FilteredCurrentSeason, {"GameID"}),
 				    ChangedTypeStr = Table.TransformColumnTypes(IsolatedGameID, {{"GameID", type text}}),
-				    
-				    // Invoke the live play-by-play API
 				    InvokedAPI = Table.AddColumn(ChangedTypeStr, "LivePlays", each fxGetPlayByPlay([GameID])),
-				    
-				    // Expand the live play results cleanly
 				    ExpandedLivePlays = Table.ExpandTableColumn(InvokedAPI, "LivePlays", 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
 				    ),
-				
-				    // Ensure live API text fields are clean before append
 				    CleanedLive = Table.TransformColumnTypes(ExpandedLivePlays, {{"EventID", type text}, {"EventTeamID", type text}}),
-				
-				    // --- THE UNION ---
-				    // Stack the Live API data on top of the Kaggle CSV history
-				    AppendedData = try Table.Combine({CleanedLive, Staging_HistoricalPlays}) otherwise CleanedLive,
-				
-				    // --- FINAL DATA TYPING FOR STAR SCHEMA ---
-				    // Safely cast everything to Whole Numbers EXCEPT EventID, which must remain text due to Kaggle's formatting
-				    TypedData = Table.TransformColumnTypes(AppendedData, {
+				    TypedData = Table.TransformColumnTypes(CleanedLive, {
 				        {"GameID", Int64.Type},
-				        {"EventID", type text},               // <-- FIX: Kept as text to prevent composite string errors
+				        {"EventID", type text},               
 				        {"PeriodNumber", Int64.Type},
 				        {"TimeInPeriod_Seconds", Int64.Type},
 				        {"EventType", type text},
-				        {"EventTeamID", Int64.Type},          // <-- Safe to cast now that "NA"s are gone
+				        {"EventTeamID", Int64.Type},          
 				        {"X_Coord", type number},
 				        {"Y_Coord", type number},
 				        {"ScoringPlayerID", Int64.Type},
@@ -1334,6 +1480,82 @@ table FactPlayByPlay
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\FactPlayByPlay.tmdl
+// --------------------------------------------------------------------------
+
+table FactPlayByPlay
+	lineageTag: bad83070-bea9-4b44-8a85-d6194bed70ff
+
+	column GameID
+		lineageTag: 3eea4485-09c6-4c5f-bd5e-897bfaafe933
+		isNameInferred
+		sourceColumn: FactLivePlays[GameID]
+
+	column PeriodNumber
+		lineageTag: d275a017-b39c-4a4e-a794-674cbd4fc0b0
+		isNameInferred
+		sourceColumn: FactLivePlays[PeriodNumber]
+
+	column EventID
+		lineageTag: b320c3c4-61f4-40da-bc64-d1875f277308
+		isNameInferred
+		sourceColumn: FactLivePlays[EventID]
+
+	column TimeInPeriod_Seconds
+		lineageTag: 46dbe54f-e1bb-4ca8-9d36-c0498202677f
+		isNameInferred
+		sourceColumn: FactLivePlays[TimeInPeriod_Seconds]
+
+	column EventType
+		lineageTag: f7502139-db1e-411e-8ace-6b36588f490b
+		isNameInferred
+		sourceColumn: FactLivePlays[EventType]
+
+	column EventTeamID
+		lineageTag: 78ed37db-7b35-40b2-add8-96c662279283
+		isNameInferred
+		sourceColumn: FactLivePlays[EventTeamID]
+
+	column X_Coord
+		lineageTag: 141e3b41-9381-42c4-bffb-d104facbb330
+		isNameInferred
+		sourceColumn: FactLivePlays[X_Coord]
+
+	column Y_Coord
+		lineageTag: b6deb19d-b3ef-47be-ae64-11013ab9f364
+		isNameInferred
+		sourceColumn: FactLivePlays[Y_Coord]
+
+	column ScoringPlayerID
+		lineageTag: 63dbd3f7-329d-44bb-baf5-50c3ff52c55f
+		isNameInferred
+		sourceColumn: FactLivePlays[ScoringPlayerID]
+
+	column ShootingPlayerID
+		lineageTag: 552c1567-1c14-437e-9522-a22b3770e3d3
+		isNameInferred
+		sourceColumn: FactLivePlays[ShootingPlayerID]
+
+	column HittingPlayerID
+		lineageTag: f9af5d46-e9b5-4c78-8d96-871a97d3d855
+		isNameInferred
+		sourceColumn: FactLivePlays[HittingPlayerID]
+
+	column HitteePlayerID
+		lineageTag: edb2e3b3-da1c-4e06-b9f1-830f55bcb71e
+		isNameInferred
+		sourceColumn: FactLivePlays[HitteePlayerID]
+
+	partition FactPlayByPlay = calculated
+		mode: import
+		source = UNION('FactLivePlays', 'FactHistoricalPlays')
+
+	annotation PBI_Id = 88a25703504849dda771e1429e17cc43
 
 
 
@@ -1734,7 +1956,7 @@ table LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9
 
 	partition LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9 = calculated
 		mode: import
-		source = Calendar(Date(Year(MIN('DimGameTracker'[GameDate])), 1, 1), Date(Year(MAX('DimGameTracker'[GameDate])), 12, 31))
+		source = Calendar(Date(Year(MIN('DimGames'[GameDate])), 1, 1), Date(Year(MAX('DimGames'[GameDate])), 12, 31))
 
 	annotation __PBI_LocalDateTable = true
 

@@ -1,0 +1,105 @@
+table FactPlayByPlay
+	lineageTag: bad83070-bea9-4b44-8a85-d6194bed70ff
+
+	column GameID
+		lineageTag: 3eea4485-09c6-4c5f-bd5e-897bfaafe933
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: FactLivePlays[GameID]
+
+		annotation SummarizationSetBy = Automatic
+
+	column PeriodNumber
+		lineageTag: d275a017-b39c-4a4e-a794-674cbd4fc0b0
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: FactLivePlays[PeriodNumber]
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventID
+		lineageTag: b320c3c4-61f4-40da-bc64-d1875f277308
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: FactLivePlays[EventID]
+
+		annotation SummarizationSetBy = Automatic
+
+	column TimeInPeriod_Seconds
+		lineageTag: 46dbe54f-e1bb-4ca8-9d36-c0498202677f
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: FactLivePlays[TimeInPeriod_Seconds]
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventType
+		lineageTag: f7502139-db1e-411e-8ace-6b36588f490b
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: FactLivePlays[EventType]
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventTeamID
+		lineageTag: 78ed37db-7b35-40b2-add8-96c662279283
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: FactLivePlays[EventTeamID]
+
+		annotation SummarizationSetBy = Automatic
+
+	column X_Coord
+		lineageTag: 141e3b41-9381-42c4-bffb-d104facbb330
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: FactLivePlays[X_Coord]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Y_Coord
+		lineageTag: b6deb19d-b3ef-47be-ae64-11013ab9f364
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: FactLivePlays[Y_Coord]
+
+		annotation SummarizationSetBy = Automatic
+
+	column ScoringPlayerID
+		lineageTag: 63dbd3f7-329d-44bb-baf5-50c3ff52c55f
+		summarizeBy: count
+		isNameInferred
+		sourceColumn: FactLivePlays[ScoringPlayerID]
+
+		annotation SummarizationSetBy = Automatic
+
+	column ShootingPlayerID
+		lineageTag: 552c1567-1c14-437e-9522-a22b3770e3d3
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: FactLivePlays[ShootingPlayerID]
+
+		annotation SummarizationSetBy = Automatic
+
+	column HittingPlayerID
+		lineageTag: f9af5d46-e9b5-4c78-8d96-871a97d3d855
+		summarizeBy: count
+		isNameInferred
+		sourceColumn: FactLivePlays[HittingPlayerID]
+
+		annotation SummarizationSetBy = Automatic
+
+	column HitteePlayerID
+		lineageTag: edb2e3b3-da1c-4e06-b9f1-830f55bcb71e
+		summarizeBy: count
+		isNameInferred
+		sourceColumn: FactLivePlays[HitteePlayerID]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FactPlayByPlay = calculated
+		mode: import
+		source = UNION('FactLivePlays', 'FactHistoricalPlays')
+
+	annotation PBI_Id = 88a25703504849dda771e1429e17cc43
+

@@ -1,63 +1,85 @@
 table FactLivePlays
+	isHidden
 	lineageTag: d0614fb1-16a1-4409-80b3-445d64a7efb1
 
 	column GameID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: ec0f0b51-61e7-4888-b18e-b0e54d4c8489
 		summarizeBy: count
 		sourceColumn: GameID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column PeriodNumber
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 718de994-ad28-4d42-a466-e65911895fda
 		summarizeBy: sum
 		sourceColumn: PeriodNumber
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column EventID
 		dataType: string
+		isHidden
 		lineageTag: 20b4e09e-4b8b-4caf-934d-272a0c64c3c8
 		summarizeBy: none
 		sourceColumn: EventID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column TimeInPeriod_Seconds
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 43793c61-9333-4a3a-a017-0cf9a7e87a89
 		summarizeBy: sum
 		sourceColumn: TimeInPeriod_Seconds
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column EventType
 		dataType: string
+		isHidden
 		lineageTag: 4b57095e-1732-4ecf-8fce-972f01ae7696
 		summarizeBy: none
 		sourceColumn: EventType
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column EventTeamID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: f62325bd-01cd-4693-b781-a1e91ac08b21
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: EventTeamID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column X_Coord
 		dataType: double
+		isHidden
 		lineageTag: e685cfc2-ef52-490b-b663-44441787a7cc
 		summarizeBy: sum
 		sourceColumn: X_Coord
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -65,9 +87,12 @@ table FactLivePlays
 
 	column Y_Coord
 		dataType: double
+		isHidden
 		lineageTag: 23f52815-8963-4b68-b998-b4fa039bc996
 		summarizeBy: sum
 		sourceColumn: Y_Coord
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -75,37 +100,49 @@ table FactLivePlays
 
 	column ScoringPlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 35e1d17b-b7ae-4673-a74c-d8796f50aa9d
 		summarizeBy: count
 		sourceColumn: ScoringPlayerID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column ShootingPlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: a0657267-5dde-4e7d-af88-bef6ef4f7c62
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: ShootingPlayerID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column HittingPlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: fe796bfb-05de-4ec5-853f-d72f392afe75
 		summarizeBy: count
 		sourceColumn: HittingPlayerID
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column HitteePlayerID
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: b0d7c320-38df-4b5b-9513-18fa65474036
 		summarizeBy: count
 		sourceColumn: HitteePlayerID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -143,6 +180,8 @@ table FactLivePlays
 				in
 				    TypedData
 				```
+
+	changedProperty = IsHidden
 
 	annotation PBI_NavigationStepName = Navigation
 

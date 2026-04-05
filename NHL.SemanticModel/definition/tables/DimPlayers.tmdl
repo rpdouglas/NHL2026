@@ -50,10 +50,10 @@ table DimPlayers
 				    BaseUrl = "https://api.nhle.com",
 				    Path = "stats/rest/en/skater/summary",
 				    
-				    // 2. API Governance: Use limit=-1 and cayenneExp to pull all active skaters for the current season in one call
+				    // 2. API Governance: Pull active skaters for the current 2025-2026 season
 				    QueryParams = [
 				        limit = "-1",
-				        cayenneExp = "seasonId=20242025"
+				        cayenneExp = "seasonId=20252026"
 				    ],
 				
 				    // 3. Error Resilience: Fetch JSON

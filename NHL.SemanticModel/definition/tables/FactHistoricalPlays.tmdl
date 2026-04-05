@@ -1,61 +1,85 @@
 table FactHistoricalPlays
+	isHidden
 	lineageTag: 4a6798c8-9c08-4583-a603-29e4867b3fd8
 
 	column GameID
-		dataType: string
+		dataType: int64
+		isHidden
+		formatString: 0
 		lineageTag: 840de4fc-11ec-433a-a4e6-125fc68f00ab
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: GameID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column EventID
 		dataType: string
+		isHidden
 		lineageTag: 78b7c776-d56b-43ae-a69a-160b74665db9
 		summarizeBy: none
 		sourceColumn: EventID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column PeriodNumber
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: e94b8d7f-6b48-4bde-a5e6-3c08709310ae
 		summarizeBy: sum
 		sourceColumn: PeriodNumber
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column TimeInPeriod_Seconds
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: 2664c6c4-d332-41d1-ac8d-720bc9319ec3
 		summarizeBy: sum
 		sourceColumn: TimeInPeriod_Seconds
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column EventType
 		dataType: string
+		isHidden
 		lineageTag: 084ccec7-d9ad-431a-81ff-508fc05e00a3
 		summarizeBy: none
 		sourceColumn: EventType
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 	column EventTeamID
-		dataType: string
+		dataType: int64
+		isHidden
+		formatString: 0
 		lineageTag: 9df4da19-890a-4274-bf68-6d119f4673f0
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: EventTeamID
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
 	column X_Coord
 		dataType: double
+		isHidden
 		lineageTag: 5e5d4b86-6b0f-4ef2-8a63-85dbe53ef43c
 		summarizeBy: sum
 		sourceColumn: X_Coord
+
+		changedProperty = IsHidden
 
 		annotation SummarizationSetBy = Automatic
 
@@ -63,13 +87,64 @@ table FactHistoricalPlays
 
 	column Y_Coord
 		dataType: double
+		isHidden
 		lineageTag: 69d7630c-2ec3-4f72-abc1-06b1f2311979
 		summarizeBy: sum
 		sourceColumn: Y_Coord
 
+		changedProperty = IsHidden
+
 		annotation SummarizationSetBy = Automatic
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ScoringPlayerID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 96a90bc3-a5bf-4b4d-95c8-a5d89af83de4
+		summarizeBy: count
+		sourceColumn: ScoringPlayerID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column ShootingPlayerID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 090c16f7-97a3-435e-8198-bcebde8733e3
+		summarizeBy: count
+		sourceColumn: ShootingPlayerID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column HittingPlayerID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6888e66f-abfe-4c2a-bdda-b26912beff32
+		summarizeBy: count
+		sourceColumn: HittingPlayerID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column HitteePlayerID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4223e683-abb2-4b77-a545-86e4241ffce8
+		summarizeBy: count
+		sourceColumn: HitteePlayerID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
 
 	partition FactHistoricalPlays = m
 		mode: import
@@ -77,16 +152,12 @@ table FactHistoricalPlays
 				let
 				    // 1. Source the local Kaggle CSV file
 				    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game_plays.csv"),[Delimiter=",", Columns=18, Encoding=1252, QuoteStyle=QuoteStyle.None]),
-				    
-				    // 2. Promote headers
 				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
 				    
-				    // 3. MEMORY OPTIMIZATION: Early Filtering
-				    // This keeps only games from the 2021-2022 season onwards to prevent memory exhaustion. 
-				    // (Change 2021000000 to a lower number if you want more history, e.g., 2015000000)
+				    // 2. Early Filtering (Keeps 2021 season onwards)
 				    FilteredHistory = Table.SelectRows(PromotedHeaders, each try Number.From([game_id]) >= 2021000000 otherwise false),
 				    
-				    // 4. Rename columns to perfectly match the live API output
+				    // 3. Rename columns
 				    RenamedColumns = Table.RenameColumns(FilteredHistory,{
 				        {"game_id", "GameID"}, 
 				        {"play_id", "EventID"}, 
@@ -97,34 +168,51 @@ table FactHistoricalPlays
 				        {"y", "Y_Coord"}
 				    }, MissingField.Ignore),
 				    
-				    // 5. Time Conversion
+				    // 4. Time Conversion
 				    SplitTime = Table.SplitColumn(RenamedColumns, "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
 				    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
 				    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", each try ([Minute] * 60) + [Second] otherwise null, Int64.Type),
 				    
-				    // 6. Select only the unified columns
+				    // 5. Select unified columns
 				    FinalColumns = Table.SelectColumns(AddSeconds, 
 				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"},
 				        MissingField.Ignore
 				    ),
 				
-				    // 7. ERROR PREVENTION: Scrub the "NA" strings from the Kaggle dataset and replace with true nulls
+				    // 6. Scrub "NA"
 				    CleanedNAs = Table.ReplaceValue(FinalColumns, "NA", null, Replacer.ReplaceValue, {"EventTeamID", "X_Coord", "Y_Coord"}),
 				    
-				    // 8. Base Data Typing (Leave IDs as text temporarily before the append)
-				    TypedData = Table.TransformColumnTypes(CleanedNAs,{
-				        {"GameID", type text}, 
+				    // 7. FIX: Inject the 4 missing Player ID columns so the count matches FactLivePlays (12 columns)
+				    AddScoring = Table.AddColumn(CleanedNAs, "ScoringPlayerID", each null, Int64.Type),
+				    AddShooting = Table.AddColumn(AddScoring, "ShootingPlayerID", each null, Int64.Type),
+				    AddHitting = Table.AddColumn(AddShooting, "HittingPlayerID", each null, Int64.Type),
+				    AddHittee = Table.AddColumn(AddHitting, "HitteePlayerID", each null, Int64.Type),
+				
+				    // 8. FIX: Force the exact column order so DAX UNION aligns them perfectly
+				    ReorderedColumns = Table.ReorderColumns(AddHittee, 
+				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
+				    ),
+				
+				    // 9. Strict Data Typing (Matching FactLivePlays exactly)
+				    TypedData = Table.TransformColumnTypes(ReorderedColumns,{
+				        {"GameID", Int64.Type}, 
 				        {"EventID", type text}, 
 				        {"PeriodNumber", Int64.Type}, 
 				        {"TimeInPeriod_Seconds", Int64.Type}, 
 				        {"EventType", type text}, 
-				        {"EventTeamID", type text}, 
+				        {"EventTeamID", Int64.Type}, 
 				        {"X_Coord", type number}, 
-				        {"Y_Coord", type number}
+				        {"Y_Coord", type number},
+				        {"ScoringPlayerID", Int64.Type},
+				        {"ShootingPlayerID", Int64.Type},
+				        {"HittingPlayerID", Int64.Type},
+				        {"HitteePlayerID", Int64.Type}
 				    })
 				in
 				    TypedData
 				```
+
+	changedProperty = IsHidden
 
 	annotation PBI_NavigationStepName = Navigation
 

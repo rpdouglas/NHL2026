@@ -14,7 +14,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 95969f73-9e20-4df9-be9a-b96cbfe4e950
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: FranchiseID
 
 		annotation SummarizationSetBy = Automatic
@@ -63,7 +63,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 0c749489-1516-4081-a033-1e36e22b2657
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: LeagueRank
 
 		annotation SummarizationSetBy = Automatic
@@ -72,7 +72,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 88df7391-7ef5-4810-ab1a-a3ba296aec85
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Points
 
 		annotation SummarizationSetBy = Automatic
@@ -89,7 +89,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 12c8623c-ff9b-44af-a885-10e9c6345ea5
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: StreakCount
 
 		annotation SummarizationSetBy = Automatic
@@ -98,7 +98,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: d8617501-88e8-41be-b225-e104440564a0
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: GoalDifferential
 
 		annotation SummarizationSetBy = Automatic
@@ -163,9 +163,14 @@ table DimTeams
 				        {"StreakCount", Int64.Type},
 				        {"GoalDifferential", Int64.Type},
 				        {"TeamLogoURL", type text}
-				    })
+				    }),
+				
+				    // --- THE FIX: ENFORCE UNIQUE ABBREVIATIONS ---
+				    // The NHL stats API returns legacy duplicates for some abbreviations.
+				    // We must remove duplicates so this column can act as a 1-side key in the Star Schema.
+				    RemovedDuplicates = Table.Distinct(TypedData, {"TeamAbbrev"})
 				in
-				    TypedData
+				    RemovedDuplicates
 				```
 
 	annotation PBI_NavigationStepName = Navigation

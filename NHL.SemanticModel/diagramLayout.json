@@ -4,14 +4,14 @@
     {
       "ordinal": 0,
       "scrollPosition": {
-        "x": 0,
+        "x": 406.82071123655669,
         "y": 0
       },
       "nodes": [
         {
           "location": {
-            "x": 564,
-            "y": 355
+            "x": 562.62560570528194,
+            "y": 309.64498827430276
           },
           "nodeIndex": "DimPlayers",
           "nodeLineageTag": "4cc27823-495c-4ca7-8d49-c8b8da14a4c7",
@@ -19,7 +19,7 @@
             "height": 200,
             "width": 234
           },
-          "zIndex": 8
+          "zIndex": 9
         },
         {
           "location": {
@@ -32,12 +32,12 @@
             "height": 176,
             "width": 234
           },
-          "zIndex": 3
+          "zIndex": 10
         },
         {
           "location": {
-            "x": 1110,
-            "y": 258
+            "x": 1017.818399627165,
+            "y": 477.56833341563311
           },
           "nodeIndex": "FactEdgeSkatingSpeeds",
           "nodeLineageTag": "e9a6b689-0c2a-46dd-ae3b-1bbf4395012f",
@@ -45,7 +45,7 @@
             "height": 300,
             "width": 234
           },
-          "zIndex": 4
+          "zIndex": 7
         },
         {
           "location": {
@@ -58,24 +58,11 @@
             "height": 128,
             "width": 234
           },
-          "zIndex": 5
+          "zIndex": 4
         },
         {
           "location": {
-            "x": 2122,
-            "y": 25
-          },
-          "nodeIndex": "game",
-          "nodeLineageTag": "83c01804-d746-4743-b3ed-5ef1e5f4b124",
-          "size": {
-            "height": 300,
-            "width": 234
-          },
-          "zIndex": 6
-        },
-        {
-          "location": {
-            "x": 1294,
+            "x": 1127.262158496198,
             "y": 0
           },
           "nodeIndex": "FactEdgeBurstDetails",
@@ -84,7 +71,7 @@
             "height": 300,
             "width": 234
           },
-          "zIndex": 7
+          "zIndex": 6
         },
         {
           "location": {
@@ -96,24 +83,25 @@
             "height": 300,
             "width": 234
           },
-          "zIndex": 0
+          "zIndex": 8
         },
         {
           "location": {
-            "x": 50,
-            "y": -25
+            "x": 1289.7267289588242,
+            "y": 440.00263730169974
           },
           "nodeIndex": "FactLivePlays",
+          "nodeLineageTag": "d0614fb1-16a1-4409-80b3-445d64a7efb1",
           "size": {
             "height": 300,
             "width": 234
           },
-          "zIndex": 0
+          "zIndex": 1
         },
         {
           "location": {
-            "x": 2356,
-            "y": 155.5
+            "x": 1542.381088217559,
+            "y": 433.3964025063367
           },
           "nodeIndex": "FactHistoricalPlays",
           "nodeLineageTag": "4a6798c8-9c08-4583-a603-29e4867b3fd8",
@@ -121,11 +109,24 @@
             "height": 272,
             "width": 234
           },
-          "zIndex": 0
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 280.37207427663975,
+            "y": 543.50210984135981
+          },
+          "nodeIndex": "FactPlayByPlay",
+          "nodeLineageTag": "bad83070-bea9-4b44-8a85-d6194bed70ff",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 3
         }
       ],
       "name": "All tables",
-      "zoomValue": 49.600957701516364,
+      "zoomValue": 72.759324150505932,
       "pinKeyFieldsToTop": false,
       "showExtraHeaderInfo": false,
       "hideKeyFieldsWhenCollapsed": false,

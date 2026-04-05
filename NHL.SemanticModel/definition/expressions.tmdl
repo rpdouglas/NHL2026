@@ -68,7 +68,9 @@ expression fxGetPlayerEDGE = ```
 		let
 		    // 1. Static Base URL and RelativePath configuration
 		    BaseUrl = "https://api-web.nhle.com",
-		    Path = "v1/edge/skater-skating-speed-detail/" & InputPlayerID & "/20242025/2",
+		    
+		    // FIX: Update URL path to 20252026
+		    Path = "v1/edge/skater-skating-speed-detail/" & InputPlayerID & "/20252026/2",
 		
 		    // 2. API Governance: Implement implicit rate limiting
 		    SourceData = Function.InvokeAfter(
@@ -76,11 +78,11 @@ expression fxGetPlayerEDGE = ```
 		        #duration(0, 0, 0, 0.3)
 		    ),
 		
-		    // 3. Extract the exact parent nodes discovered in the diagnostic test
+		    // 3. Extract the exact parent nodes
 		    TopSpeedsNode = try SourceData[topSkatingSpeeds] otherwise null,
 		    SpeedDetailsNode = try SourceData[skatingSpeedDetails] otherwise null,
 		
-		    // 4. Create a clean, flat record containing these nodes
+		    // 4. Create a clean, flat record
 		    FlatRecord = [
 		        PlayerID = InputPlayerID, 
 		        TopSkatingSpeeds = TopSpeedsNode,
@@ -90,7 +92,7 @@ expression fxGetPlayerEDGE = ```
 		    // 5. Convert to Table
 		    DataTable = Table.FromRecords({FlatRecord}),
 		
-		    // 6. Data Typing: Type the ID, but leave the nested data as 'any' so it can be expanded in the UI
+		    // 6. Data Typing
 		    TypedData = Table.TransformColumnTypes(DataTable, {
 		        {"PlayerID", Int64.Type}
 		    })
@@ -127,4 +129,17 @@ expression Staging_EDGE = ```
 	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Exception
+
+expression game =
+		let
+		    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game.csv"),[Delimiter=",", Columns=15, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+		    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+		    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"game_id", Int64.Type}, {"season", Int64.Type}, {"type", type text}, {"date_time_GMT", type datetime}, {"away_team_id", Int64.Type}, {"home_team_id", Int64.Type}, {"away_goals", Int64.Type}, {"home_goals", Int64.Type}, {"outcome", type text}, {"home_rink_side_start", type text}, {"venue", type text}, {"venue_link", type text}, {"venue_time_zone_id", type text}, {"venue_time_zone_offset", Int64.Type}, {"venue_time_zone_tz", type text}})
+		in
+		    #"Changed Type"
+	lineageTag: db2029b9-16ba-4b52-99d8-111f569d30c2
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
 
