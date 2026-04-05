@@ -130,14 +130,19 @@ expression Staging_EDGE = ```
 
 expression Staging_HistoricalPlays = ```
 		let
-		    // 1. Source the local Kaggle CSV file you actually have
+		    // 1. Source the local Kaggle CSV file
 		    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game_plays.csv"),[Delimiter=",", Columns=18, Encoding=1252, QuoteStyle=QuoteStyle.None]),
 		    
 		    // 2. Promote headers
 		    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
 		    
-		    // 3. Rename columns to perfectly match the live API output (FactPlayByPlay)
-		    RenamedColumns = Table.RenameColumns(PromotedHeaders,{
+		    // 3. MEMORY OPTIMIZATION: Early Filtering
+		    // This keeps only games from the 2021-2022 season onwards to prevent memory exhaustion. 
+		    // (Change 2021000000 to a lower number if you want more history, e.g., 2015000000)
+		    FilteredHistory = Table.SelectRows(PromotedHeaders, each try Number.From([game_id]) >= 2021000000 otherwise false),
+		    
+		    // 4. Rename columns to perfectly match the live API output
+		    RenamedColumns = Table.RenameColumns(FilteredHistory,{
 		        {"game_id", "GameID"}, 
 		        {"play_id", "EventID"}, 
 		        {"period", "PeriodNumber"}, 
@@ -147,20 +152,22 @@ expression Staging_HistoricalPlays = ```
 		        {"y", "Y_Coord"}
 		    }, MissingField.Ignore),
 		    
-		    // 4. Time Conversion: The CSV stores time as MM:SS. We need total seconds.
+		    // 5. Time Conversion
 		    SplitTime = Table.SplitColumn(RenamedColumns, "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
 		    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
-		    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", each ([Minute] * 60) + [Second], Int64.Type),
+		    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", each try ([Minute] * 60) + [Second] otherwise null, Int64.Type),
 		    
-		    // 5. Select only the unified columns
-		    // Note: Historical player IDs are isolated in game_plays_players.csv. We map the core events first for performance.
+		    // 6. Select only the unified columns
 		    FinalColumns = Table.SelectColumns(AddSeconds, 
 		        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"},
 		        MissingField.Ignore
 		    ),
+		
+		    // 7. ERROR PREVENTION: Scrub the "NA" strings from the Kaggle dataset and replace with true nulls
+		    CleanedNAs = Table.ReplaceValue(FinalColumns, "NA", null, Replacer.ReplaceValue, {"EventTeamID", "X_Coord", "Y_Coord"}),
 		    
-		    // 6. Enforce strict data types (Matching the exact string types from your live API script)
-		    TypedData = Table.TransformColumnTypes(FinalColumns,{
+		    // 8. Base Data Typing (Leave IDs as text temporarily before the append)
+		    TypedData = Table.TransformColumnTypes(CleanedNAs,{
 		        {"GameID", type text}, 
 		        {"EventID", type text}, 
 		        {"PeriodNumber", Int64.Type}, 
@@ -177,5 +184,5 @@ expression Staging_HistoricalPlays = ```
 
 	annotation PBI_NavigationStepName = Navigation
 
-	annotation PBI_ResultType = Table
+	annotation PBI_ResultType = Exception
 

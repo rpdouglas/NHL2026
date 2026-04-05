@@ -11,9 +11,10 @@ table FactPlayByPlay
 		annotation SummarizationSetBy = Automatic
 
 	column PeriodNumber
-		dataType: string
+		dataType: int64
+		formatString: 0
 		lineageTag: 718de994-ad28-4d42-a466-e65911895fda
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: PeriodNumber
 
 		annotation SummarizationSetBy = Automatic
@@ -27,9 +28,10 @@ table FactPlayByPlay
 		annotation SummarizationSetBy = Automatic
 
 	column TimeInPeriod_Seconds
-		dataType: string
+		dataType: int64
+		formatString: 0
 		lineageTag: 43793c61-9333-4a3a-a017-0cf9a7e87a89
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: TimeInPeriod_Seconds
 
 		annotation SummarizationSetBy = Automatic
@@ -43,7 +45,8 @@ table FactPlayByPlay
 		annotation SummarizationSetBy = Automatic
 
 	column EventTeamID
-		dataType: string
+		dataType: int64
+		formatString: 0
 		lineageTag: f62325bd-01cd-4693-b781-a1e91ac08b21
 		summarizeBy: none
 		sourceColumn: EventTeamID
@@ -51,31 +54,37 @@ table FactPlayByPlay
 		annotation SummarizationSetBy = Automatic
 
 	column X_Coord
-		dataType: string
+		dataType: double
 		lineageTag: e685cfc2-ef52-490b-b663-44441787a7cc
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: X_Coord
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column Y_Coord
-		dataType: string
+		dataType: double
 		lineageTag: 23f52815-8963-4b68-b998-b4fa039bc996
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: Y_Coord
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column ScoringPlayerID
-		dataType: string
+		dataType: int64
+		formatString: 0
 		lineageTag: 35e1d17b-b7ae-4673-a74c-d8796f50aa9d
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: ScoringPlayerID
 
 		annotation SummarizationSetBy = Automatic
 
 	column ShootingPlayerID
-		dataType: string
+		dataType: int64
+		formatString: 0
 		lineageTag: a0657267-5dde-4e7d-af88-bef6ef4f7c62
 		summarizeBy: none
 		sourceColumn: ShootingPlayerID
@@ -83,17 +92,19 @@ table FactPlayByPlay
 		annotation SummarizationSetBy = Automatic
 
 	column HittingPlayerID
-		dataType: string
+		dataType: int64
+		formatString: 0
 		lineageTag: fe796bfb-05de-4ec5-853f-d72f392afe75
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: HittingPlayerID
 
 		annotation SummarizationSetBy = Automatic
 
 	column HitteePlayerID
-		dataType: string
+		dataType: int64
+		formatString: 0
 		lineageTag: b0d7c320-38df-4b5b-9513-18fa65474036
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: HitteePlayerID
 
 		annotation SummarizationSetBy = Automatic
@@ -103,30 +114,46 @@ table FactPlayByPlay
 		source = ```
 				let
 				    // --- BRANCH A: LIVE API DATA ---
-				    // 1. Point to the live games tracker
 				    SourceTracker = DimGameTracker,
 				    
-				    // 2. PREVENT COLLISIONS: Keep ONLY the GameID before invoking the function
+				    // Keep ONLY the GameID before invoking the function
 				    IsolatedGameID = Table.SelectColumns(SourceTracker, {"GameID"}),
-				    
-				    // 3. Convert to text temporarily to feed the custom function
 				    ChangedTypeStr = Table.TransformColumnTypes(IsolatedGameID, {{"GameID", type text}}),
 				    
-				    // 4. Invoke the live play-by-play API
+				    // Invoke the live play-by-play API
 				    InvokedAPI = Table.AddColumn(ChangedTypeStr, "LivePlays", each fxGetPlayByPlay([GameID])),
-				    // 5. Expand the live play results cleanly (No .1 collisions!)
+				    
+				    // Expand the live play results cleanly
 				    ExpandedLivePlays = Table.ExpandTableColumn(InvokedAPI, "LivePlays", 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
 				    ),
 				
+				    // Ensure live API text fields are clean before append
+				    CleanedLive = Table.TransformColumnTypes(ExpandedLivePlays, {{"EventID", type text}, {"EventTeamID", type text}}),
+				
 				    // --- THE UNION ---
-				    // 6. Stack the Live API data on top of the Kaggle CSV history
-				    // NOTE: This step assumes your historical query is named exactly "Staging_HistoricalPlays"
-				    AppendedData = try Table.Combine({ExpandedLivePlays, Staging_HistoricalPlays}) otherwise ExpandedLivePlays,
-				    #"Changed Type" = Table.TransformColumnTypes(AppendedData,{{"GameID", Int64.Type}})
+				    // Stack the Live API data on top of the Kaggle CSV history
+				    AppendedData = try Table.Combine({CleanedLive, Staging_HistoricalPlays}) otherwise CleanedLive,
+				
+				    // --- FINAL DATA TYPING FOR STAR SCHEMA ---
+				    // Safely cast everything to Whole Numbers EXCEPT EventID, which must remain text due to Kaggle's formatting
+				    TypedData = Table.TransformColumnTypes(AppendedData, {
+				        {"GameID", Int64.Type},
+				        {"EventID", type text},               // <-- FIX: Kept as text to prevent composite string errors
+				        {"PeriodNumber", Int64.Type},
+				        {"TimeInPeriod_Seconds", Int64.Type},
+				        {"EventType", type text},
+				        {"EventTeamID", Int64.Type},          // <-- Safe to cast now that "NA"s are gone
+				        {"X_Coord", type number},
+				        {"Y_Coord", type number},
+				        {"ScoringPlayerID", Int64.Type},
+				        {"ShootingPlayerID", Int64.Type},
+				        {"HittingPlayerID", Int64.Type},
+				        {"HitteePlayerID", Int64.Type}
+				    })
 				in
-				    #"Changed Type"
+				    TypedData
 				```
 
 	annotation PBI_NavigationStepName = Navigation
