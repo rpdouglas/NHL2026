@@ -1,0 +1,151 @@
+table FactEdgeSkatingSpeeds
+	lineageTag: e9a6b689-0c2a-46dd-ae3b-1bbf4395012f
+
+	column PlayerID
+		dataType: string
+		lineageTag: d695de2d-483c-43c9-855e-20fb0333bc2f
+		summarizeBy: none
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column gameCenterLink
+		dataType: string
+		lineageTag: 5940c019-48a6-44f1-827e-67f2bd54e038
+		summarizeBy: none
+		sourceColumn: gameCenterLink
+
+		annotation SummarizationSetBy = Automatic
+
+	column gameDate
+		dataType: string
+		lineageTag: 09e73d32-985e-4bab-8b30-bef8b5f0bbff
+		summarizeBy: none
+		sourceColumn: gameDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column gameType
+		dataType: string
+		lineageTag: 7f02cc9c-0a0e-4a36-a7bc-a59fea07e57b
+		summarizeBy: none
+		sourceColumn: gameType
+
+		annotation SummarizationSetBy = Automatic
+
+	column playerOnHomeTeam
+		dataType: string
+		lineageTag: 1f4f2524-d9b3-4d55-8748-b4558a9a2822
+		summarizeBy: none
+		sourceColumn: playerOnHomeTeam
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'skatingSpeed.imperial'
+		dataType: string
+		lineageTag: 2fd2300a-6572-4b83-b66f-ce2ac517511f
+		summarizeBy: none
+		sourceColumn: skatingSpeed.imperial
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'skatingSpeed.metric'
+		dataType: string
+		lineageTag: 8159b201-1ccf-486b-954f-66794bb35667
+		summarizeBy: none
+		sourceColumn: skatingSpeed.metric
+
+		annotation SummarizationSetBy = Automatic
+
+	column timeInPeriod
+		dataType: string
+		lineageTag: 585669e9-20e2-4ac1-b448-4ce4396baa6d
+		summarizeBy: none
+		sourceColumn: timeInPeriod
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'periodDescriptor.number'
+		dataType: string
+		lineageTag: a09647fa-646e-41f0-9cc2-481c3063ca35
+		summarizeBy: none
+		sourceColumn: periodDescriptor.number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'periodDescriptor.periodType'
+		dataType: string
+		lineageTag: c522d7c8-e377-4459-a25e-9304eaad2193
+		summarizeBy: none
+		sourceColumn: periodDescriptor.periodType
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'periodDescriptor.maxRegulationPeriods'
+		dataType: string
+		lineageTag: b26ecce8-a570-4def-b7ec-4a8212f35b47
+		summarizeBy: none
+		sourceColumn: periodDescriptor.maxRegulationPeriods
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'homeTeam.abbrev'
+		dataType: string
+		lineageTag: 9cd7e6b1-4c52-45dd-813c-07da054f6cac
+		summarizeBy: none
+		sourceColumn: homeTeam.abbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'homeTeam.slug'
+		dataType: string
+		lineageTag: 58c7ab84-236e-4904-bf8e-7d82f7e1f306
+		summarizeBy: none
+		sourceColumn: homeTeam.slug
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'awayTeam.abbrev'
+		dataType: string
+		lineageTag: ec4e6bbd-d5a1-4639-93b5-a1ddce9e33ae
+		summarizeBy: none
+		sourceColumn: awayTeam.abbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'awayTeam.slug'
+		dataType: string
+		lineageTag: 8f1cae47-88e2-4d67-8f85-67a3c3c29615
+		summarizeBy: none
+		sourceColumn: awayTeam.slug
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FactEdgeSkatingSpeeds = m
+		mode: import
+		source = ```
+				let
+				    // 1. Reference the staging table to avoid recalling the API
+				    Source = Staging_EDGE,
+				    
+				    // 2. Remove the other detail list to prevent massive row duplication
+				    RemovedDetails = Table.RemoveColumns(Source,{"SkatingSpeedDetails"}),
+				    
+				    // 3. THE FIX: Expand the List into rows first
+				    ExpandedList = Table.ExpandListColumn(RemovedDetails, "TopSkatingSpeeds"),
+				    #"Expanded TopSkatingSpeeds" = Table.ExpandRecordColumn(ExpandedList, "TopSkatingSpeeds", {"gameCenterLink", "gameDate", "gameType", "playerOnHomeTeam", "skatingSpeed", "timeInPeriod", "periodDescriptor", "homeTeam", "awayTeam"}, {"gameCenterLink", "gameDate", "gameType", "playerOnHomeTeam", "skatingSpeed", "timeInPeriod", "periodDescriptor", "homeTeam", "awayTeam"}),
+				    #"Expanded skatingSpeed" = Table.ExpandRecordColumn(#"Expanded TopSkatingSpeeds", "skatingSpeed", {"imperial", "metric"}, {"skatingSpeed.imperial", "skatingSpeed.metric"}),
+				    #"Expanded periodDescriptor" = Table.ExpandRecordColumn(#"Expanded skatingSpeed", "periodDescriptor", {"number", "periodType", "maxRegulationPeriods"}, {"periodDescriptor.number", "periodDescriptor.periodType", "periodDescriptor.maxRegulationPeriods"}),
+				    #"Expanded homeTeam" = Table.ExpandRecordColumn(#"Expanded periodDescriptor", "homeTeam", {"commonName", "placeNameWithPreposition", "abbrev", "teamLogo", "slug"}, {"homeTeam.commonName", "homeTeam.placeNameWithPreposition", "homeTeam.abbrev", "homeTeam.teamLogo", "homeTeam.slug"}),
+				    #"Expanded homeTeam.commonName" = Table.ExpandRecordColumn(#"Expanded homeTeam", "homeTeam.commonName", {"default"}, {"homeTeam.commonName.default"}),
+				    #"Expanded homeTeam.teamLogo" = Table.ExpandRecordColumn(#"Expanded homeTeam.commonName", "homeTeam.teamLogo", {"light", "dark"}, {"homeTeam.teamLogo.light", "homeTeam.teamLogo.dark"}),
+				    #"Expanded awayTeam" = Table.ExpandRecordColumn(#"Expanded homeTeam.teamLogo", "awayTeam", {"abbrev", "slug"}, {"awayTeam.abbrev", "awayTeam.slug"}),
+				    #"Removed Columns" = Table.RemoveColumns(#"Expanded awayTeam",{"homeTeam.commonName.default", "homeTeam.placeNameWithPreposition", "homeTeam.teamLogo.light", "homeTeam.teamLogo.dark"})
+				in
+				    #"Removed Columns"
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

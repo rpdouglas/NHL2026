@@ -1,0 +1,150 @@
+table game
+	lineageTag: 83c01804-d746-4743-b3ed-5ef1e5f4b124
+
+	column game_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 1453ac07-fa8c-4622-ae1d-22b7e05f6995
+		summarizeBy: sum
+		sourceColumn: game_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column season
+		dataType: int64
+		formatString: 0
+		lineageTag: e61aa487-ed31-4d69-8e89-4d1d37fcf755
+		summarizeBy: sum
+		sourceColumn: season
+
+		annotation SummarizationSetBy = Automatic
+
+	column type
+		dataType: string
+		lineageTag: adccb095-be6e-4ea6-b96f-e13cf01a57bf
+		summarizeBy: none
+		sourceColumn: type
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_time_GMT
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 6f77ed48-907e-4b98-920b-d86d914c4a38
+		summarizeBy: none
+		sourceColumn: date_time_GMT
+
+		variation Variation
+			isDefault
+			relationship: eae0cd1e-acc3-4027-ace6-bd7b3bc64d7b
+			defaultHierarchy: LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column away_team_id
+		dataType: int64
+		formatString: 0
+		lineageTag: e37df7dd-bc70-41ce-8d35-a57dfa8f8ace
+		summarizeBy: sum
+		sourceColumn: away_team_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column home_team_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 105e004f-c660-4369-a717-b4a748774055
+		summarizeBy: sum
+		sourceColumn: home_team_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column away_goals
+		dataType: int64
+		formatString: 0
+		lineageTag: f636d4a7-1347-4dae-85d5-fbfdcedc2f7f
+		summarizeBy: sum
+		sourceColumn: away_goals
+
+		annotation SummarizationSetBy = Automatic
+
+	column home_goals
+		dataType: int64
+		formatString: 0
+		lineageTag: e557fdf5-89f9-4e0c-b7ee-a0f4d7c4d93b
+		summarizeBy: sum
+		sourceColumn: home_goals
+
+		annotation SummarizationSetBy = Automatic
+
+	column outcome
+		dataType: string
+		lineageTag: 89c49dcd-c097-450b-a822-8660143cecd8
+		summarizeBy: none
+		sourceColumn: outcome
+
+		annotation SummarizationSetBy = Automatic
+
+	column home_rink_side_start
+		dataType: string
+		lineageTag: a2a47409-0b04-4fb4-b226-695b8fdef6d3
+		summarizeBy: none
+		sourceColumn: home_rink_side_start
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue
+		dataType: string
+		lineageTag: aa7b5496-1590-46fc-80b5-129509b2f291
+		summarizeBy: none
+		sourceColumn: venue
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue_link
+		dataType: string
+		lineageTag: 0dca0987-d831-4cc9-8237-81eeb4431ec1
+		summarizeBy: none
+		sourceColumn: venue_link
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue_time_zone_id
+		dataType: string
+		lineageTag: 5d0230ad-ac07-4d76-8f02-d24d92ca99a5
+		summarizeBy: none
+		sourceColumn: venue_time_zone_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue_time_zone_offset
+		dataType: int64
+		formatString: 0
+		lineageTag: 3aef7cb0-03e9-49a6-9813-4025c0ed8c20
+		summarizeBy: sum
+		sourceColumn: venue_time_zone_offset
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue_time_zone_tz
+		dataType: string
+		lineageTag: feb3c726-e8d8-4101-b8e0-5298b7091be2
+		summarizeBy: none
+		sourceColumn: venue_time_zone_tz
+
+		annotation SummarizationSetBy = Automatic
+
+	partition game = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game.csv"),[Delimiter=",", Columns=15, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"game_id", Int64.Type}, {"season", Int64.Type}, {"type", type text}, {"date_time_GMT", type datetime}, {"away_team_id", Int64.Type}, {"home_team_id", Int64.Type}, {"away_goals", Int64.Type}, {"home_goals", Int64.Type}, {"outcome", type text}, {"home_rink_side_start", type text}, {"venue", type text}, {"venue_link", type text}, {"venue_time_zone_id", type text}, {"venue_time_zone_offset", Int64.Type}, {"venue_time_zone_tz", type text}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

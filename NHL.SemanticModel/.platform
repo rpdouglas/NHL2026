@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "NHL"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "eaef53b9-8e99-45d4-95cd-26eff1bd8912"
+  }
+}

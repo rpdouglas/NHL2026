@@ -1,0 +1,73 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 334,
+            "y": -50
+          },
+          "nodeIndex": "DimGameTracker",
+          "nodeLineageTag": "bbd493a1-8060-4baa-bbb9-66318297a19c",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 50,
+            "y": -50
+          },
+          "nodeIndex": "FactPlayByPlay",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 568,
+            "y": 50
+          },
+          "nodeIndex": "DimPlayers",
+          "nodeLineageTag": "4cc27823-495c-4ca7-8d49-c8b8da14a4c7",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 852,
+            "y": 62
+          },
+          "nodeIndex": "DimTeams",
+          "nodeLineageTag": "755959a4-88c2-42c4-aede-3839de96911d",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 100,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

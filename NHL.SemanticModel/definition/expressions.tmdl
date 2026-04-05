@@ -1,0 +1,105 @@
+expression fxGetPlayByPlay = ```
+		(GameID as text) =>
+		let
+		    // 1. Static Base URL and RelativePath configuration
+		    BaseUrl = "https://api-web.nhle.com",
+		    Path = "v1/gamecenter/" & Text.From(GameID) & "/play-by-play",
+		
+		    // 2. Error Resilience: Fetch JSON and gracefully handle 404s
+		    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
+		
+		    // Extract the 'plays' array. Fallback to an empty list if the game hasn't started
+		    PlaysList = try Source[plays] otherwise {},
+		
+		    // THE FIX: Explicitly name the column {"Column1"} so empty lists don't break the expansion
+		    PlaysTable = Table.FromList(PlaysList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
+		
+		    // 3. Data Flattening: Expand the root event record
+		    ExpandedPlays = try Table.ExpandRecordColumn(PlaysTable, "Column1", 
+		        {"eventId", "periodDescriptor", "timeInPeriod", "typeDescKey", "details"}, 
+		        {"EventID", "PeriodRecord", "TimeInPeriod", "EventType", "DetailsRecord"}
+		    ) otherwise PlaysTable,
+		
+		    // Expand Period Data
+		    ExpandedPeriod = try Table.ExpandRecordColumn(ExpandedPlays, "PeriodRecord", 
+		        {"number"}, 
+		        {"PeriodNumber"}
+		    ) otherwise ExpandedPlays,
+		
+		    // Expand Event Details (Extracting Coordinates and Player IDs)
+		    ExpandedDetails = try Table.ExpandRecordColumn(ExpandedPeriod, "DetailsRecord", 
+		        {"xCoord", "yCoord", "eventOwnerTeamId", "scoringPlayerId", "shootingPlayerId", "hittingPlayerId", "hitteePlayerId"}, 
+		        {"X_Coord", "Y_Coord", "EventTeamID", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
+		    ) otherwise ExpandedPeriod,
+		
+		    // 4. Data Typing & Transformation: Convert MM:SS to total numeric seconds
+		    // We add a check to make sure the column exists before trying to split it, just in case the table is entirely empty
+		    SplitTime = if Table.HasColumns(ExpandedDetails, {"TimeInPeriod"}) then 
+		                    Table.SplitColumn(ExpandedDetails, "TimeInPeriod", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}) 
+		                else Table.AddColumn(Table.AddColumn(ExpandedDetails, "Minute", each null), "Second", each null),
+		                
+		    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
+		    
+		    // Calculate total seconds, handling nulls gracefully
+		    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", 
+		        each if [Minute] <> null and [Second] <> null then ([Minute] * 60) + [Second] else null, 
+		        Int64.Type
+		    ),
+		
+		    // Attach the GameID to the dataset so it can link back to the DimGameTracker in your Star Schema
+		    AddGameID = Table.AddColumn(AddSeconds, "GameID", each GameID, type text),
+		
+		    // 5. Memory Efficiency: Select only necessary dimensions and facts for the Star Schema
+		    // We use MissingField.Ignore so it doesn't crash if an empty game didn't generate these columns
+		    FinalColumns = Table.SelectColumns(AddGameID, 
+		        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, MissingField.Ignore
+		    )
+		in
+		    FinalColumns
+		```
+	lineageTag: aad82752-9c50-4b4d-85e4-623bf62c6939
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+
+expression fxGetPlayerEDGE = ```
+		(InputPlayerID as text) =>
+		let
+		    // 1. Static Base URL and RelativePath configuration
+		    BaseUrl = "https://api-web.nhle.com",
+		    Path = "v1/edge/skater-skating-speed-detail/" & InputPlayerID & "/20242025/2",
+		
+		    // 2. API Governance: Implement implicit rate limiting
+		    SourceData = Function.InvokeAfter(
+		        () => try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
+		        #duration(0, 0, 0, 0.3)
+		    ),
+		
+		    // 3. Extract the exact parent nodes discovered in the diagnostic test
+		    TopSpeedsNode = try SourceData[topSkatingSpeeds] otherwise null,
+		    SpeedDetailsNode = try SourceData[skatingSpeedDetails] otherwise null,
+		
+		    // 4. Create a clean, flat record containing these nodes
+		    FlatRecord = [
+		        PlayerID = InputPlayerID, 
+		        TopSkatingSpeeds = TopSpeedsNode,
+		        SkatingSpeedDetails = SpeedDetailsNode
+		    ],
+		
+		    // 5. Convert to Table
+		    DataTable = Table.FromRecords({FlatRecord}),
+		
+		    // 6. Data Typing: Type the ID, but leave the nested data as 'any' so it can be expanded in the UI
+		    TypedData = Table.TransformColumnTypes(DataTable, {
+		        {"PlayerID", Int64.Type}
+		    })
+		in
+		    TypedData
+		```
+	lineageTag: b5850f58-7435-4a8a-aaa3-16adbcb82de1
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+

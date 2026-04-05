@@ -1,0 +1,102 @@
+table DimTeams
+	lineageTag: 755959a4-88c2-42c4-aede-3839de96911d
+
+	column TeamID
+		dataType: int64
+		formatString: 0
+		lineageTag: 19320d38-c2b9-457d-80d4-1a1c7fba273a
+		summarizeBy: none
+		sourceColumn: TeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column FranchiseID
+		dataType: int64
+		formatString: 0
+		lineageTag: 95969f73-9e20-4df9-be9a-b96cbfe4e950
+		summarizeBy: none
+		sourceColumn: FranchiseID
+
+		annotation SummarizationSetBy = Automatic
+
+	column TeamName
+		dataType: string
+		lineageTag: 1e174192-8cc4-4404-a942-a0d7fb2da7d2
+		summarizeBy: none
+		sourceColumn: TeamName
+
+		annotation SummarizationSetBy = Automatic
+
+	column TeamAbbrev
+		dataType: string
+		lineageTag: f408a944-de41-4a0b-bba5-baa93424b452
+		summarizeBy: none
+		sourceColumn: TeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column TeamLogoURL
+		dataType: string
+		lineageTag: 5b3257d3-68e4-4672-85b3-43f9d3e0793e
+		summarizeBy: none
+		sourceColumn: TeamLogoURL
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimTeams = m
+		mode: import
+		source = ```
+				let
+				    // 1. Static Base URL and RelativePath configuration (Refresh Safety Requirement)
+				    BaseUrl = "https://api.nhle.com",
+				    Path = "stats/rest/en/team",
+				    
+				    // 2. API Governance: Use the limit parameter to ensure we get all records
+				    QueryParams = [
+				        limit = "-1"
+				    ],
+				
+				    // 3. Error Resilience: Fetch JSON and handle potential connection issues
+				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path, Query=QueryParams])) otherwise null,
+				    
+				    // Extract the 'data' array
+				    DataList = try Source[data] otherwise {},
+				    
+				    // Convert to Table
+				    TeamsTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
+				    
+				    // 4. Data Flattening: Expand the team records
+				    ExpandedTeams = try Table.ExpandRecordColumn(TeamsTable, "Column1", 
+				        {"id", "franchiseId", "fullName", "triCode"}, 
+				        {"TeamID", "FranchiseID", "TeamName", "TeamAbbrev"}
+				    ) otherwise TeamsTable,
+				
+				    // 5. Data Enhancement: Synthesize the official NHL SVG Logo URL
+				    // The NHL asset server relies on the 3-letter abbreviation to serve logos.
+				    AddLogoURL = Table.AddColumn(ExpandedTeams, "TeamLogoURL", 
+				        each "https://assets.nhle.com/logos/nhl/svg/" & [TeamAbbrev] & "_light.svg", 
+				        type text
+				    ),
+				
+				    // 6. Memory Efficiency: Select only necessary columns
+				    FinalColumns = Table.SelectColumns(AddLogoURL, 
+				        {"TeamID", "FranchiseID", "TeamName", "TeamAbbrev", "TeamLogoURL"}, 
+				        MissingField.Ignore
+				    ),
+				
+				    // 7. Data Typing: Cast for DAX engine optimization
+				    TypedData = Table.TransformColumnTypes(FinalColumns, {
+				        {"TeamID", Int64.Type}, 
+				        {"FranchiseID", Int64.Type}, 
+				        {"TeamName", type text}, 
+				        {"TeamAbbrev", type text},
+				        {"TeamLogoURL", type text}
+				    })
+				in
+				    TypedData
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

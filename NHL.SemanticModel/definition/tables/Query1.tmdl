@@ -1,0 +1,41 @@
+table Query1
+	lineageTag: 880a518b-715b-4848-bc7c-f8cdb5b85bf1
+
+	column Name
+		dataType: string
+		lineageTag: f4cc1dae-41a4-40f1-a0d1-fc224b1bd56d
+		summarizeBy: none
+		sourceColumn: Name
+
+		annotation SummarizationSetBy = Automatic
+
+	column Value
+		dataType: string
+		lineageTag: 3298e794-6059-4016-b5df-14a31764cb88
+		summarizeBy: none
+		sourceColumn: Value
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Query1 = m
+		mode: import
+		source = ```
+				let
+				    // 1. Diagnostic Test for a known player with heavy ice time (Connor McDavid)
+				    PlayerID = "8478402", 
+				    BaseUrl = "https://api-web.nhle.com",
+				    Path = "v1/edge/skater-skating-speed-detail/" & PlayerID & "/20242025/2",
+				
+				    // 2. Fetch the raw JSON WITHOUT try...otherwise to expose the true payload
+				    Source = Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])),
+				
+				    // 3. Convert the Record to a Table so you can clearly read the Keys and Values
+				    ConvertedToTable = try Record.ToTable(Source) otherwise Source
+				in
+				    ConvertedToTable
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

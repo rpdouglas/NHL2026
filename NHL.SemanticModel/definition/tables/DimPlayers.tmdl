@@ -1,0 +1,101 @@
+table DimPlayers
+	lineageTag: 4cc27823-495c-4ca7-8d49-c8b8da14a4c7
+
+	column PlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: 5d07aa07-b1c7-48c2-8c01-ab2735c8fdf1
+		summarizeBy: none
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column PlayerName
+		dataType: string
+		lineageTag: 5955b7c6-bd48-4bd8-94a1-fba63fb84a7e
+		summarizeBy: none
+		sourceColumn: PlayerName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Position
+		dataType: string
+		lineageTag: cda93fa8-6456-43e1-a957-185dfd89bbb4
+		summarizeBy: none
+		sourceColumn: Position
+
+		annotation SummarizationSetBy = Automatic
+
+	column ShootsCatches
+		dataType: string
+		lineageTag: 47428503-f2a1-46e5-b69d-8ae344c5fa0b
+		summarizeBy: none
+		sourceColumn: ShootsCatches
+
+		annotation SummarizationSetBy = Automatic
+
+	column HeadshotURL
+		dataType: string
+		lineageTag: 792ca273-8775-4a92-ae14-157d06865719
+		summarizeBy: none
+		sourceColumn: HeadshotURL
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimPlayers = m
+		mode: import
+		source = ```
+				let
+				    // 1. Static Base URL and RelativePath configuration (Refresh Safety Requirement)
+				    BaseUrl = "https://api.nhle.com",
+				    Path = "stats/rest/en/skater/summary",
+				    
+				    // 2. API Governance: Use limit=-1 and cayenneExp to pull all active skaters for the current season in one call
+				    QueryParams = [
+				        limit = "-1",
+				        cayenneExp = "seasonId=20242025"
+				    ],
+				
+				    // 3. Error Resilience: Fetch JSON
+				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path, Query=QueryParams])) otherwise null,
+				    
+				    // Extract the 'data' array
+				    DataList = try Source[data] otherwise {},
+				    
+				    // Convert to Table
+				    PlayersTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
+				    
+				    // 4. Data Flattening: Expand the player records
+				    ExpandedPlayers = try Table.ExpandRecordColumn(PlayersTable, "Column1", 
+				        {"playerId", "skaterFullName", "positionCode", "shootsCatches"}, 
+				        {"PlayerID", "PlayerName", "Position", "ShootsCatches"}
+				    ) otherwise PlayersTable,
+				
+				    // Synthesize the Headshot URL so Power BI can render images in visuals without extra API calls
+				    AddHeadshotURL = Table.AddColumn(ExpandedPlayers, "HeadshotURL", 
+				        each "https://assets.nhle.com/mugs/nhl/latest/ext/light/" & Text.From([PlayerID]) & ".png", 
+				        type text
+				    ),
+				
+				    // 5. Memory Efficiency: Select only necessary columns
+				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "HeadshotURL"}, MissingField.Ignore),
+				
+				    // THE FIX: Remove duplicates caused by mid-season trades to ensure a 1-to-Many relationship works
+				    RemoveDuplicates = Table.Distinct(FinalColumns, {"PlayerID"}),
+				
+				    // 6. Data Typing: Cast for DAX engine optimization
+				    TypedData = Table.TransformColumnTypes(RemoveDuplicates, {
+				        {"PlayerID", Int64.Type}, 
+				        {"PlayerName", type text}, 
+				        {"Position", type text}, 
+				        {"ShootsCatches", type text},
+				        {"HeadshotURL", type text}
+				    })
+				in
+				    TypedData
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

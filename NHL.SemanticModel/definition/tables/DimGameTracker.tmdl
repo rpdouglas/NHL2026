@@ -1,0 +1,199 @@
+table DimGameTracker
+	lineageTag: bbd493a1-8060-4baa-bbb9-66318297a19c
+
+	column GameID
+		dataType: int64
+		formatString: 0
+		lineageTag: 1535b46e-829f-4566-9454-5ab5e6d014c0
+		summarizeBy: count
+		sourceColumn: GameID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Season
+		dataType: int64
+		formatString: 0
+		lineageTag: 7c0109c9-19fa-4a87-b54e-fd95eff202d5
+		summarizeBy: sum
+		sourceColumn: Season
+
+		annotation SummarizationSetBy = Automatic
+
+	column GameType
+		dataType: int64
+		formatString: 0
+		lineageTag: 6821dd76-31c8-4dbe-be5f-9058d66b4b75
+		summarizeBy: sum
+		sourceColumn: GameType
+
+		annotation SummarizationSetBy = Automatic
+
+	column GameDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: c23d9f0b-bdd1-4042-8d64-cd2c559cced3
+		summarizeBy: none
+		sourceColumn: GameDate
+
+		variation Variation
+			isDefault
+			relationship: 438c941c-4f27-4051-8e8d-788ad42822ca
+			defaultHierarchy: LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column GameState
+		dataType: string
+		lineageTag: f865e013-2471-45cc-bd88-b351a5d088ef
+		summarizeBy: none
+		sourceColumn: GameState
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeTeamID
+		dataType: int64
+		formatString: 0
+		lineageTag: 613170b9-5d36-48ba-89af-cf27ea9d7b09
+		summarizeBy: count
+		sourceColumn: HomeTeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeTeamAbbrev
+		dataType: string
+		lineageTag: 1bee5ce5-3bf9-4ad6-ad63-85cfc9b6a8c6
+		summarizeBy: none
+		sourceColumn: HomeTeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeScore
+		dataType: int64
+		formatString: 0
+		lineageTag: 3aa7a795-6416-404f-b3eb-d7143542999e
+		summarizeBy: sum
+		sourceColumn: HomeScore
+
+		annotation SummarizationSetBy = Automatic
+
+	column AwayTeamID
+		dataType: int64
+		formatString: 0
+		lineageTag: c7396bca-7e14-4f05-b144-b7b814608a63
+		summarizeBy: count
+		sourceColumn: AwayTeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column AwayTeamAbbrev
+		dataType: string
+		lineageTag: b219ff76-8a60-42c9-be0a-31671627f054
+		summarizeBy: none
+		sourceColumn: AwayTeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column AwayScore
+		dataType: int64
+		formatString: 0
+		lineageTag: 14f6319e-9d48-4d51-9d2f-a91db59d513b
+		summarizeBy: sum
+		sourceColumn: AwayScore
+
+		annotation SummarizationSetBy = Automatic
+
+	column PeriodNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: feb22b66-9b4c-4646-be91-ea155ef1587b
+		summarizeBy: sum
+		sourceColumn: PeriodNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column TimeRemaining
+		dataType: string
+		lineageTag: f417a3b0-6446-4bc9-a5a9-14c08984344c
+		summarizeBy: none
+		sourceColumn: TimeRemaining
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimGameTracker = m
+		mode: import
+		source = ```
+				let
+				    // 1. Static Base URL and RelativePath configuration (Refresh Safety Requirement)
+				    BaseUrl = "https://api-web.nhle.com",
+				    Path = "v1/score/now",
+				
+				    // 2. Error Resilience: Fetch and parse JSON with try...otherwise
+				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
+				
+				    // Extract the list of games, providing an empty list fallback if the node doesn't exist
+				    GamesList = try Source[games] otherwise {},
+				
+				    // Convert the list to a table
+				    GamesTable = Table.FromList(GamesList, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+				
+				    // 3. Data Flattening: Expand the root game record
+				    ExpandedGames = Table.ExpandRecordColumn(GamesTable, "Column1", 
+				        {"id", "season", "gameType", "gameDate", "venue", "gameState", "homeTeam", "awayTeam", "periodDescriptor", "clock"}, 
+				        {"GameID", "Season", "GameType", "GameDate", "Venue", "GameState", "HomeTeamRecord", "AwayTeamRecord", "PeriodRecord", "ClockRecord"}
+				    ),
+				
+				    // Expand Home Team Data
+				    ExpandedHome = try Table.ExpandRecordColumn(ExpandedGames, "HomeTeamRecord", 
+				        {"id", "abbrev", "score"}, 
+				        {"HomeTeamID", "HomeTeamAbbrev", "HomeScore"}
+				    ) otherwise ExpandedGames,
+				
+				    // Expand Away Team Data
+				    ExpandedAway = try Table.ExpandRecordColumn(ExpandedHome, "AwayTeamRecord", 
+				        {"id", "abbrev", "score"}, 
+				        {"AwayTeamID", "AwayTeamAbbrev", "AwayScore"}
+				    ) otherwise ExpandedHome,
+				
+				    // Expand Period Data (Crucial for LIVE tracking)
+				    ExpandedPeriod = try Table.ExpandRecordColumn(ExpandedAway, "PeriodRecord", 
+				        {"number", "periodType"}, 
+				        {"PeriodNumber", "PeriodType"}
+				    ) otherwise ExpandedAway,
+				
+				    // Expand Clock Data (Crucial for LIVE tracking)
+				    ExpandedClock = try Table.ExpandRecordColumn(ExpandedPeriod, "ClockRecord", 
+				        {"timeRemaining", "inIntermission"}, 
+				        {"TimeRemaining", "InIntermission"}
+				    ) otherwise ExpandedPeriod,
+				
+				    // 4. Memory Efficiency: Select only necessary dimensions and facts for the Star Schema
+				    FinalColumns = Table.SelectColumns(ExpandedClock, 
+				        {"GameID", "Season", "GameType", "GameDate", "GameState", "HomeTeamID", "HomeTeamAbbrev", "HomeScore", "AwayTeamID", "AwayTeamAbbrev", "AwayScore", "PeriodNumber", "TimeRemaining"}
+				    ),
+				
+				    // 5. Data Typing: Cast to strong types for DAX engine optimization
+				    TypedData = Table.TransformColumnTypes(FinalColumns, {
+				        {"GameID", Int64.Type}, 
+				        {"Season", Int64.Type}, 
+				        {"GameType", Int64.Type}, 
+				        {"GameDate", type date}, 
+				        {"GameState", type text}, 
+				        {"HomeTeamID", Int64.Type}, 
+				        {"HomeTeamAbbrev", type text}, 
+				        {"HomeScore", Int64.Type}, 
+				        {"AwayTeamID", Int64.Type}, 
+				        {"AwayTeamAbbrev", type text}, 
+				        {"AwayScore", Int64.Type}, 
+				        {"PeriodNumber", Int64.Type}, 
+				        {"TimeRemaining", type text}
+				    })
+				in
+				    TypedData
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

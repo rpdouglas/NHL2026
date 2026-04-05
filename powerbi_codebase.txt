@@ -1,0 +1,1903 @@
+=== POWER BI TMDL CODEBASE EXPORT ===
+This file contains the complete M queries, DAX measures, and relationships for the data model.
+================================================================================
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\database.tmdl
+// --------------------------------------------------------------------------
+
+database
+	compatibilityLevel: 1600
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\expressions.tmdl
+// --------------------------------------------------------------------------
+
+expression fxGetPlayByPlay = ```
+		(GameID as text) =>
+		let
+		    // 1. Static Base URL and RelativePath configuration
+		    BaseUrl = "https://api-web.nhle.com",
+		    Path = "v1/gamecenter/" & Text.From(GameID) & "/play-by-play",
+		
+		    // 2. Error Resilience: Fetch JSON and gracefully handle 404s
+		    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
+		
+		    // Extract the 'plays' array. Fallback to an empty list if the game hasn't started
+		    PlaysList = try Source[plays] otherwise {},
+		
+		    // THE FIX: Explicitly name the column {"Column1"} so empty lists don't break the expansion
+		    PlaysTable = Table.FromList(PlaysList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
+		
+		    // 3. Data Flattening: Expand the root event record
+		    ExpandedPlays = try Table.ExpandRecordColumn(PlaysTable, "Column1", 
+		        {"eventId", "periodDescriptor", "timeInPeriod", "typeDescKey", "details"}, 
+		        {"EventID", "PeriodRecord", "TimeInPeriod", "EventType", "DetailsRecord"}
+		    ) otherwise PlaysTable,
+		
+		    // Expand Period Data
+		    ExpandedPeriod = try Table.ExpandRecordColumn(ExpandedPlays, "PeriodRecord", 
+		        {"number"}, 
+		        {"PeriodNumber"}
+		    ) otherwise ExpandedPlays,
+		
+		    // Expand Event Details (Extracting Coordinates and Player IDs)
+		    ExpandedDetails = try Table.ExpandRecordColumn(ExpandedPeriod, "DetailsRecord", 
+		        {"xCoord", "yCoord", "eventOwnerTeamId", "scoringPlayerId", "shootingPlayerId", "hittingPlayerId", "hitteePlayerId"}, 
+		        {"X_Coord", "Y_Coord", "EventTeamID", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
+		    ) otherwise ExpandedPeriod,
+		
+		    // 4. Data Typing & Transformation: Convert MM:SS to total numeric seconds
+		    // We add a check to make sure the column exists before trying to split it, just in case the table is entirely empty
+		    SplitTime = if Table.HasColumns(ExpandedDetails, {"TimeInPeriod"}) then 
+		                    Table.SplitColumn(ExpandedDetails, "TimeInPeriod", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}) 
+		                else Table.AddColumn(Table.AddColumn(ExpandedDetails, "Minute", each null), "Second", each null),
+		                
+		    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
+		    
+		    // Calculate total seconds, handling nulls gracefully
+		    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", 
+		        each if [Minute] <> null and [Second] <> null then ([Minute] * 60) + [Second] else null, 
+		        Int64.Type
+		    ),
+		
+		    // Attach the GameID to the dataset so it can link back to the DimGameTracker in your Star Schema
+		    AddGameID = Table.AddColumn(AddSeconds, "GameID", each GameID, type text),
+		
+		    // 5. Memory Efficiency: Select only necessary dimensions and facts for the Star Schema
+		    // We use MissingField.Ignore so it doesn't crash if an empty game didn't generate these columns
+		    FinalColumns = Table.SelectColumns(AddGameID, 
+		        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, MissingField.Ignore
+		    )
+		in
+		    FinalColumns
+		```
+	lineageTag: aad82752-9c50-4b4d-85e4-623bf62c6939
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+
+expression fxGetPlayerEDGE = ```
+		(InputPlayerID as text) =>
+		let
+		    // 1. Static Base URL and RelativePath configuration
+		    BaseUrl = "https://api-web.nhle.com",
+		    Path = "v1/edge/skater-skating-speed-detail/" & InputPlayerID & "/20242025/2",
+		
+		    // 2. API Governance: Implement implicit rate limiting
+		    SourceData = Function.InvokeAfter(
+		        () => try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
+		        #duration(0, 0, 0, 0.3)
+		    ),
+		
+		    // 3. Extract the exact parent nodes discovered in the diagnostic test
+		    TopSpeedsNode = try SourceData[topSkatingSpeeds] otherwise null,
+		    SpeedDetailsNode = try SourceData[skatingSpeedDetails] otherwise null,
+		
+		    // 4. Create a clean, flat record containing these nodes
+		    FlatRecord = [
+		        PlayerID = InputPlayerID, 
+		        TopSkatingSpeeds = TopSpeedsNode,
+		        SkatingSpeedDetails = SpeedDetailsNode
+		    ],
+		
+		    // 5. Convert to Table
+		    DataTable = Table.FromRecords({FlatRecord}),
+		
+		    // 6. Data Typing: Type the ID, but leave the nested data as 'any' so it can be expanded in the UI
+		    TypedData = Table.TransformColumnTypes(DataTable, {
+		        {"PlayerID", Int64.Type}
+		    })
+		in
+		    TypedData
+		```
+	lineageTag: b5850f58-7435-4a8a-aaa3-16adbcb82de1
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Function
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\model.tmdl
+// --------------------------------------------------------------------------
+
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-CA
+	dataAccessOptions
+		fastCombine
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["DimGameTracker","fxGetPlayByPlay","FactPlayByPlay","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","Query1","FactEdgeSkatingSpeeds","Staging_EDGE (2)","game"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table DimGameTracker
+ref table DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362
+ref table LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9
+ref table FactPlayByPlay
+ref table LocalDateTable_885770e6-6cbe-4c01-a904-6cd49b89f63e
+ref table DimTeams
+ref table DimPlayers
+ref table Staging_EDGE
+ref table Query1
+ref table FactEdgeSkatingSpeeds
+ref table 'Staging_EDGE (2)'
+ref table game
+ref table LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6
+
+ref cultureInfo en-US
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\relationships.tmdl
+// --------------------------------------------------------------------------
+
+relationship 438c941c-4f27-4051-8e8d-788ad42822ca
+	joinOnDateBehavior: datePartOnly
+	fromColumn: DimGameTracker.GameDate
+	toColumn: LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.Date
+
+relationship e6524962-b0ba-4ddf-b5c5-3104621cebe2
+	joinOnDateBehavior: datePartOnly
+	fromColumn: FactPlayByPlay.GameDate
+	toColumn: LocalDateTable_885770e6-6cbe-4c01-a904-6cd49b89f63e.Date
+
+relationship e83e66e5-116a-a4a1-be41-05723191ca81
+	fromColumn: FactPlayByPlay.EventTeamID
+	toColumn: DimTeams.TeamID
+
+relationship fcb728e0-a916-ab52-d7df-77c1a8e9eed1
+	fromColumn: FactPlayByPlay.ShootingPlayerID
+	toColumn: DimPlayers.PlayerID
+
+relationship AutoDetected_004b9faa-2e6c-47fe-a84f-58a59c1817f4
+	fromColumn: FactEdgeSkatingSpeeds.'homeTeam.abbrev'
+	toColumn: DimGameTracker.HomeTeamAbbrev
+
+relationship AutoDetected_96e09143-38d6-40c3-ab70-dbc16dbbeef9
+	fromColumn: FactEdgeSkatingSpeeds.PlayerID
+	toColumn: Staging_EDGE.PlayerID
+
+relationship AutoDetected_f31d8e60-9979-4620-9e05-0f732d19c113
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: 'Staging_EDGE (2)'.PlayerID
+	toColumn: Staging_EDGE.PlayerID
+
+relationship eae0cd1e-acc3-4027-ace6-bd7b3bc64d7b
+	joinOnDateBehavior: datePartOnly
+	fromColumn: game.date_time_GMT
+	toColumn: LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6.Date
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\cultures\en-US.tmdl
+// --------------------------------------------------------------------------
+
+cultureInfo en-US
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362.tmdl
+// --------------------------------------------------------------------------
+
+table DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362
+	isHidden
+	isPrivate
+	lineageTag: e9c84f27-68b1-49be-969e-bd620c8526e2
+
+	column Date
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		lineageTag: 9f604bba-c5d6-495a-83d1-ddf2ff2bba46
+		dataCategory: PaddedDateTableDates
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = User
+
+	column Year = YEAR([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: dd3e81e5-f358-47f8-8f71-4807391bccfb
+		dataCategory: Years
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Year
+
+	column MonthNo = MONTH([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9dc37f04-aa6f-42e8-ad62-4bfe5e1f380a
+		dataCategory: MonthOfYear
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = MonthNumber
+
+	column Month = FORMAT([Date], "MMMM")
+		dataType: string
+		isHidden
+		lineageTag: ba4a7b9e-597f-4619-b05c-144e6275b30f
+		dataCategory: Months
+		summarizeBy: none
+		sortByColumn: MonthNo
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Month
+
+	column QuarterNo = INT(([MonthNo] + 2) / 3)
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d848ebda-e79b-4a27-b112-ca2ba3105869
+		dataCategory: QuarterOfYear
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = QuarterNumber
+
+	column Quarter = "Qtr " & [QuarterNo]
+		dataType: string
+		isHidden
+		lineageTag: 55ff6121-4a30-4515-b42f-7da4ef1e5ac3
+		dataCategory: Quarters
+		summarizeBy: none
+		sortByColumn: QuarterNo
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Quarter
+
+	column Day = DAY([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 8e0b0abd-88cd-48dc-9bdc-2ae0f5c0ba4f
+		dataCategory: DayOfMonth
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Day
+
+	hierarchy 'Date Hierarchy'
+		lineageTag: 9af30d87-2fdb-4a30-bc45-8701843b8a51
+
+		level Year
+			lineageTag: 1640d81a-b990-4d38-a7d2-c83e82c83a0c
+			column: Year
+
+		level Quarter
+			lineageTag: 00e37e71-2bc5-4df3-9997-a84f000f0a8a
+			column: Quarter
+
+		level Month
+			lineageTag: 6d6b95a0-3aa6-46be-a726-92c1594885b2
+			column: Month
+
+		level Day
+			lineageTag: a714bb01-7cef-45e4-a2b7-0549a2758365
+			column: Day
+
+		annotation TemplateId = DateHierarchy
+
+	partition DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362 = calculated
+		mode: import
+		source = Calendar(Date(2015,1,1), Date(2015,1,1))
+
+	annotation __PBI_TemplateDateTable = true
+
+	annotation DefaultItem = DateHierarchy
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\DimGameTracker.tmdl
+// --------------------------------------------------------------------------
+
+table DimGameTracker
+	lineageTag: bbd493a1-8060-4baa-bbb9-66318297a19c
+
+	column GameID
+		dataType: int64
+		formatString: 0
+		lineageTag: 1535b46e-829f-4566-9454-5ab5e6d014c0
+		summarizeBy: count
+		sourceColumn: GameID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Season
+		dataType: int64
+		formatString: 0
+		lineageTag: 7c0109c9-19fa-4a87-b54e-fd95eff202d5
+		summarizeBy: sum
+		sourceColumn: Season
+
+		annotation SummarizationSetBy = Automatic
+
+	column GameType
+		dataType: int64
+		formatString: 0
+		lineageTag: 6821dd76-31c8-4dbe-be5f-9058d66b4b75
+		summarizeBy: sum
+		sourceColumn: GameType
+
+		annotation SummarizationSetBy = Automatic
+
+	column GameDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: c23d9f0b-bdd1-4042-8d64-cd2c559cced3
+		summarizeBy: none
+		sourceColumn: GameDate
+
+		variation Variation
+			isDefault
+			relationship: 438c941c-4f27-4051-8e8d-788ad42822ca
+			defaultHierarchy: LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column GameState
+		dataType: string
+		lineageTag: f865e013-2471-45cc-bd88-b351a5d088ef
+		summarizeBy: none
+		sourceColumn: GameState
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeTeamID
+		dataType: int64
+		formatString: 0
+		lineageTag: 613170b9-5d36-48ba-89af-cf27ea9d7b09
+		summarizeBy: count
+		sourceColumn: HomeTeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeTeamAbbrev
+		dataType: string
+		lineageTag: 1bee5ce5-3bf9-4ad6-ad63-85cfc9b6a8c6
+		summarizeBy: none
+		sourceColumn: HomeTeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeScore
+		dataType: int64
+		formatString: 0
+		lineageTag: 3aa7a795-6416-404f-b3eb-d7143542999e
+		summarizeBy: sum
+		sourceColumn: HomeScore
+
+		annotation SummarizationSetBy = Automatic
+
+	column AwayTeamID
+		dataType: int64
+		formatString: 0
+		lineageTag: c7396bca-7e14-4f05-b144-b7b814608a63
+		summarizeBy: count
+		sourceColumn: AwayTeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column AwayTeamAbbrev
+		dataType: string
+		lineageTag: b219ff76-8a60-42c9-be0a-31671627f054
+		summarizeBy: none
+		sourceColumn: AwayTeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column AwayScore
+		dataType: int64
+		formatString: 0
+		lineageTag: 14f6319e-9d48-4d51-9d2f-a91db59d513b
+		summarizeBy: sum
+		sourceColumn: AwayScore
+
+		annotation SummarizationSetBy = Automatic
+
+	column PeriodNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: feb22b66-9b4c-4646-be91-ea155ef1587b
+		summarizeBy: sum
+		sourceColumn: PeriodNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column TimeRemaining
+		dataType: string
+		lineageTag: f417a3b0-6446-4bc9-a5a9-14c08984344c
+		summarizeBy: none
+		sourceColumn: TimeRemaining
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimGameTracker = m
+		mode: import
+		source = ```
+				let
+				    // 1. Static Base URL and RelativePath configuration (Refresh Safety Requirement)
+				    BaseUrl = "https://api-web.nhle.com",
+				    Path = "v1/score/now",
+				
+				    // 2. Error Resilience: Fetch and parse JSON with try...otherwise
+				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
+				
+				    // Extract the list of games, providing an empty list fallback if the node doesn't exist
+				    GamesList = try Source[games] otherwise {},
+				
+				    // Convert the list to a table
+				    GamesTable = Table.FromList(GamesList, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+				
+				    // 3. Data Flattening: Expand the root game record
+				    ExpandedGames = Table.ExpandRecordColumn(GamesTable, "Column1", 
+				        {"id", "season", "gameType", "gameDate", "venue", "gameState", "homeTeam", "awayTeam", "periodDescriptor", "clock"}, 
+				        {"GameID", "Season", "GameType", "GameDate", "Venue", "GameState", "HomeTeamRecord", "AwayTeamRecord", "PeriodRecord", "ClockRecord"}
+				    ),
+				
+				    // Expand Home Team Data
+				    ExpandedHome = try Table.ExpandRecordColumn(ExpandedGames, "HomeTeamRecord", 
+				        {"id", "abbrev", "score"}, 
+				        {"HomeTeamID", "HomeTeamAbbrev", "HomeScore"}
+				    ) otherwise ExpandedGames,
+				
+				    // Expand Away Team Data
+				    ExpandedAway = try Table.ExpandRecordColumn(ExpandedHome, "AwayTeamRecord", 
+				        {"id", "abbrev", "score"}, 
+				        {"AwayTeamID", "AwayTeamAbbrev", "AwayScore"}
+				    ) otherwise ExpandedHome,
+				
+				    // Expand Period Data (Crucial for LIVE tracking)
+				    ExpandedPeriod = try Table.ExpandRecordColumn(ExpandedAway, "PeriodRecord", 
+				        {"number", "periodType"}, 
+				        {"PeriodNumber", "PeriodType"}
+				    ) otherwise ExpandedAway,
+				
+				    // Expand Clock Data (Crucial for LIVE tracking)
+				    ExpandedClock = try Table.ExpandRecordColumn(ExpandedPeriod, "ClockRecord", 
+				        {"timeRemaining", "inIntermission"}, 
+				        {"TimeRemaining", "InIntermission"}
+				    ) otherwise ExpandedPeriod,
+				
+				    // 4. Memory Efficiency: Select only necessary dimensions and facts for the Star Schema
+				    FinalColumns = Table.SelectColumns(ExpandedClock, 
+				        {"GameID", "Season", "GameType", "GameDate", "GameState", "HomeTeamID", "HomeTeamAbbrev", "HomeScore", "AwayTeamID", "AwayTeamAbbrev", "AwayScore", "PeriodNumber", "TimeRemaining"}
+				    ),
+				
+				    // 5. Data Typing: Cast to strong types for DAX engine optimization
+				    TypedData = Table.TransformColumnTypes(FinalColumns, {
+				        {"GameID", Int64.Type}, 
+				        {"Season", Int64.Type}, 
+				        {"GameType", Int64.Type}, 
+				        {"GameDate", type date}, 
+				        {"GameState", type text}, 
+				        {"HomeTeamID", Int64.Type}, 
+				        {"HomeTeamAbbrev", type text}, 
+				        {"HomeScore", Int64.Type}, 
+				        {"AwayTeamID", Int64.Type}, 
+				        {"AwayTeamAbbrev", type text}, 
+				        {"AwayScore", Int64.Type}, 
+				        {"PeriodNumber", Int64.Type}, 
+				        {"TimeRemaining", type text}
+				    })
+				in
+				    TypedData
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\DimPlayers.tmdl
+// --------------------------------------------------------------------------
+
+table DimPlayers
+	lineageTag: 4cc27823-495c-4ca7-8d49-c8b8da14a4c7
+
+	column PlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: 5d07aa07-b1c7-48c2-8c01-ab2735c8fdf1
+		summarizeBy: none
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column PlayerName
+		dataType: string
+		lineageTag: 5955b7c6-bd48-4bd8-94a1-fba63fb84a7e
+		summarizeBy: none
+		sourceColumn: PlayerName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Position
+		dataType: string
+		lineageTag: cda93fa8-6456-43e1-a957-185dfd89bbb4
+		summarizeBy: none
+		sourceColumn: Position
+
+		annotation SummarizationSetBy = Automatic
+
+	column ShootsCatches
+		dataType: string
+		lineageTag: 47428503-f2a1-46e5-b69d-8ae344c5fa0b
+		summarizeBy: none
+		sourceColumn: ShootsCatches
+
+		annotation SummarizationSetBy = Automatic
+
+	column HeadshotURL
+		dataType: string
+		lineageTag: 792ca273-8775-4a92-ae14-157d06865719
+		summarizeBy: none
+		sourceColumn: HeadshotURL
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimPlayers = m
+		mode: import
+		source = ```
+				let
+				    // 1. Static Base URL and RelativePath configuration (Refresh Safety Requirement)
+				    BaseUrl = "https://api.nhle.com",
+				    Path = "stats/rest/en/skater/summary",
+				    
+				    // 2. API Governance: Use limit=-1 and cayenneExp to pull all active skaters for the current season in one call
+				    QueryParams = [
+				        limit = "-1",
+				        cayenneExp = "seasonId=20242025"
+				    ],
+				
+				    // 3. Error Resilience: Fetch JSON
+				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path, Query=QueryParams])) otherwise null,
+				    
+				    // Extract the 'data' array
+				    DataList = try Source[data] otherwise {},
+				    
+				    // Convert to Table
+				    PlayersTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
+				    
+				    // 4. Data Flattening: Expand the player records
+				    ExpandedPlayers = try Table.ExpandRecordColumn(PlayersTable, "Column1", 
+				        {"playerId", "skaterFullName", "positionCode", "shootsCatches"}, 
+				        {"PlayerID", "PlayerName", "Position", "ShootsCatches"}
+				    ) otherwise PlayersTable,
+				
+				    // Synthesize the Headshot URL so Power BI can render images in visuals without extra API calls
+				    AddHeadshotURL = Table.AddColumn(ExpandedPlayers, "HeadshotURL", 
+				        each "https://assets.nhle.com/mugs/nhl/latest/ext/light/" & Text.From([PlayerID]) & ".png", 
+				        type text
+				    ),
+				
+				    // 5. Memory Efficiency: Select only necessary columns
+				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "HeadshotURL"}, MissingField.Ignore),
+				
+				    // THE FIX: Remove duplicates caused by mid-season trades to ensure a 1-to-Many relationship works
+				    RemoveDuplicates = Table.Distinct(FinalColumns, {"PlayerID"}),
+				
+				    // 6. Data Typing: Cast for DAX engine optimization
+				    TypedData = Table.TransformColumnTypes(RemoveDuplicates, {
+				        {"PlayerID", Int64.Type}, 
+				        {"PlayerName", type text}, 
+				        {"Position", type text}, 
+				        {"ShootsCatches", type text},
+				        {"HeadshotURL", type text}
+				    })
+				in
+				    TypedData
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\DimTeams.tmdl
+// --------------------------------------------------------------------------
+
+table DimTeams
+	lineageTag: 755959a4-88c2-42c4-aede-3839de96911d
+
+	column TeamID
+		dataType: int64
+		formatString: 0
+		lineageTag: 19320d38-c2b9-457d-80d4-1a1c7fba273a
+		summarizeBy: none
+		sourceColumn: TeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column FranchiseID
+		dataType: int64
+		formatString: 0
+		lineageTag: 95969f73-9e20-4df9-be9a-b96cbfe4e950
+		summarizeBy: none
+		sourceColumn: FranchiseID
+
+		annotation SummarizationSetBy = Automatic
+
+	column TeamName
+		dataType: string
+		lineageTag: 1e174192-8cc4-4404-a942-a0d7fb2da7d2
+		summarizeBy: none
+		sourceColumn: TeamName
+
+		annotation SummarizationSetBy = Automatic
+
+	column TeamAbbrev
+		dataType: string
+		lineageTag: f408a944-de41-4a0b-bba5-baa93424b452
+		summarizeBy: none
+		sourceColumn: TeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column TeamLogoURL
+		dataType: string
+		lineageTag: 5b3257d3-68e4-4672-85b3-43f9d3e0793e
+		summarizeBy: none
+		sourceColumn: TeamLogoURL
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimTeams = m
+		mode: import
+		source = ```
+				let
+				    // 1. Static Base URL and RelativePath configuration (Refresh Safety Requirement)
+				    BaseUrl = "https://api.nhle.com",
+				    Path = "stats/rest/en/team",
+				    
+				    // 2. API Governance: Use the limit parameter to ensure we get all records
+				    QueryParams = [
+				        limit = "-1"
+				    ],
+				
+				    // 3. Error Resilience: Fetch JSON and handle potential connection issues
+				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path, Query=QueryParams])) otherwise null,
+				    
+				    // Extract the 'data' array
+				    DataList = try Source[data] otherwise {},
+				    
+				    // Convert to Table
+				    TeamsTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
+				    
+				    // 4. Data Flattening: Expand the team records
+				    ExpandedTeams = try Table.ExpandRecordColumn(TeamsTable, "Column1", 
+				        {"id", "franchiseId", "fullName", "triCode"}, 
+				        {"TeamID", "FranchiseID", "TeamName", "TeamAbbrev"}
+				    ) otherwise TeamsTable,
+				
+				    // 5. Data Enhancement: Synthesize the official NHL SVG Logo URL
+				    // The NHL asset server relies on the 3-letter abbreviation to serve logos.
+				    AddLogoURL = Table.AddColumn(ExpandedTeams, "TeamLogoURL", 
+				        each "https://assets.nhle.com/logos/nhl/svg/" & [TeamAbbrev] & "_light.svg", 
+				        type text
+				    ),
+				
+				    // 6. Memory Efficiency: Select only necessary columns
+				    FinalColumns = Table.SelectColumns(AddLogoURL, 
+				        {"TeamID", "FranchiseID", "TeamName", "TeamAbbrev", "TeamLogoURL"}, 
+				        MissingField.Ignore
+				    ),
+				
+				    // 7. Data Typing: Cast for DAX engine optimization
+				    TypedData = Table.TransformColumnTypes(FinalColumns, {
+				        {"TeamID", Int64.Type}, 
+				        {"FranchiseID", Int64.Type}, 
+				        {"TeamName", type text}, 
+				        {"TeamAbbrev", type text},
+				        {"TeamLogoURL", type text}
+				    })
+				in
+				    TypedData
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\FactEdgeSkatingSpeeds.tmdl
+// --------------------------------------------------------------------------
+
+table FactEdgeSkatingSpeeds
+	lineageTag: e9a6b689-0c2a-46dd-ae3b-1bbf4395012f
+
+	column PlayerID
+		dataType: string
+		lineageTag: d695de2d-483c-43c9-855e-20fb0333bc2f
+		summarizeBy: none
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column gameCenterLink
+		dataType: string
+		lineageTag: 5940c019-48a6-44f1-827e-67f2bd54e038
+		summarizeBy: none
+		sourceColumn: gameCenterLink
+
+		annotation SummarizationSetBy = Automatic
+
+	column gameDate
+		dataType: string
+		lineageTag: 09e73d32-985e-4bab-8b30-bef8b5f0bbff
+		summarizeBy: none
+		sourceColumn: gameDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column gameType
+		dataType: string
+		lineageTag: 7f02cc9c-0a0e-4a36-a7bc-a59fea07e57b
+		summarizeBy: none
+		sourceColumn: gameType
+
+		annotation SummarizationSetBy = Automatic
+
+	column playerOnHomeTeam
+		dataType: string
+		lineageTag: 1f4f2524-d9b3-4d55-8748-b4558a9a2822
+		summarizeBy: none
+		sourceColumn: playerOnHomeTeam
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'skatingSpeed.imperial'
+		dataType: string
+		lineageTag: 2fd2300a-6572-4b83-b66f-ce2ac517511f
+		summarizeBy: none
+		sourceColumn: skatingSpeed.imperial
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'skatingSpeed.metric'
+		dataType: string
+		lineageTag: 8159b201-1ccf-486b-954f-66794bb35667
+		summarizeBy: none
+		sourceColumn: skatingSpeed.metric
+
+		annotation SummarizationSetBy = Automatic
+
+	column timeInPeriod
+		dataType: string
+		lineageTag: 585669e9-20e2-4ac1-b448-4ce4396baa6d
+		summarizeBy: none
+		sourceColumn: timeInPeriod
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'periodDescriptor.number'
+		dataType: string
+		lineageTag: a09647fa-646e-41f0-9cc2-481c3063ca35
+		summarizeBy: none
+		sourceColumn: periodDescriptor.number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'periodDescriptor.periodType'
+		dataType: string
+		lineageTag: c522d7c8-e377-4459-a25e-9304eaad2193
+		summarizeBy: none
+		sourceColumn: periodDescriptor.periodType
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'periodDescriptor.maxRegulationPeriods'
+		dataType: string
+		lineageTag: b26ecce8-a570-4def-b7ec-4a8212f35b47
+		summarizeBy: none
+		sourceColumn: periodDescriptor.maxRegulationPeriods
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'homeTeam.abbrev'
+		dataType: string
+		lineageTag: 9cd7e6b1-4c52-45dd-813c-07da054f6cac
+		summarizeBy: none
+		sourceColumn: homeTeam.abbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'homeTeam.slug'
+		dataType: string
+		lineageTag: 58c7ab84-236e-4904-bf8e-7d82f7e1f306
+		summarizeBy: none
+		sourceColumn: homeTeam.slug
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'awayTeam.abbrev'
+		dataType: string
+		lineageTag: ec4e6bbd-d5a1-4639-93b5-a1ddce9e33ae
+		summarizeBy: none
+		sourceColumn: awayTeam.abbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'awayTeam.slug'
+		dataType: string
+		lineageTag: 8f1cae47-88e2-4d67-8f85-67a3c3c29615
+		summarizeBy: none
+		sourceColumn: awayTeam.slug
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FactEdgeSkatingSpeeds = m
+		mode: import
+		source = ```
+				let
+				    // 1. Reference the staging table to avoid recalling the API
+				    Source = Staging_EDGE,
+				    
+				    // 2. Remove the other detail list to prevent massive row duplication
+				    RemovedDetails = Table.RemoveColumns(Source,{"SkatingSpeedDetails"}),
+				    
+				    // 3. THE FIX: Expand the List into rows first
+				    ExpandedList = Table.ExpandListColumn(RemovedDetails, "TopSkatingSpeeds"),
+				    #"Expanded TopSkatingSpeeds" = Table.ExpandRecordColumn(ExpandedList, "TopSkatingSpeeds", {"gameCenterLink", "gameDate", "gameType", "playerOnHomeTeam", "skatingSpeed", "timeInPeriod", "periodDescriptor", "homeTeam", "awayTeam"}, {"gameCenterLink", "gameDate", "gameType", "playerOnHomeTeam", "skatingSpeed", "timeInPeriod", "periodDescriptor", "homeTeam", "awayTeam"}),
+				    #"Expanded skatingSpeed" = Table.ExpandRecordColumn(#"Expanded TopSkatingSpeeds", "skatingSpeed", {"imperial", "metric"}, {"skatingSpeed.imperial", "skatingSpeed.metric"}),
+				    #"Expanded periodDescriptor" = Table.ExpandRecordColumn(#"Expanded skatingSpeed", "periodDescriptor", {"number", "periodType", "maxRegulationPeriods"}, {"periodDescriptor.number", "periodDescriptor.periodType", "periodDescriptor.maxRegulationPeriods"}),
+				    #"Expanded homeTeam" = Table.ExpandRecordColumn(#"Expanded periodDescriptor", "homeTeam", {"commonName", "placeNameWithPreposition", "abbrev", "teamLogo", "slug"}, {"homeTeam.commonName", "homeTeam.placeNameWithPreposition", "homeTeam.abbrev", "homeTeam.teamLogo", "homeTeam.slug"}),
+				    #"Expanded homeTeam.commonName" = Table.ExpandRecordColumn(#"Expanded homeTeam", "homeTeam.commonName", {"default"}, {"homeTeam.commonName.default"}),
+				    #"Expanded homeTeam.teamLogo" = Table.ExpandRecordColumn(#"Expanded homeTeam.commonName", "homeTeam.teamLogo", {"light", "dark"}, {"homeTeam.teamLogo.light", "homeTeam.teamLogo.dark"}),
+				    #"Expanded awayTeam" = Table.ExpandRecordColumn(#"Expanded homeTeam.teamLogo", "awayTeam", {"abbrev", "slug"}, {"awayTeam.abbrev", "awayTeam.slug"}),
+				    #"Removed Columns" = Table.RemoveColumns(#"Expanded awayTeam",{"homeTeam.commonName.default", "homeTeam.placeNameWithPreposition", "homeTeam.teamLogo.light", "homeTeam.teamLogo.dark"})
+				in
+				    #"Removed Columns"
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\FactPlayByPlay.tmdl
+// --------------------------------------------------------------------------
+
+table FactPlayByPlay
+	lineageTag: d0614fb1-16a1-4409-80b3-445d64a7efb1
+
+	column GameID
+		dataType: string
+		lineageTag: ec0f0b51-61e7-4888-b18e-b0e54d4c8489
+		summarizeBy: none
+		sourceColumn: GameID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Season
+		dataType: int64
+		formatString: 0
+		lineageTag: e20105a4-ce30-4d36-95c2-33459f8d0465
+		summarizeBy: sum
+		sourceColumn: Season
+
+		annotation SummarizationSetBy = Automatic
+
+	column GameType
+		dataType: int64
+		formatString: 0
+		lineageTag: 84784a39-09fd-41ed-8f44-ac6fb12e141f
+		summarizeBy: sum
+		sourceColumn: GameType
+
+		annotation SummarizationSetBy = Automatic
+
+	column GameDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e60f181b-939f-4253-a2c6-7a537af8f480
+		summarizeBy: none
+		sourceColumn: GameDate
+
+		variation Variation
+			isDefault
+			relationship: e6524962-b0ba-4ddf-b5c5-3104621cebe2
+			defaultHierarchy: LocalDateTable_885770e6-6cbe-4c01-a904-6cd49b89f63e.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column PeriodNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 718de994-ad28-4d42-a466-e65911895fda
+		summarizeBy: sum
+		sourceColumn: PeriodNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column TimeRemaining
+		dataType: string
+		lineageTag: ece713fa-d14b-4feb-b35f-7b608fd56df2
+		summarizeBy: none
+		sourceColumn: TimeRemaining
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventID
+		dataType: string
+		lineageTag: 20b4e09e-4b8b-4caf-934d-272a0c64c3c8
+		summarizeBy: none
+		sourceColumn: EventID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'PeriodNumber.1'
+		dataType: string
+		lineageTag: f86fee30-8a71-455c-9981-e84e4facc1af
+		summarizeBy: none
+		sourceColumn: PeriodNumber.1
+
+		annotation SummarizationSetBy = Automatic
+
+	column TimeInPeriod_Seconds
+		dataType: string
+		lineageTag: 43793c61-9333-4a3a-a017-0cf9a7e87a89
+		summarizeBy: none
+		sourceColumn: TimeInPeriod_Seconds
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventType
+		dataType: string
+		lineageTag: 4b57095e-1732-4ecf-8fce-972f01ae7696
+		summarizeBy: none
+		sourceColumn: EventType
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventTeamID
+		dataType: string
+		lineageTag: f62325bd-01cd-4693-b781-a1e91ac08b21
+		summarizeBy: none
+		sourceColumn: EventTeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column X_Coord
+		dataType: string
+		lineageTag: e685cfc2-ef52-490b-b663-44441787a7cc
+		summarizeBy: none
+		sourceColumn: X_Coord
+
+		annotation SummarizationSetBy = Automatic
+
+	column Y_Coord
+		dataType: string
+		lineageTag: 23f52815-8963-4b68-b998-b4fa039bc996
+		summarizeBy: none
+		sourceColumn: Y_Coord
+
+		annotation SummarizationSetBy = Automatic
+
+	column ScoringPlayerID
+		dataType: string
+		lineageTag: 35e1d17b-b7ae-4673-a74c-d8796f50aa9d
+		summarizeBy: none
+		sourceColumn: ScoringPlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column ShootingPlayerID
+		dataType: string
+		lineageTag: a0657267-5dde-4e7d-af88-bef6ef4f7c62
+		summarizeBy: none
+		sourceColumn: ShootingPlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column HittingPlayerID
+		dataType: string
+		lineageTag: fe796bfb-05de-4ec5-853f-d72f392afe75
+		summarizeBy: none
+		sourceColumn: HittingPlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column HitteePlayerID
+		dataType: string
+		lineageTag: b0d7c320-38df-4b5b-9513-18fa65474036
+		summarizeBy: none
+		sourceColumn: HitteePlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	partition FactPlayByPlay = m
+		mode: import
+		source =
+				let
+				    Source = DimGameTracker,
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"GameID", type text}}),
+				    #"Invoked Custom Function" = Table.AddColumn(#"Changed Type", "fxGetPlayByPlay", each fxGetPlayByPlay([GameID])),
+				    #"Expanded fxGetPlayByPlay" = Table.ExpandTableColumn(#"Invoked Custom Function", "fxGetPlayByPlay", {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, {"EventID", "PeriodNumber.1", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}),
+				    #"Removed Columns" = Table.RemoveColumns(#"Expanded fxGetPlayByPlay",{"GameState", "HomeTeamID", "HomeTeamAbbrev", "HomeScore", "AwayTeamID", "AwayTeamAbbrev", "AwayScore"})
+				in
+				    #"Removed Columns"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\game.tmdl
+// --------------------------------------------------------------------------
+
+table game
+	lineageTag: 83c01804-d746-4743-b3ed-5ef1e5f4b124
+
+	column game_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 1453ac07-fa8c-4622-ae1d-22b7e05f6995
+		summarizeBy: sum
+		sourceColumn: game_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column season
+		dataType: int64
+		formatString: 0
+		lineageTag: e61aa487-ed31-4d69-8e89-4d1d37fcf755
+		summarizeBy: sum
+		sourceColumn: season
+
+		annotation SummarizationSetBy = Automatic
+
+	column type
+		dataType: string
+		lineageTag: adccb095-be6e-4ea6-b96f-e13cf01a57bf
+		summarizeBy: none
+		sourceColumn: type
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_time_GMT
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 6f77ed48-907e-4b98-920b-d86d914c4a38
+		summarizeBy: none
+		sourceColumn: date_time_GMT
+
+		variation Variation
+			isDefault
+			relationship: eae0cd1e-acc3-4027-ace6-bd7b3bc64d7b
+			defaultHierarchy: LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+	column away_team_id
+		dataType: int64
+		formatString: 0
+		lineageTag: e37df7dd-bc70-41ce-8d35-a57dfa8f8ace
+		summarizeBy: sum
+		sourceColumn: away_team_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column home_team_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 105e004f-c660-4369-a717-b4a748774055
+		summarizeBy: sum
+		sourceColumn: home_team_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column away_goals
+		dataType: int64
+		formatString: 0
+		lineageTag: f636d4a7-1347-4dae-85d5-fbfdcedc2f7f
+		summarizeBy: sum
+		sourceColumn: away_goals
+
+		annotation SummarizationSetBy = Automatic
+
+	column home_goals
+		dataType: int64
+		formatString: 0
+		lineageTag: e557fdf5-89f9-4e0c-b7ee-a0f4d7c4d93b
+		summarizeBy: sum
+		sourceColumn: home_goals
+
+		annotation SummarizationSetBy = Automatic
+
+	column outcome
+		dataType: string
+		lineageTag: 89c49dcd-c097-450b-a822-8660143cecd8
+		summarizeBy: none
+		sourceColumn: outcome
+
+		annotation SummarizationSetBy = Automatic
+
+	column home_rink_side_start
+		dataType: string
+		lineageTag: a2a47409-0b04-4fb4-b226-695b8fdef6d3
+		summarizeBy: none
+		sourceColumn: home_rink_side_start
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue
+		dataType: string
+		lineageTag: aa7b5496-1590-46fc-80b5-129509b2f291
+		summarizeBy: none
+		sourceColumn: venue
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue_link
+		dataType: string
+		lineageTag: 0dca0987-d831-4cc9-8237-81eeb4431ec1
+		summarizeBy: none
+		sourceColumn: venue_link
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue_time_zone_id
+		dataType: string
+		lineageTag: 5d0230ad-ac07-4d76-8f02-d24d92ca99a5
+		summarizeBy: none
+		sourceColumn: venue_time_zone_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue_time_zone_offset
+		dataType: int64
+		formatString: 0
+		lineageTag: 3aef7cb0-03e9-49a6-9813-4025c0ed8c20
+		summarizeBy: sum
+		sourceColumn: venue_time_zone_offset
+
+		annotation SummarizationSetBy = Automatic
+
+	column venue_time_zone_tz
+		dataType: string
+		lineageTag: feb3c726-e8d8-4101-b8e0-5298b7091be2
+		summarizeBy: none
+		sourceColumn: venue_time_zone_tz
+
+		annotation SummarizationSetBy = Automatic
+
+	partition game = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game.csv"),[Delimiter=",", Columns=15, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"game_id", Int64.Type}, {"season", Int64.Type}, {"type", type text}, {"date_time_GMT", type datetime}, {"away_team_id", Int64.Type}, {"home_team_id", Int64.Type}, {"away_goals", Int64.Type}, {"home_goals", Int64.Type}, {"outcome", type text}, {"home_rink_side_start", type text}, {"venue", type text}, {"venue_link", type text}, {"venue_time_zone_id", type text}, {"venue_time_zone_offset", Int64.Type}, {"venue_time_zone_tz", type text}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6.tmdl
+// --------------------------------------------------------------------------
+
+table LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6
+	isHidden
+	showAsVariationsOnly
+	lineageTag: 20cd77c0-8790-4c74-a4c3-57f68a0713d9
+
+	column Date
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		lineageTag: afd23888-5678-4c60-a7e1-fa2689abf68e
+		dataCategory: PaddedDateTableDates
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = User
+
+	column Year = YEAR([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: b75fbe09-4414-433b-95ab-acf67680b9bf
+		dataCategory: Years
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Year
+
+	column MonthNo = MONTH([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6cb7758e-12e4-429b-a2d2-1f3fa84c4cad
+		dataCategory: MonthOfYear
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = MonthNumber
+
+	column Month = FORMAT([Date], "MMMM")
+		dataType: string
+		isHidden
+		lineageTag: 54fd4fd2-fcd0-4baf-9798-850754ff2748
+		dataCategory: Months
+		summarizeBy: none
+		sortByColumn: MonthNo
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Month
+
+	column QuarterNo = INT(([MonthNo] + 2) / 3)
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c5897b30-5348-410c-a04d-e1f04a277cb0
+		dataCategory: QuarterOfYear
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = QuarterNumber
+
+	column Quarter = "Qtr " & [QuarterNo]
+		dataType: string
+		isHidden
+		lineageTag: 4ae79789-dc01-461d-ae18-51a0198c4827
+		dataCategory: Quarters
+		summarizeBy: none
+		sortByColumn: QuarterNo
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Quarter
+
+	column Day = DAY([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7a6f2267-05de-4894-8f0e-0637f7dc6a81
+		dataCategory: DayOfMonth
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Day
+
+	hierarchy 'Date Hierarchy'
+		lineageTag: 57260d1f-3ae7-4067-b7db-9fd5880ec1ca
+
+		level Year
+			lineageTag: 9f376776-6187-41e7-9245-97bfdd7a4165
+			column: Year
+
+		level Quarter
+			lineageTag: 80d5d052-9aec-46ef-8800-ffbf73cc04c4
+			column: Quarter
+
+		level Month
+			lineageTag: 04a6fbc4-65af-4ee8-9523-e19e9cb4b4c6
+			column: Month
+
+		level Day
+			lineageTag: 4288a225-a46f-43d9-adba-3c5bc35c8fa8
+			column: Day
+
+		annotation TemplateId = DateHierarchy
+
+	partition LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6 = calculated
+		mode: import
+		source = Calendar(Date(Year(MIN('game'[date_time_GMT])), 1, 1), Date(Year(MAX('game'[date_time_GMT])), 12, 31))
+
+	annotation __PBI_LocalDateTable = true
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.tmdl
+// --------------------------------------------------------------------------
+
+table LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9
+	isHidden
+	showAsVariationsOnly
+	lineageTag: bcb6e326-55de-407b-b7c4-348f7daf0606
+
+	column Date
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		lineageTag: 67d3513a-de10-4d80-bbed-86932cb2b7a8
+		dataCategory: PaddedDateTableDates
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = User
+
+	column Year = YEAR([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 94a9b41f-f4a0-4b6c-a433-28a4c3a5945f
+		dataCategory: Years
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Year
+
+	column MonthNo = MONTH([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 77995e33-04f7-47b5-87aa-4ff6158beaf7
+		dataCategory: MonthOfYear
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = MonthNumber
+
+	column Month = FORMAT([Date], "MMMM")
+		dataType: string
+		isHidden
+		lineageTag: 8474611a-0f29-4017-a98d-2cada56d079b
+		dataCategory: Months
+		summarizeBy: none
+		sortByColumn: MonthNo
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Month
+
+	column QuarterNo = INT(([MonthNo] + 2) / 3)
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 73b2fe73-f189-47ad-a93c-061a0c950ab8
+		dataCategory: QuarterOfYear
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = QuarterNumber
+
+	column Quarter = "Qtr " & [QuarterNo]
+		dataType: string
+		isHidden
+		lineageTag: cdc2df77-705b-4539-aace-93b60499ba11
+		dataCategory: Quarters
+		summarizeBy: none
+		sortByColumn: QuarterNo
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Quarter
+
+	column Day = DAY([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 15543d73-206d-41ec-bd24-871e98591a28
+		dataCategory: DayOfMonth
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Day
+
+	hierarchy 'Date Hierarchy'
+		lineageTag: 4d8eaf6b-2530-4452-9599-51169e98416a
+
+		level Year
+			lineageTag: 436176c4-853a-49cb-8116-415f3fb7f188
+			column: Year
+
+		level Quarter
+			lineageTag: e42f4bab-90d5-40d0-a4fb-0f9661ad7598
+			column: Quarter
+
+		level Month
+			lineageTag: a6798650-33db-4513-a815-b875289a2e1b
+			column: Month
+
+		level Day
+			lineageTag: f46806f6-60f1-4296-a6f9-bc6d872a4e80
+			column: Day
+
+		annotation TemplateId = DateHierarchy
+
+	partition LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9 = calculated
+		mode: import
+		source = Calendar(Date(Year(MIN('DimGameTracker'[GameDate])), 1, 1), Date(Year(MAX('DimGameTracker'[GameDate])), 12, 31))
+
+	annotation __PBI_LocalDateTable = true
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\LocalDateTable_885770e6-6cbe-4c01-a904-6cd49b89f63e.tmdl
+// --------------------------------------------------------------------------
+
+table LocalDateTable_885770e6-6cbe-4c01-a904-6cd49b89f63e
+	isHidden
+	showAsVariationsOnly
+	lineageTag: a6cf1855-f07c-4b97-b252-2acbe93e1e8f
+
+	column Date
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		lineageTag: 5b005e1c-423b-4322-9ced-56187faf035a
+		dataCategory: PaddedDateTableDates
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = User
+
+	column Year = YEAR([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 99222d11-bbb5-40e4-9056-107fe4867bc8
+		dataCategory: Years
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Year
+
+	column MonthNo = MONTH([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: bdec480f-f37d-446c-bcc8-e9b274acb241
+		dataCategory: MonthOfYear
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = MonthNumber
+
+	column Month = FORMAT([Date], "MMMM")
+		dataType: string
+		isHidden
+		lineageTag: 73c42eed-e118-43b3-9813-ada369155b1b
+		dataCategory: Months
+		summarizeBy: none
+		sortByColumn: MonthNo
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Month
+
+	column QuarterNo = INT(([MonthNo] + 2) / 3)
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7da8e7b4-be7f-45bb-b615-b8770979be60
+		dataCategory: QuarterOfYear
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = QuarterNumber
+
+	column Quarter = "Qtr " & [QuarterNo]
+		dataType: string
+		isHidden
+		lineageTag: 97db901e-de22-4b30-80fb-910a8aa288fa
+		dataCategory: Quarters
+		summarizeBy: none
+		sortByColumn: QuarterNo
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Quarter
+
+	column Day = DAY([Date])
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 1b7fdd41-ba9f-4ee8-a837-e20e8c855308
+		dataCategory: DayOfMonth
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+		annotation TemplateId = Day
+
+	hierarchy 'Date Hierarchy'
+		lineageTag: 05b6a646-f573-491b-9123-5ef231143c08
+
+		level Year
+			lineageTag: 22092f7b-a205-4a47-b653-256bd600c519
+			column: Year
+
+		level Quarter
+			lineageTag: 9a522cbf-dcfb-40cd-85fe-57a89c4b4933
+			column: Quarter
+
+		level Month
+			lineageTag: 7e712a65-2432-4050-927f-850b04afb90e
+			column: Month
+
+		level Day
+			lineageTag: 28a288e4-1f33-4e62-8243-604e63461890
+			column: Day
+
+		annotation TemplateId = DateHierarchy
+
+	partition LocalDateTable_885770e6-6cbe-4c01-a904-6cd49b89f63e = calculated
+		mode: import
+		source = Calendar(Date(Year(MIN('FactPlayByPlay'[GameDate])), 1, 1), Date(Year(MAX('FactPlayByPlay'[GameDate])), 12, 31))
+
+	annotation __PBI_LocalDateTable = true
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\Query1.tmdl
+// --------------------------------------------------------------------------
+
+table Query1
+	lineageTag: 880a518b-715b-4848-bc7c-f8cdb5b85bf1
+
+	column Name
+		dataType: string
+		lineageTag: f4cc1dae-41a4-40f1-a0d1-fc224b1bd56d
+		summarizeBy: none
+		sourceColumn: Name
+
+		annotation SummarizationSetBy = Automatic
+
+	column Value
+		dataType: string
+		lineageTag: 3298e794-6059-4016-b5df-14a31764cb88
+		summarizeBy: none
+		sourceColumn: Value
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Query1 = m
+		mode: import
+		source = ```
+				let
+				    // 1. Diagnostic Test for a known player with heavy ice time (Connor McDavid)
+				    PlayerID = "8478402", 
+				    BaseUrl = "https://api-web.nhle.com",
+				    Path = "v1/edge/skater-skating-speed-detail/" & PlayerID & "/20242025/2",
+				
+				    // 2. Fetch the raw JSON WITHOUT try...otherwise to expose the true payload
+				    Source = Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])),
+				
+				    // 3. Convert the Record to a Table so you can clearly read the Keys and Values
+				    ConvertedToTable = try Record.ToTable(Source) otherwise Source
+				in
+				    ConvertedToTable
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\Staging_EDGE (2).tmdl
+// --------------------------------------------------------------------------
+
+table 'Staging_EDGE (2)'
+	lineageTag: f9823446-ee09-40ee-b8b8-b67bfae7fe60
+
+	column PlayerID
+		dataType: string
+		lineageTag: f34a2b91-59f0-4070-a16a-b904c44568b2
+		summarizeBy: none
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.imperial'
+		dataType: string
+		lineageTag: d86f4245-dc53-4607-a380-3e453826caab
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.imperial
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.metric'
+		dataType: string
+		lineageTag: 2669ea18-3b3e-4fb7-a238-d0b39cbf7600
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.metric
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.percentile'
+		dataType: string
+		lineageTag: 577ced23-edc1-450e-ab30-d7e06d38b0e2
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.percentile
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial'
+		dataType: string
+		lineageTag: bcbd76e8-3186-4d6c-bfe8-d5746fbd65e1
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.metric'
+		dataType: string
+		lineageTag: 0332ad78-318b-453e-957f-273da4cc1a98
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.metric
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName.default'
+		dataType: string
+		lineageTag: 2cf4d853-8d42-43fe-a1c6-1a2d031fa9bc
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName.default
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.player.lastName'
+		dataType: string
+		lineageTag: 45ee8306-16ef-4b5b-9a4d-a545051f1925
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.player.lastName
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.gameDate'
+		dataType: string
+		lineageTag: f3330b11-5e93-4959-9090-9d83fc843ae6
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.gameDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.awayTeam'
+		dataType: string
+		lineageTag: 0f65d272-2f83-4de9-907b-0cda2bed97e8
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.awayTeam
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.homeTeam'
+		dataType: string
+		lineageTag: d9e38a73-f074-4358-8ae4-f8299aa84d49
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.homeTeam
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.gameOutcome'
+		dataType: string
+		lineageTag: 14827254-11bd-4a26-9059-c50207fed10f
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.gameOutcome
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.periodDescriptor'
+		dataType: string
+		lineageTag: 7a25119b-8e4b-440c-832b-98eb2f703250
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.periodDescriptor
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.timeInPeriod'
+		dataType: string
+		lineageTag: 4294ca64-6d57-464e-ad07-f4981518b343
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.timeInPeriod
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.gameType'
+		dataType: string
+		lineageTag: 7232e105-21bd-4d69-b3e5-2fc9da4b6f1b
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.gameType
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.burstsOver22'
+		dataType: string
+		lineageTag: 93ac8c46-7ce4-4472-ad43-722961846dfe
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.burstsOver22
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.bursts20To22'
+		dataType: string
+		lineageTag: 2d51fe06-fcd3-412f-9afd-c37fe0a278f5
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.bursts20To22
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'SkatingSpeedDetails.bursts18To20'
+		dataType: string
+		lineageTag: 615b43b0-a5d2-451b-9aff-ea52509f615e
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails.bursts18To20
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Staging_EDGE (2)' = m
+		mode: import
+		source =
+				let
+				    Source = Staging_EDGE,
+				    #"Removed Columns" = Table.RemoveColumns(Source,{"TopSkatingSpeeds"}),
+				    #"Expanded SkatingSpeedDetails" = Table.ExpandRecordColumn(#"Removed Columns", "SkatingSpeedDetails", {"maxSkatingSpeed", "burstsOver22", "bursts20To22", "bursts18To20"}, {"SkatingSpeedDetails.maxSkatingSpeed", "SkatingSpeedDetails.burstsOver22", "SkatingSpeedDetails.bursts20To22", "SkatingSpeedDetails.bursts18To20"}),
+				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails", "SkatingSpeedDetails.maxSkatingSpeed", {"imperial", "metric", "percentile", "leagueAvg", "overlay"}, {"SkatingSpeedDetails.maxSkatingSpeed.imperial", "SkatingSpeedDetails.maxSkatingSpeed.metric", "SkatingSpeedDetails.maxSkatingSpeed.percentile", "SkatingSpeedDetails.maxSkatingSpeed.leagueAvg", "SkatingSpeedDetails.maxSkatingSpeed.overlay"}),
+				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails.maxSkatingSpeed", "SkatingSpeedDetails.maxSkatingSpeed.overlay", {"player", "gameDate", "awayTeam", "homeTeam", "gameOutcome", "periodDescriptor", "timeInPeriod", "gameType"}, {"SkatingSpeedDetails.maxSkatingSpeed.overlay.player", "SkatingSpeedDetails.maxSkatingSpeed.overlay.gameDate", "SkatingSpeedDetails.maxSkatingSpeed.overlay.awayTeam", "SkatingSpeedDetails.maxSkatingSpeed.overlay.homeTeam", "SkatingSpeedDetails.maxSkatingSpeed.overlay.gameOutcome", "SkatingSpeedDetails.maxSkatingSpeed.overlay.periodDescriptor", "SkatingSpeedDetails.maxSkatingSpeed.overlay.timeInPeriod", "SkatingSpeedDetails.maxSkatingSpeed.overlay.gameType"}),
+				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay.player" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay", "SkatingSpeedDetails.maxSkatingSpeed.overlay.player", {"firstName", "lastName"}, {"SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName", "SkatingSpeedDetails.maxSkatingSpeed.overlay.player.lastName"}),
+				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay.player", "SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName", {"default"}, {"SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName.default"}),
+				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.leagueAvg" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName", "SkatingSpeedDetails.maxSkatingSpeed.leagueAvg", {"imperial", "metric"}, {"SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial", "SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.metric"})
+				in
+				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.leagueAvg"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+
+// --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\Staging_EDGE.tmdl
+// --------------------------------------------------------------------------
+
+table Staging_EDGE
+	lineageTag: b288995a-a724-4eee-90aa-c7ff39fb731c
+
+	column PlayerID
+		dataType: string
+		lineageTag: ab8d2f7b-ce3c-434e-b6ed-da779b97b46b
+		summarizeBy: none
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column TopSkatingSpeeds
+		dataType: string
+		lineageTag: 98ec35d4-f140-4ec8-a8a4-8b224ca5410b
+		summarizeBy: none
+		sourceColumn: TopSkatingSpeeds
+
+		annotation SummarizationSetBy = Automatic
+
+	column SkatingSpeedDetails
+		dataType: string
+		lineageTag: eaab4ddf-5a85-49cc-a587-17465e06d13c
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Staging_EDGE = m
+		mode: import
+		source = ```
+				let
+				    // 1. Reference the existing Dimension table to get the active Player IDs
+				    Source = DimPlayers,
+				    
+				    // 2. Remove all descriptive columns to keep this table lightweight
+				    // We only need the PlayerID to feed into our custom function
+				    IsolatedIDs = Table.SelectColumns(Source,{"PlayerID"}),
+				    
+				    // 3. Convert PlayerID to Text temporarily to match the function parameter
+				    ChangedType = Table.TransformColumnTypes(IsolatedIDs,{{"PlayerID", type text}}),
+				    
+				    // 4. Invoke the EDGE API function
+				    // WARNING: Due to the 300ms delay to prevent rate-limiting, this step will take 3-4 minutes to process all ~700 players.
+				    InvokedFunction = Table.AddColumn(ChangedType, "EDGE_Data", each fxGetPlayerEDGE([PlayerID])),
+				    #"Expanded EDGE_Data" = Table.ExpandTableColumn(InvokedFunction, "EDGE_Data", {"TopSkatingSpeeds", "SkatingSpeedDetails"}, {"TopSkatingSpeeds", "SkatingSpeedDetails"})
+				in
+				    #"Expanded EDGE_Data"
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
+
+
+

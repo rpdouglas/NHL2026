@@ -1,0 +1,53 @@
+table Staging_EDGE
+	lineageTag: b288995a-a724-4eee-90aa-c7ff39fb731c
+
+	column PlayerID
+		dataType: string
+		lineageTag: ab8d2f7b-ce3c-434e-b6ed-da779b97b46b
+		summarizeBy: none
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column TopSkatingSpeeds
+		dataType: string
+		lineageTag: 98ec35d4-f140-4ec8-a8a4-8b224ca5410b
+		summarizeBy: none
+		sourceColumn: TopSkatingSpeeds
+
+		annotation SummarizationSetBy = Automatic
+
+	column SkatingSpeedDetails
+		dataType: string
+		lineageTag: eaab4ddf-5a85-49cc-a587-17465e06d13c
+		summarizeBy: none
+		sourceColumn: SkatingSpeedDetails
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Staging_EDGE = m
+		mode: import
+		source = ```
+				let
+				    // 1. Reference the existing Dimension table to get the active Player IDs
+				    Source = DimPlayers,
+				    
+				    // 2. Remove all descriptive columns to keep this table lightweight
+				    // We only need the PlayerID to feed into our custom function
+				    IsolatedIDs = Table.SelectColumns(Source,{"PlayerID"}),
+				    
+				    // 3. Convert PlayerID to Text temporarily to match the function parameter
+				    ChangedType = Table.TransformColumnTypes(IsolatedIDs,{{"PlayerID", type text}}),
+				    
+				    // 4. Invoke the EDGE API function
+				    // WARNING: Due to the 300ms delay to prevent rate-limiting, this step will take 3-4 minutes to process all ~700 players.
+				    InvokedFunction = Table.AddColumn(ChangedType, "EDGE_Data", each fxGetPlayerEDGE([PlayerID])),
+				    #"Expanded EDGE_Data" = Table.ExpandTableColumn(InvokedFunction, "EDGE_Data", {"TopSkatingSpeeds", "SkatingSpeedDetails"}, {"TopSkatingSpeeds", "SkatingSpeedDetails"})
+				in
+				    #"Expanded EDGE_Data"
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
