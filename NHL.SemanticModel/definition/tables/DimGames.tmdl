@@ -1,0 +1,155 @@
+table DimGames
+	lineageTag: bbd493a1-8060-4baa-bbb9-66318297a19c
+
+	column GameID
+		dataType: int64
+		formatString: 0
+		lineageTag: 1535b46e-829f-4566-9454-5ab5e6d014c0
+		summarizeBy: count
+		sourceColumn: GameID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Season
+		dataType: int64
+		formatString: 0
+		lineageTag: 7c0109c9-19fa-4a87-b54e-fd95eff202d5
+		summarizeBy: sum
+		sourceColumn: Season
+
+		annotation SummarizationSetBy = Automatic
+
+	column GameType
+		dataType: string
+		lineageTag: 6821dd76-31c8-4dbe-be5f-9058d66b4b75
+		summarizeBy: none
+		sourceColumn: GameType
+
+		annotation SummarizationSetBy = Automatic
+
+	column GameDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: c23d9f0b-bdd1-4042-8d64-cd2c559cced3
+		summarizeBy: none
+		sourceColumn: GameDate
+
+		variation Variation
+			isDefault
+			relationship: 438c941c-4f27-4051-8e8d-788ad42822ca
+			defaultHierarchy: LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column GameState
+		dataType: string
+		lineageTag: f865e013-2471-45cc-bd88-b351a5d088ef
+		summarizeBy: none
+		sourceColumn: GameState
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeTeamID
+		dataType: int64
+		formatString: 0
+		lineageTag: 613170b9-5d36-48ba-89af-cf27ea9d7b09
+		summarizeBy: count
+		sourceColumn: HomeTeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeTeamAbbrev
+		dataType: string
+		lineageTag: 1bee5ce5-3bf9-4ad6-ad63-85cfc9b6a8c6
+		summarizeBy: none
+		sourceColumn: HomeTeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column HomeScore
+		dataType: string
+		lineageTag: 3aa7a795-6416-404f-b3eb-d7143542999e
+		summarizeBy: none
+		sourceColumn: HomeScore
+
+		annotation SummarizationSetBy = Automatic
+
+	column AwayTeamID
+		dataType: int64
+		formatString: 0
+		lineageTag: c7396bca-7e14-4f05-b144-b7b814608a63
+		summarizeBy: count
+		sourceColumn: AwayTeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column AwayTeamAbbrev
+		dataType: string
+		lineageTag: b219ff76-8a60-42c9-be0a-31671627f054
+		summarizeBy: none
+		sourceColumn: AwayTeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
+	column AwayScore
+		dataType: string
+		lineageTag: 14f6319e-9d48-4d51-9d2f-a91db59d513b
+		summarizeBy: none
+		sourceColumn: AwayScore
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimGames = m
+		mode: import
+		source = ```
+				let
+				    // --- BRANCH A: LIVE GAMES ---
+				    BaseUrl = "https://api-web.nhle.com",
+				    Path = "v1/score/now",
+				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
+				    GamesList = try Source[games] otherwise {},
+				    GamesTable = Table.FromList(GamesList, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+				    ExpandedGames = Table.ExpandRecordColumn(GamesTable, "Column1", 
+				        {"id", "season", "gameType", "gameDate", "gameState", "homeTeam", "awayTeam"}, 
+				        {"GameID", "Season", "GameType", "GameDate", "GameState", "HomeTeamRecord", "AwayTeamRecord"}
+				    ),
+				    ExpandedHome = try Table.ExpandRecordColumn(ExpandedGames, "HomeTeamRecord", {"id", "abbrev", "score"}, {"HomeTeamID", "HomeTeamAbbrev", "HomeScore"}) otherwise ExpandedGames,
+				    ExpandedAway = try Table.ExpandRecordColumn(ExpandedHome, "AwayTeamRecord", {"id", "abbrev", "score"}, {"AwayTeamID", "AwayTeamAbbrev", "AwayScore"}) otherwise ExpandedHome,
+				    
+				    // Select and type the live data. GameType is cast to text because Kaggle stores it as text ("R", "P", etc.)
+				    LiveGames = Table.SelectColumns(ExpandedAway, {"GameID", "Season", "GameType", "GameDate", "GameState", "HomeTeamID", "HomeTeamAbbrev", "HomeScore", "AwayTeamID", "AwayTeamAbbrev", "AwayScore"}, MissingField.Ignore),
+				    CleanedLive = Table.TransformColumnTypes(LiveGames, {
+				        {"GameID", Int64.Type}, {"Season", Int64.Type}, {"GameType", type text}, {"GameDate", type date}, 
+				        {"GameState", type text}, {"HomeTeamID", Int64.Type}, {"AwayTeamID", Int64.Type}
+				    }),
+				
+				    // --- BRANCH B: HISTORICAL GAMES (KAGGLE) ---
+				    // Extract only the necessary columns from the 'game' table and rename them to match the API
+				    HistoricalGames = Table.RenameColumns(
+				        Table.SelectColumns(game, {"game_id", "season", "type", "date_time_GMT", "home_team_id", "away_team_id"}, MissingField.Ignore), 
+				        {{"game_id", "GameID"}, {"season", "Season"}, {"type", "GameType"}, {"date_time_GMT", "GameDate"}, {"home_team_id", "HomeTeamID"}, {"away_team_id", "AwayTeamID"}},
+				        MissingField.Ignore
+				    ),
+				    CleanedHist = Table.TransformColumnTypes(HistoricalGames, {{"GameDate", type date}}),
+				
+				    // --- THE UNION ---
+				    AppendedGames = try Table.Combine({CleanedLive, CleanedHist}) otherwise CleanedLive,
+				
+				    // Ensure final strict typing for relationships
+				    TypedData = Table.TransformColumnTypes(AppendedGames, {
+				        {"GameID", Int64.Type},
+				        {"Season", Int64.Type},
+				        {"GameDate", type date},
+				        {"HomeTeamID", Int64.Type},
+				        {"AwayTeamID", Int64.Type}
+				    })
+				in
+				    TypedData
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

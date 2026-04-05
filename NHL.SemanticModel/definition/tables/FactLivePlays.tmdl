@@ -1,4 +1,4 @@
-table FactPlayByPlay
+table FactLivePlays
 	lineageTag: d0614fb1-16a1-4409-80b3-445d64a7efb1
 
 	column GameID
@@ -109,42 +109,30 @@ table FactPlayByPlay
 
 		annotation SummarizationSetBy = Automatic
 
-	partition FactPlayByPlay = m
+	partition FactLivePlays = m
 		mode: import
 		source = ```
 				let
-				    // --- BRANCH A: LIVE API DATA ---
-				    SourceTracker = DimGameTracker,
+				    SourceTracker = DimGames,
 				    
-				    // Keep ONLY the GameID before invoking the function
-				    IsolatedGameID = Table.SelectColumns(SourceTracker, {"GameID"}),
+				    // FIX: Filter to ONLY the 2025-2026 season games
+				    FilteredCurrentSeason = Table.SelectRows(SourceTracker, each ([Season] = 20252026)),
+				    
+				    IsolatedGameID = Table.SelectColumns(FilteredCurrentSeason, {"GameID"}),
 				    ChangedTypeStr = Table.TransformColumnTypes(IsolatedGameID, {{"GameID", type text}}),
-				    
-				    // Invoke the live play-by-play API
 				    InvokedAPI = Table.AddColumn(ChangedTypeStr, "LivePlays", each fxGetPlayByPlay([GameID])),
-				    
-				    // Expand the live play results cleanly
 				    ExpandedLivePlays = Table.ExpandTableColumn(InvokedAPI, "LivePlays", 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
 				    ),
-				
-				    // Ensure live API text fields are clean before append
 				    CleanedLive = Table.TransformColumnTypes(ExpandedLivePlays, {{"EventID", type text}, {"EventTeamID", type text}}),
-				
-				    // --- THE UNION ---
-				    // Stack the Live API data on top of the Kaggle CSV history
-				    AppendedData = try Table.Combine({CleanedLive, Staging_HistoricalPlays}) otherwise CleanedLive,
-				
-				    // --- FINAL DATA TYPING FOR STAR SCHEMA ---
-				    // Safely cast everything to Whole Numbers EXCEPT EventID, which must remain text due to Kaggle's formatting
-				    TypedData = Table.TransformColumnTypes(AppendedData, {
+				    TypedData = Table.TransformColumnTypes(CleanedLive, {
 				        {"GameID", Int64.Type},
-				        {"EventID", type text},               // <-- FIX: Kept as text to prevent composite string errors
+				        {"EventID", type text},               
 				        {"PeriodNumber", Int64.Type},
 				        {"TimeInPeriod_Seconds", Int64.Type},
 				        {"EventType", type text},
-				        {"EventTeamID", Int64.Type},          // <-- Safe to cast now that "NA"s are gone
+				        {"EventTeamID", Int64.Type},          
 				        {"X_Coord", type number},
 				        {"Y_Coord", type number},
 				        {"ScoringPlayerID", Int64.Type},

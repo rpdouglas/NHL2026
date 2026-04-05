@@ -10,31 +10,6 @@
       "nodes": [
         {
           "location": {
-            "x": 334,
-            "y": -25
-          },
-          "nodeIndex": "DimGameTracker",
-          "nodeLineageTag": "bbd493a1-8060-4baa-bbb9-66318297a19c",
-          "size": {
-            "height": 300,
-            "width": 234
-          },
-          "zIndex": 1
-        },
-        {
-          "location": {
-            "x": 50,
-            "y": -25
-          },
-          "nodeIndex": "FactPlayByPlay",
-          "size": {
-            "height": 300,
-            "width": 234
-          },
-          "zIndex": 2
-        },
-        {
-          "location": {
             "x": 564,
             "y": 355
           },
@@ -110,6 +85,43 @@
             "width": 234
           },
           "zIndex": 7
+        },
+        {
+          "location": {
+            "x": 334,
+            "y": -25
+          },
+          "nodeIndex": "DimGames",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 50,
+            "y": -25
+          },
+          "nodeIndex": "FactLivePlays",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2356,
+            "y": 155.5
+          },
+          "nodeIndex": "FactHistoricalPlays",
+          "nodeLineageTag": "4a6798c8-9c08-4583-a603-29e4867b3fd8",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 0
         }
       ],
       "name": "All tables",

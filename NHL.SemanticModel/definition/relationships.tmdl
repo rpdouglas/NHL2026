@@ -1,19 +1,15 @@
 relationship 438c941c-4f27-4051-8e8d-788ad42822ca
 	joinOnDateBehavior: datePartOnly
-	fromColumn: DimGameTracker.GameDate
+	fromColumn: DimGames.GameDate
 	toColumn: LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.Date
 
 relationship e83e66e5-116a-a4a1-be41-05723191ca81
-	fromColumn: FactPlayByPlay.EventTeamID
+	fromColumn: FactLivePlays.EventTeamID
 	toColumn: DimTeams.TeamID
 
 relationship fcb728e0-a916-ab52-d7df-77c1a8e9eed1
-	fromColumn: FactPlayByPlay.ShootingPlayerID
+	fromColumn: FactLivePlays.ShootingPlayerID
 	toColumn: DimPlayers.PlayerID
-
-relationship AutoDetected_004b9faa-2e6c-47fe-a84f-58a59c1817f4
-	fromColumn: FactEdgeSkatingSpeeds.'homeTeam.abbrev'
-	toColumn: DimGameTracker.HomeTeamAbbrev
 
 relationship eae0cd1e-acc3-4027-ace6-bd7b3bc64d7b
 	joinOnDateBehavior: datePartOnly

@@ -1,0 +1,132 @@
+table FactHistoricalPlays
+	lineageTag: 4a6798c8-9c08-4583-a603-29e4867b3fd8
+
+	column GameID
+		dataType: string
+		lineageTag: 840de4fc-11ec-433a-a4e6-125fc68f00ab
+		summarizeBy: none
+		sourceColumn: GameID
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventID
+		dataType: string
+		lineageTag: 78b7c776-d56b-43ae-a69a-160b74665db9
+		summarizeBy: none
+		sourceColumn: EventID
+
+		annotation SummarizationSetBy = Automatic
+
+	column PeriodNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: e94b8d7f-6b48-4bde-a5e6-3c08709310ae
+		summarizeBy: sum
+		sourceColumn: PeriodNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column TimeInPeriod_Seconds
+		dataType: int64
+		formatString: 0
+		lineageTag: 2664c6c4-d332-41d1-ac8d-720bc9319ec3
+		summarizeBy: sum
+		sourceColumn: TimeInPeriod_Seconds
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventType
+		dataType: string
+		lineageTag: 084ccec7-d9ad-431a-81ff-508fc05e00a3
+		summarizeBy: none
+		sourceColumn: EventType
+
+		annotation SummarizationSetBy = Automatic
+
+	column EventTeamID
+		dataType: string
+		lineageTag: 9df4da19-890a-4274-bf68-6d119f4673f0
+		summarizeBy: none
+		sourceColumn: EventTeamID
+
+		annotation SummarizationSetBy = Automatic
+
+	column X_Coord
+		dataType: double
+		lineageTag: 5e5d4b86-6b0f-4ef2-8a63-85dbe53ef43c
+		summarizeBy: sum
+		sourceColumn: X_Coord
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Y_Coord
+		dataType: double
+		lineageTag: 69d7630c-2ec3-4f72-abc1-06b1f2311979
+		summarizeBy: sum
+		sourceColumn: Y_Coord
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition FactHistoricalPlays = m
+		mode: import
+		source = ```
+				let
+				    // 1. Source the local Kaggle CSV file
+				    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game_plays.csv"),[Delimiter=",", Columns=18, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+				    
+				    // 2. Promote headers
+				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    
+				    // 3. MEMORY OPTIMIZATION: Early Filtering
+				    // This keeps only games from the 2021-2022 season onwards to prevent memory exhaustion. 
+				    // (Change 2021000000 to a lower number if you want more history, e.g., 2015000000)
+				    FilteredHistory = Table.SelectRows(PromotedHeaders, each try Number.From([game_id]) >= 2021000000 otherwise false),
+				    
+				    // 4. Rename columns to perfectly match the live API output
+				    RenamedColumns = Table.RenameColumns(FilteredHistory,{
+				        {"game_id", "GameID"}, 
+				        {"play_id", "EventID"}, 
+				        {"period", "PeriodNumber"}, 
+				        {"event", "EventType"}, 
+				        {"team_id_for", "EventTeamID"}, 
+				        {"x", "X_Coord"}, 
+				        {"y", "Y_Coord"}
+				    }, MissingField.Ignore),
+				    
+				    // 5. Time Conversion
+				    SplitTime = Table.SplitColumn(RenamedColumns, "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
+				    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
+				    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", each try ([Minute] * 60) + [Second] otherwise null, Int64.Type),
+				    
+				    // 6. Select only the unified columns
+				    FinalColumns = Table.SelectColumns(AddSeconds, 
+				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"},
+				        MissingField.Ignore
+				    ),
+				
+				    // 7. ERROR PREVENTION: Scrub the "NA" strings from the Kaggle dataset and replace with true nulls
+				    CleanedNAs = Table.ReplaceValue(FinalColumns, "NA", null, Replacer.ReplaceValue, {"EventTeamID", "X_Coord", "Y_Coord"}),
+				    
+				    // 8. Base Data Typing (Leave IDs as text temporarily before the append)
+				    TypedData = Table.TransformColumnTypes(CleanedNAs,{
+				        {"GameID", type text}, 
+				        {"EventID", type text}, 
+				        {"PeriodNumber", Int64.Type}, 
+				        {"TimeInPeriod_Seconds", Int64.Type}, 
+				        {"EventType", type text}, 
+				        {"EventTeamID", type text}, 
+				        {"X_Coord", type number}, 
+				        {"Y_Coord", type number}
+				    })
+				in
+				    TypedData
+				```
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
