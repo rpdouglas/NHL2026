@@ -1,4 +1,4 @@
-table 'Staging_EDGE (2)'
+table FactEdgeBurstDetails
 	lineageTag: f9823446-ee09-40ee-b8b8-b67bfae7fe60
 
 	column PlayerID
@@ -145,7 +145,7 @@ table 'Staging_EDGE (2)'
 
 		annotation SummarizationSetBy = Automatic
 
-	partition 'Staging_EDGE (2)' = m
+	partition FactEdgeBurstDetails = m
 		mode: import
 		source =
 				let

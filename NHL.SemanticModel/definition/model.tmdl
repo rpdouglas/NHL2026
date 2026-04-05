@@ -9,7 +9,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_QueryOrder = ["DimGameTracker","fxGetPlayByPlay","FactPlayByPlay","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","Query1","FactEdgeSkatingSpeeds","Staging_EDGE (2)","game"]
+annotation PBI_QueryOrder = ["DimGameTracker","fxGetPlayByPlay","FactPlayByPlay","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","Query1","FactEdgeSkatingSpeeds","FactEdgeBurstDetails","game","Staging_HistoricalPlays"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
@@ -17,13 +17,11 @@ ref table DimGameTracker
 ref table DateTableTemplate_5816527a-4f9d-4003-88f3-eaa40a9af362
 ref table LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9
 ref table FactPlayByPlay
-ref table LocalDateTable_885770e6-6cbe-4c01-a904-6cd49b89f63e
 ref table DimTeams
 ref table DimPlayers
-ref table Staging_EDGE
 ref table Query1
 ref table FactEdgeSkatingSpeeds
-ref table 'Staging_EDGE (2)'
+ref table FactEdgeBurstDetails
 ref table game
 ref table LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6
 

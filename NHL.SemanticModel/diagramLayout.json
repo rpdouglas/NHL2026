@@ -11,7 +11,7 @@
         {
           "location": {
             "x": 334,
-            "y": -50
+            "y": -25
           },
           "nodeIndex": "DimGameTracker",
           "nodeLineageTag": "bbd493a1-8060-4baa-bbb9-66318297a19c",
@@ -19,24 +19,24 @@
             "height": 300,
             "width": 234
           },
-          "zIndex": 0
+          "zIndex": 1
         },
         {
           "location": {
             "x": 50,
-            "y": -50
+            "y": -25
           },
           "nodeIndex": "FactPlayByPlay",
           "size": {
             "height": 300,
             "width": 234
           },
-          "zIndex": 0
+          "zIndex": 2
         },
         {
           "location": {
-            "x": 568,
-            "y": 50
+            "x": 564,
+            "y": 355
           },
           "nodeIndex": "DimPlayers",
           "nodeLineageTag": "4cc27823-495c-4ca7-8d49-c8b8da14a4c7",
@@ -44,12 +44,12 @@
             "height": 200,
             "width": 234
           },
-          "zIndex": 0
+          "zIndex": 8
         },
         {
           "location": {
             "x": 852,
-            "y": 62
+            "y": 87
           },
           "nodeIndex": "DimTeams",
           "nodeLineageTag": "755959a4-88c2-42c4-aede-3839de96911d",
@@ -57,11 +57,63 @@
             "height": 176,
             "width": 234
           },
-          "zIndex": 0
+          "zIndex": 3
+        },
+        {
+          "location": {
+            "x": 1110,
+            "y": 258
+          },
+          "nodeIndex": "FactEdgeSkatingSpeeds",
+          "nodeLineageTag": "e9a6b689-0c2a-46dd-ae3b-1bbf4395012f",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 4
+        },
+        {
+          "location": {
+            "x": 1654,
+            "y": 111
+          },
+          "nodeIndex": "Query1",
+          "nodeLineageTag": "880a518b-715b-4848-bc7c-f8cdb5b85bf1",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 5
+        },
+        {
+          "location": {
+            "x": 2122,
+            "y": 25
+          },
+          "nodeIndex": "game",
+          "nodeLineageTag": "83c01804-d746-4743-b3ed-5ef1e5f4b124",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 6
+        },
+        {
+          "location": {
+            "x": 1294,
+            "y": 0
+          },
+          "nodeIndex": "FactEdgeBurstDetails",
+          "nodeLineageTag": "f9823446-ee09-40ee-b8b8-b67bfae7fe60",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 7
         }
       ],
       "name": "All tables",
-      "zoomValue": 100,
+      "zoomValue": 49.600957701516364,
       "pinKeyFieldsToTop": false,
       "showExtraHeaderInfo": false,
       "hideKeyFieldsWhenCollapsed": false,

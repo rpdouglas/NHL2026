@@ -103,3 +103,79 @@ expression fxGetPlayerEDGE = ```
 
 	annotation PBI_ResultType = Function
 
+expression Staging_EDGE = ```
+		let
+		    // 1. Reference the existing Dimension table to get the active Player IDs
+		    Source = DimPlayers,
+		    
+		    // 2. Remove all descriptive columns to keep this table lightweight
+		    // We only need the PlayerID to feed into our custom function
+		    IsolatedIDs = Table.SelectColumns(Source,{"PlayerID"}),
+		    
+		    // 3. Convert PlayerID to Text temporarily to match the function parameter
+		    ChangedType = Table.TransformColumnTypes(IsolatedIDs,{{"PlayerID", type text}}),
+		    
+		    // 4. Invoke the EDGE API function
+		    // WARNING: Due to the 300ms delay to prevent rate-limiting, this step will take 3-4 minutes to process all ~700 players.
+		    InvokedFunction = Table.AddColumn(ChangedType, "EDGE_Data", each fxGetPlayerEDGE([PlayerID])),
+		    #"Expanded EDGE_Data" = Table.ExpandTableColumn(InvokedFunction, "EDGE_Data", {"TopSkatingSpeeds", "SkatingSpeedDetails"}, {"TopSkatingSpeeds", "SkatingSpeedDetails"})
+		in
+		    #"Expanded EDGE_Data"
+		```
+	lineageTag: b2c4d25b-bac2-44d1-8f34-a785c8ab9764
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Exception
+
+expression Staging_HistoricalPlays = ```
+		let
+		    // 1. Source the local Kaggle CSV file you actually have
+		    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game_plays.csv"),[Delimiter=",", Columns=18, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+		    
+		    // 2. Promote headers
+		    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+		    
+		    // 3. Rename columns to perfectly match the live API output (FactPlayByPlay)
+		    RenamedColumns = Table.RenameColumns(PromotedHeaders,{
+		        {"game_id", "GameID"}, 
+		        {"play_id", "EventID"}, 
+		        {"period", "PeriodNumber"}, 
+		        {"event", "EventType"}, 
+		        {"team_id_for", "EventTeamID"}, 
+		        {"x", "X_Coord"}, 
+		        {"y", "Y_Coord"}
+		    }, MissingField.Ignore),
+		    
+		    // 4. Time Conversion: The CSV stores time as MM:SS. We need total seconds.
+		    SplitTime = Table.SplitColumn(RenamedColumns, "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
+		    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
+		    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", each ([Minute] * 60) + [Second], Int64.Type),
+		    
+		    // 5. Select only the unified columns
+		    // Note: Historical player IDs are isolated in game_plays_players.csv. We map the core events first for performance.
+		    FinalColumns = Table.SelectColumns(AddSeconds, 
+		        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"},
+		        MissingField.Ignore
+		    ),
+		    
+		    // 6. Enforce strict data types (Matching the exact string types from your live API script)
+		    TypedData = Table.TransformColumnTypes(FinalColumns,{
+		        {"GameID", type text}, 
+		        {"EventID", type text}, 
+		        {"PeriodNumber", Int64.Type}, 
+		        {"TimeInPeriod_Seconds", Int64.Type}, 
+		        {"EventType", type text}, 
+		        {"EventTeamID", type text}, 
+		        {"X_Coord", type number}, 
+		        {"Y_Coord", type number}
+		    })
+		in
+		    TypedData
+		```
+	lineageTag: 0aae4968-e517-40aa-b9f1-d63549c7a11f
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

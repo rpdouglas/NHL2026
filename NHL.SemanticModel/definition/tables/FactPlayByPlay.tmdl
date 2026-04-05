@@ -2,61 +2,19 @@ table FactPlayByPlay
 	lineageTag: d0614fb1-16a1-4409-80b3-445d64a7efb1
 
 	column GameID
-		dataType: string
+		dataType: int64
+		formatString: 0
 		lineageTag: ec0f0b51-61e7-4888-b18e-b0e54d4c8489
-		summarizeBy: none
+		summarizeBy: count
 		sourceColumn: GameID
 
 		annotation SummarizationSetBy = Automatic
 
-	column Season
-		dataType: int64
-		formatString: 0
-		lineageTag: e20105a4-ce30-4d36-95c2-33459f8d0465
-		summarizeBy: sum
-		sourceColumn: Season
-
-		annotation SummarizationSetBy = Automatic
-
-	column GameType
-		dataType: int64
-		formatString: 0
-		lineageTag: 84784a39-09fd-41ed-8f44-ac6fb12e141f
-		summarizeBy: sum
-		sourceColumn: GameType
-
-		annotation SummarizationSetBy = Automatic
-
-	column GameDate
-		dataType: dateTime
-		formatString: Long Date
-		lineageTag: e60f181b-939f-4253-a2c6-7a537af8f480
-		summarizeBy: none
-		sourceColumn: GameDate
-
-		variation Variation
-			isDefault
-			relationship: e6524962-b0ba-4ddf-b5c5-3104621cebe2
-			defaultHierarchy: LocalDateTable_885770e6-6cbe-4c01-a904-6cd49b89f63e.'Date Hierarchy'
-
-		annotation SummarizationSetBy = Automatic
-
-		annotation UnderlyingDateTimeDataType = Date
-
 	column PeriodNumber
-		dataType: int64
-		formatString: 0
-		lineageTag: 718de994-ad28-4d42-a466-e65911895fda
-		summarizeBy: sum
-		sourceColumn: PeriodNumber
-
-		annotation SummarizationSetBy = Automatic
-
-	column TimeRemaining
 		dataType: string
-		lineageTag: ece713fa-d14b-4feb-b35f-7b608fd56df2
+		lineageTag: 718de994-ad28-4d42-a466-e65911895fda
 		summarizeBy: none
-		sourceColumn: TimeRemaining
+		sourceColumn: PeriodNumber
 
 		annotation SummarizationSetBy = Automatic
 
@@ -65,14 +23,6 @@ table FactPlayByPlay
 		lineageTag: 20b4e09e-4b8b-4caf-934d-272a0c64c3c8
 		summarizeBy: none
 		sourceColumn: EventID
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'PeriodNumber.1'
-		dataType: string
-		lineageTag: f86fee30-8a71-455c-9981-e84e4facc1af
-		summarizeBy: none
-		sourceColumn: PeriodNumber.1
 
 		annotation SummarizationSetBy = Automatic
 
@@ -150,15 +100,34 @@ table FactPlayByPlay
 
 	partition FactPlayByPlay = m
 		mode: import
-		source =
+		source = ```
 				let
-				    Source = DimGameTracker,
-				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"GameID", type text}}),
-				    #"Invoked Custom Function" = Table.AddColumn(#"Changed Type", "fxGetPlayByPlay", each fxGetPlayByPlay([GameID])),
-				    #"Expanded fxGetPlayByPlay" = Table.ExpandTableColumn(#"Invoked Custom Function", "fxGetPlayByPlay", {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, {"EventID", "PeriodNumber.1", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}),
-				    #"Removed Columns" = Table.RemoveColumns(#"Expanded fxGetPlayByPlay",{"GameState", "HomeTeamID", "HomeTeamAbbrev", "HomeScore", "AwayTeamID", "AwayTeamAbbrev", "AwayScore"})
+				    // --- BRANCH A: LIVE API DATA ---
+				    // 1. Point to the live games tracker
+				    SourceTracker = DimGameTracker,
+				    
+				    // 2. PREVENT COLLISIONS: Keep ONLY the GameID before invoking the function
+				    IsolatedGameID = Table.SelectColumns(SourceTracker, {"GameID"}),
+				    
+				    // 3. Convert to text temporarily to feed the custom function
+				    ChangedTypeStr = Table.TransformColumnTypes(IsolatedGameID, {{"GameID", type text}}),
+				    
+				    // 4. Invoke the live play-by-play API
+				    InvokedAPI = Table.AddColumn(ChangedTypeStr, "LivePlays", each fxGetPlayByPlay([GameID])),
+				    // 5. Expand the live play results cleanly (No .1 collisions!)
+				    ExpandedLivePlays = Table.ExpandTableColumn(InvokedAPI, "LivePlays", 
+				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, 
+				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
+				    ),
+				
+				    // --- THE UNION ---
+				    // 6. Stack the Live API data on top of the Kaggle CSV history
+				    // NOTE: This step assumes your historical query is named exactly "Staging_HistoricalPlays"
+				    AppendedData = try Table.Combine({ExpandedLivePlays, Staging_HistoricalPlays}) otherwise ExpandedLivePlays,
+				    #"Changed Type" = Table.TransformColumnTypes(AppendedData,{{"GameID", Int64.Type}})
 				in
-				    #"Removed Columns"
+				    #"Changed Type"
+				```
 
 	annotation PBI_NavigationStepName = Navigation
 

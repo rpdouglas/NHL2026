@@ -3,11 +3,6 @@ relationship 438c941c-4f27-4051-8e8d-788ad42822ca
 	fromColumn: DimGameTracker.GameDate
 	toColumn: LocalDateTable_4cb117be-042e-4a8b-8271-23c902054bb9.Date
 
-relationship e6524962-b0ba-4ddf-b5c5-3104621cebe2
-	joinOnDateBehavior: datePartOnly
-	fromColumn: FactPlayByPlay.GameDate
-	toColumn: LocalDateTable_885770e6-6cbe-4c01-a904-6cd49b89f63e.Date
-
 relationship e83e66e5-116a-a4a1-be41-05723191ca81
 	fromColumn: FactPlayByPlay.EventTeamID
 	toColumn: DimTeams.TeamID
@@ -20,18 +15,17 @@ relationship AutoDetected_004b9faa-2e6c-47fe-a84f-58a59c1817f4
 	fromColumn: FactEdgeSkatingSpeeds.'homeTeam.abbrev'
 	toColumn: DimGameTracker.HomeTeamAbbrev
 
-relationship AutoDetected_96e09143-38d6-40c3-ab70-dbc16dbbeef9
-	fromColumn: FactEdgeSkatingSpeeds.PlayerID
-	toColumn: Staging_EDGE.PlayerID
-
-relationship AutoDetected_f31d8e60-9979-4620-9e05-0f732d19c113
-	crossFilteringBehavior: bothDirections
-	fromCardinality: one
-	fromColumn: 'Staging_EDGE (2)'.PlayerID
-	toColumn: Staging_EDGE.PlayerID
-
 relationship eae0cd1e-acc3-4027-ace6-bd7b3bc64d7b
 	joinOnDateBehavior: datePartOnly
 	fromColumn: game.date_time_GMT
 	toColumn: LocalDateTable_1dfc7273-a0ee-4682-b0d0-fab469cc25f6.Date
+
+relationship 47f7d708-1e5b-f043-da62-4845cd607c76
+	fromColumn: FactEdgeSkatingSpeeds.PlayerID
+	toColumn: DimPlayers.PlayerID
+
+relationship 325d0399-fed9-bbe8-655f-eed4bbd9da31
+	crossFilteringBehavior: bothDirections
+	fromColumn: FactEdgeBurstDetails.PlayerID
+	toColumn: DimPlayers.PlayerID
 
