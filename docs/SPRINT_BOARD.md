@@ -1,21 +1,18 @@
 # 🏃 Active Sprint Board
 
-**Current Phase:** Sprint 1.0 (The Core Reporting Flow)
+**Current Phase:** Sprint 2.0 (Advanced Analytics & EDGE)
 
 ## ✅ Completed Sprints
-- [x] **Sprint 0.1:** Core API connections established (Plays, Teams, Players, EDGE).
-- [x] **Sprint 0.2:** Lambda Architecture deployed (DAX UNION).
-- [x] **Sprint 0.3:** Schema hardening, PK uniqueness, and 2025-2026 season rollover.
-- [x] **PROJ-01:** The Standings Matrix. (League Level)
-- [x] **PROJ-01.5:** Traditional Stats Integration (G, A, P, GP extracted in DimPlayers).
-- [x] **PROJ-02: The League Dashboard.** Assemble the front page using the PROJ-01 Standings Matrix and a "League Leaders" Top 5 table.
-- [x] **PROJ-03: The Team Report.** Drill-through functionality and basic tables assembled. (UI/UX formatting parked for later).
+- [x] **Sprint 0.1 - 0.3:** Data plumbing, Lambda architecture, and PK hardening.
+- [x] **Sprint 1.0: The Core Reporting Flow.** - [x] PROJ-01: Standings Matrix
+  - [x] PROJ-02: League Dashboard
+  - [x] PROJ-03: Team Report (Drill-through base)
+  - [x] PROJ-04: Player Scorecard (Target page)
 
-## 🟡 Sprint 1.0: The Core Reporting Flow (Active)
-- [ ] **PROJ-04: The Player Scorecard.** Finalize the drill-through destination page using the Identity Banner and Traditional Stats KPIs.
+## 🟡 Sprint 2.0: Advanced Analytics (Active)
+- [ ] **PROJ-05: The EDGE Radar Plot.** Re-integrate burst telemetry DAX measures into the Player Scorecard.
+- [ ] **PROJ-06: Spatial Rink Mapping.** Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`.
 
-## 🧊 Product Backlog (Sprint 2.0 - Advanced Analytics)
-- [ ] **PROJ-05:** The EDGE Radar Plot (Re-integrate burst telemetry).
-- [ ] **PROJ-06:** Spatial Rink Mapping (Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`).
+## 🧊 Product Backlog (Sprint 3.0)
 - [ ] **PROJ-07:** Expected Goals (xG) Distance DAX Model.
 - [ ] **PROJ-08:** Trade Target Scatter Plot (Speed vs. Volume).
