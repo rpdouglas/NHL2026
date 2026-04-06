@@ -1,0 +1,196 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "dd63e1655bb8d50108ab",
+  "position": {
+    "x": 60.401606425702816,
+    "y": 280.16064257028114,
+    "z": 2,
+    "height": 388.11244979919678,
+    "width": 604.01606425702812,
+    "tabOrder": 2
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimPlayers"
+                    }
+                  },
+                  "Property": "PlayerName"
+                }
+              },
+              "queryRef": "DimPlayers.PlayerName",
+              "nativeQueryRef": "PlayerName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimPlayers"
+                    }
+                  },
+                  "Property": "HeadshotURL"
+                }
+              },
+              "queryRef": "DimPlayers.HeadshotURL",
+              "nativeQueryRef": "HeadshotURL"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimPlayers"
+                    }
+                  },
+                  "Property": "Position"
+                }
+              },
+              "queryRef": "DimPlayers.Position",
+              "nativeQueryRef": "Position"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Player Goals"
+                }
+              },
+              "queryRef": "_Measures.Player Goals",
+              "nativeQueryRef": "Player Goals"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Player Assists"
+                }
+              },
+              "queryRef": "_Measures.Player Assists",
+              "nativeQueryRef": "Player Assists"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Player Points"
+                }
+              },
+              "queryRef": "_Measures.Player Points",
+              "nativeQueryRef": "Player Points"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "2e61844cdec3e55d7ca5",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimPlayers"
+              }
+            },
+            "Property": "PlayerName"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "6441f5895fb4ca31cf8e",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimPlayers"
+              }
+            },
+            "Property": "HeadshotURL"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "f8cbd16af6be8e88a797",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimPlayers"
+              }
+            },
+            "Property": "Position"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "35e7c7b25a97f71b6752",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Player Goals"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "de7e73b6b5d395a7c1c9",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Player Assists"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "5cac78b6a052b6ba0f10",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Player Points"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

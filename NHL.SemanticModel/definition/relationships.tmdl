@@ -11,15 +11,11 @@ relationship e937b057-45e9-e8ad-92ca-4a9a7bf9fb47
 	fromColumn: FactPlayByPlay.GameID
 	toColumn: DimGames.GameID
 
-relationship 26489267-7581-bf1e-9b34-768d33527645
-	fromColumn: FactPlayByPlay.EventTeamID
-	toColumn: DimTeams.TeamID
-
 relationship 4705664c-842c-2872-e80b-00ac6b534b9c
 	fromColumn: FactPlayByPlay.ShootingPlayerID
 	toColumn: DimPlayers.PlayerID
 
-relationship 7de5cb31-0665-f4c1-27ae-2da6b6ea180e
-	fromColumn: FactEdgeSkatingSpeeds.'homeTeam.abbrev'
+relationship f2817f3f-ed1b-faf4-8e93-83b7d6e5241e
+	fromColumn: DimPlayers.CurrentTeamAbbrev
 	toColumn: DimTeams.TeamAbbrev
 

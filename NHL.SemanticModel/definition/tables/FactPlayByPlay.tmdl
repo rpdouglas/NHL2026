@@ -43,7 +43,7 @@ table FactPlayByPlay
 
 	column EventTeamID
 		lineageTag: 78ed37db-7b35-40b2-add8-96c662279283
-		summarizeBy: none
+		summarizeBy: count
 		isNameInferred
 		sourceColumn: FactLivePlays[EventTeamID]
 

@@ -14,7 +14,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 95969f73-9e20-4df9-be9a-b96cbfe4e950
-		summarizeBy: count
+		summarizeBy: none
 		sourceColumn: FranchiseID
 
 		annotation SummarizationSetBy = Automatic
@@ -38,6 +38,7 @@ table DimTeams
 	column TeamLogoURL
 		dataType: string
 		lineageTag: 5b3257d3-68e4-4672-85b3-43f9d3e0793e
+		dataCategory: ImageUrl
 		summarizeBy: none
 		sourceColumn: TeamLogoURL
 
@@ -63,7 +64,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 0c749489-1516-4081-a033-1e36e22b2657
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: LeagueRank
 
 		annotation SummarizationSetBy = Automatic
@@ -72,7 +73,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 88df7391-7ef5-4810-ab1a-a3ba296aec85
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: Points
 
 		annotation SummarizationSetBy = Automatic
@@ -89,7 +90,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: 12c8623c-ff9b-44af-a885-10e9c6345ea5
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: StreakCount
 
 		annotation SummarizationSetBy = Automatic
@@ -98,7 +99,7 @@ table DimTeams
 		dataType: int64
 		formatString: 0
 		lineageTag: d8617501-88e8-41be-b225-e104440564a0
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: GoalDifferential
 
 		annotation SummarizationSetBy = Automatic

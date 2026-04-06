@@ -10,21 +10,25 @@ def sync_docs():
     # --- FILE 1: SPRINT_BOARD.md ---
     files_to_update['docs/SPRINT_BOARD.md'] = r"""# 🏃 Active Sprint Board
 
-**Current Phase:** Sprint 1.0 (The Visual Foundation)
+**Current Phase:** Sprint 1.0 (The Core Reporting Flow)
 
 ## ✅ Completed Sprints
 - [x] **Sprint 0.1:** Core API connections established (Plays, Teams, Players, EDGE).
 - [x] **Sprint 0.2:** Lambda Architecture deployed (DAX UNION).
 - [x] **Sprint 0.3:** Schema hardening, PK uniqueness, and 2025-2026 season rollover.
+- [x] **PROJ-01:** The Standings Matrix. (League Level)
+- [x] **PROJ-01.5:** Traditional Stats Integration (G, A, P, GP extracted in DimPlayers).
+- [x] **PROJ-02: The League Dashboard.** Assemble the front page using the PROJ-01 Standings Matrix and a "League Leaders" Top 5 table.
+- [x] **PROJ-03: The Team Report.** Drill-through functionality and basic tables assembled. (UI/UX formatting parked for later).
 
-## 🟡 Sprint 1.0: The Visual Foundation (Active)
-- [x] **PROJ-01:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the `DimTeams` table.
-- [ ] **PROJ-02:** The EDGE Radar Plot. Build DAX measures calculating Player Speed/Bursts vs. League Average.
-- [ ] **PROJ-03:** Spatial Rink Mapping. Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`.
+## 🟡 Sprint 1.0: The Core Reporting Flow (Active)
+- [ ] **PROJ-04: The Player Scorecard.** Finalize the drill-through destination page using the Identity Banner and Traditional Stats KPIs.
 
-## 🧊 Product Backlog
-- [ ] **PROJ-04:** Expected Goals (xG) DAX Model (Distance from net calculation).
-- [ ] **PROJ-05:** Trade Target Scatter Plot (Speed vs. Volume).
+## 🧊 Product Backlog (Sprint 2.0 - Advanced Analytics)
+- [ ] **PROJ-05:** The EDGE Radar Plot (Re-integrate burst telemetry).
+- [ ] **PROJ-06:** Spatial Rink Mapping (Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`).
+- [ ] **PROJ-07:** Expected Goals (xG) Distance DAX Model.
+- [ ] **PROJ-08:** Trade Target Scatter Plot (Speed vs. Volume).
 """
 
     # --- FILE 2: SCHEMA_ARCHITECTURE.md ---
@@ -34,16 +38,16 @@ def sync_docs():
 **Format:** TMDL (Tabular Model Definition Language)
 
 ## 1. High-Level Topology
+*(Updated to reflect strict cascading filters and removal of ambiguous paths)*
 
 __FENCE__mermaid
 graph TD
     DimGames --> FactPlayByPlay
-    DimTeams --> FactPlayByPlay
     DimPlayers --> FactPlayByPlay
     
-    DimTeams --> FactEdgeSkatingSpeeds
-    DimPlayers --> FactEdgeSkatingSpeeds
+    DimTeams --> DimPlayers
     
+    DimPlayers --> FactEdgeSkatingSpeeds
     DimPlayers --> FactEdgeBurstDetails
     DimGames --> FactEdgeSkatingSpeeds
 __FENCE__
@@ -55,32 +59,48 @@ __FENCE__
 * **Fields:** `GameID` (PK), `Season`, `GameType`, `GameDate`, `HomeTeamID`, `AwayTeamID`.
 
 ### `DimTeams`
-* **Purpose:** The Digital Rolodex for franchises. Built via a Left Outer Join of the legacy Stats API (for historical IDs) and the live Standings API.
-* **Fields:** `TeamID` (PK), `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`, `GoalDifferential`, `StreakType`, `StreakCount`.
+* **Purpose:** The Digital Rolodex for franchises. 
+* **Fields:** `TeamID` (PK), `FranchiseID`, `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`, `GoalDifferential`, `StreakType`, `StreakCount`.
 
 ### `DimPlayers`
 * **Purpose:** Active roster dictionary.
-* **Fields:** `PlayerID` (PK), `PlayerName`, `Position`, `ShootsCatches`, `HeadshotURL`.
+* **Fields:** `PlayerID` (PK), `PlayerName`, `Position`, `ShootsCatches`, `GamesPlayed`, `Goals`, `Assists`, `Points`, `CurrentTeamAbbrev` (FK to DimTeams), `HeadshotURL`.
 
 ## 3. Fact Tables (Events & Telemetry)
 
 ### `FactPlayByPlay` (DAX UNION Table)
 * **Purpose:** The core event ledger. Unifies `FactLivePlays` and `FactHistoricalPlays`.
-* **Fields:** `GameID` (FK), `EventID`, `PeriodNumber`, `TimeInPeriod_Seconds`, `EventType`, `EventTeamID` (FK), `X_Coord`, `Y_Coord`, `ScoringPlayerID` (FK), `ShootingPlayerID` (FK).
+* **Fields:** `GameID` (FK), `EventID`, `PeriodNumber`, `TimeInPeriod_Seconds`, `EventType`, `EventTeamID`, `X_Coord`, `Y_Coord`, `ScoringPlayerID` (FK), `ShootingPlayerID` (FK), `HittingPlayerID` (FK), `HitteePlayerID` (FK).
 
 ### `FactEdgeSkatingSpeeds`
 * **Purpose:** Player telemetry for top speeds.
-* **Fields:** `PlayerID` (FK), `skatingSpeed.imperial`, `skatingSpeed.metric`, `periodDescriptor.number`.
+* **Fields:** `PlayerID` (FK), `skatingSpeed.imperial`, `skatingSpeed.metric`, `periodDescriptor.number`, `homeTeam.abbrev`.
 
 ### `FactEdgeBurstDetails`
 * **Purpose:** Player telemetry for acceleration and league comparisons.
-* **Fields:** `PlayerID` (FK), `max.imperial`, `max.percentile`, `leagueAvg.imperial`, `burstsOver22`.
+* **Fields:** `PlayerID` (FK), `SkatingSpeedDetails.maxSkatingSpeed.imperial`, `SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial`, `burstsOver22`, `bursts20To22`, `bursts18To20`.
 
 ## 4. DAX Measures (`_Measures` Table)
 * **Purpose:** Centralized repository for all explicit DAX calculations to prevent model scattering.
-* **Metrics:** * `Team Points`: `SUM('DimTeams'[Points])`
-  * `Team Goal Diff`: `SUM('DimTeams'[GoalDifferential])`
-  * `Current Streak`: Uses `ISINSCOPE` to restrict streak rendering to the lowest Team hierarchy level.
+* **Metrics:** Covered in `MEASURE_DICTIONARY.md`
+"""
+
+    # --- FILE 3: MEASURE_DICTIONARY.md ---
+    files_to_update['docs/MEASURE_DICTIONARY.md'] = r"""# 📏 DAX Measure Dictionary
+
+| Measure Name | Table | Logic | Persona Focus |
+| :--- | :--- | :--- | :--- |
+| `Team Points` | `_Measures` | `SUM('DimTeams'[Points])` | Casual Fan |
+| `Team Goal Diff` | `_Measures` | `SUM('DimTeams'[GoalDifferential])` | Casual Fan |
+| `Current Streak` | `_Measures` | Extracts streak contextually at Team hierarchy | Casual Fan |
+| `Player Goals` | `_Measures` | `SUM('DimPlayers'[Goals])` | Casual Fan / Manager |
+| `Player Assists` | `_Measures` | `SUM('DimPlayers'[Assists])` | Casual Fan / Manager |
+| `Player Points` | `_Measures` | `SUM('DimPlayers'[Points])` | Casual Fan / Manager |
+| `Games Played` | `_Measures` | `SUM('DimPlayers'[GamesPlayed])` | Casual Fan / Manager |
+| `Player Max Speed (mph)` | `_Measures` | `AVERAGE` of EDGE max speed | Fantasy Manager |
+| `League Avg Max Speed` | `_Measures` | `AVERAGE` of EDGE league avg speed | Fantasy Manager |
+| `Player Bursts > 22mph` | `_Measures` | `SUM` of bursts over 22mph | Fantasy Manager |
+| `Player Bursts 20-22mph` | `_Measures` | `SUM` of bursts 20-22mph | Fantasy Manager |
 """
 
     for relative_path, content in files_to_update.items():
