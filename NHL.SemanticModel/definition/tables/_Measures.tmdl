@@ -1,41 +1,63 @@
 table _Measures
-	lineageTag: 328dacd0-43e1-49b0-89a3-4c0ee0ed5ab2
+	lineageTag: a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d
 
-	measure 'Team Points' = ```
-			
-						SUM('DimTeams'[Points])
-			```
+	measure 'Team Points' = SUM('DimTeams'[Points])
 		formatString: 0
-		lineageTag: c5cd7da9-eb53-4e63-a7e1-508b2ce56efe
+		lineageTag: d4c3b2a1-f6e5-b8a7-d0c9-c6b5a4f3e2d1
 
 	measure 'Team Goal Diff' = SUM('DimTeams'[GoalDifferential])
-		formatString: 0
-		lineageTag: b6d4c9d7-4ec0-4af4-abca-a86f81a85dab
+		formatString: +0;-0;0
+		lineageTag: 1a2b3c4d-5e6f-7a8b-9c0d-e1f2a3b4c5d6
 
-	measure 'Current Streak' = ```
-			
-						IF(
-						    ISINSCOPE('DimTeams'[TeamName]), 
-						    MAX('DimTeams'[StreakType]) & MAX('DimTeams'[StreakCount]), 
-						    BLANK()
-						)
-			```
-		lineageTag: a7202a20-846d-4370-8701-606e2afa356d
+	measure 'Current Streak' =
+			IF(
+			    ISINSCOPE('DimTeams'[TeamName]),
+			    MAX('DimTeams'[StreakType]) & MAX('DimTeams'[StreakCount]),
+			    BLANK()
+			)
+		lineageTag: 9f8e7d6c-5b4a-3f2e-1d0c-b9a8f7e6d5c4
 
-	column Column
+	measure 'Player Max Speed (mph)' = AVERAGE('FactEdgeBurstDetails'[SkatingSpeedDetails.maxSkatingSpeed.imperial])
+		formatString: 0.00
+		lineageTag: 2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e
+
+	measure 'League Avg Max Speed (mph)' = AVERAGE('FactEdgeBurstDetails'[SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial])
+		formatString: 0.00
+		lineageTag: 3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f
+
+	measure 'Player Bursts > 22mph' = SUM('FactEdgeBurstDetails'[burstsOver22])
 		formatString: 0
-		lineageTag: bc2304a1-4935-47a1-8759-7ba8f0ca1a8b
-		summarizeBy: sum
+		lineageTag: 4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a
+
+	measure 'Player Bursts 20-22mph' = SUM('FactEdgeBurstDetails'[bursts20To22])
+		formatString: 0
+		lineageTag: 5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b
+
+	measure 'Player Goals' = SUM('DimPlayers'[Goals])
+		formatString: 0
+		lineageTag: a7570938-979f-4e80-a29b-4cd7d2519b6a
+
+	measure 'Player Assists' = SUM('DimPlayers'[Assists])
+		formatString: 0
+		lineageTag: 4a6c7476-e3cf-43ad-af51-77e2bd493ad9
+
+	measure 'Player Points' = SUM('DimPlayers'[Points])
+		formatString: 0
+		lineageTag: a6b93a6b-824f-457e-ae21-896744b9d35a
+
+	measure 'Games Played' = SUM('DimPlayers'[GamesPlayed])
+		formatString: 0
+		lineageTag: d3b4eedb-5a04-4e14-bb27-58fcbaa47ea7
+
+	column Value
+		dataType: int64
+		isHidden
+		lineageTag: df0fe028-898e-436c-9506-03a97af5e407
+		summarizeBy: none
 		isNameInferred
-		sourceColumn: [Column]
-
-		annotation SummarizationSetBy = Automatic
+		sourceColumn: [Value]
 
 	partition _Measures = calculated
 		mode: import
-		source = Row("Column", BLANK())
-
-	annotation PBI_Id = 2146d91f1b114cc988227f1e5408b70c
-
-	annotation 436ba87b-9c83-4389-a31b-ebd06a36be98 = {"Expression":""}
+		source = {BLANK()}
 

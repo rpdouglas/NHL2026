@@ -1,0 +1,106 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "621138b2ed30d18feb41",
+  "position": {
+    "x": 745.38152610441773,
+    "y": 38.554216867469883,
+    "z": 2001,
+    "height": 275.02008032128515,
+    "width": 349.55823293172693,
+    "tabOrder": 3
+  },
+  "visual": {
+    "visualType": "gauge",
+    "query": {
+      "queryState": {
+        "TargetValue": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "League Avg Max Speed (mph)"
+                }
+              },
+              "queryRef": "_Measures.League Avg Max Speed (mph)",
+              "nativeQueryRef": "League Avg Max Speed (mph)"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Player Max Speed (mph)"
+                }
+              },
+              "queryRef": "_Measures.Player Max Speed (mph)",
+              "nativeQueryRef": "Player Max Speed (mph)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "Player Max Speed (mph)"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "a4e1682d7c5dc02d8f25",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Player Max Speed (mph)"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "7a1823dfb25018886aef",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "League Avg Max Speed (mph)"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

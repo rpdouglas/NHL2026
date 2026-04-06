@@ -37,8 +37,45 @@ table DimPlayers
 	column HeadshotURL
 		dataType: string
 		lineageTag: 792ca273-8775-4a92-ae14-157d06865719
+		dataCategory: ImageUrl
 		summarizeBy: none
 		sourceColumn: HeadshotURL
+
+		annotation SummarizationSetBy = Automatic
+
+	column GamesPlayed
+		dataType: int64
+		formatString: 0
+		lineageTag: 70c59582-d7e6-4039-b4ca-07fb02dcc90b
+		summarizeBy: sum
+		sourceColumn: GamesPlayed
+
+		annotation SummarizationSetBy = Automatic
+
+	column Goals
+		dataType: int64
+		formatString: 0
+		lineageTag: 3ff463b9-8717-4979-82cd-6a51e48d61cd
+		summarizeBy: sum
+		sourceColumn: Goals
+
+		annotation SummarizationSetBy = Automatic
+
+	column Assists
+		dataType: int64
+		formatString: 0
+		lineageTag: 986b1221-dbb1-4de7-939e-6f633d14a7e5
+		summarizeBy: sum
+		sourceColumn: Assists
+
+		annotation SummarizationSetBy = Automatic
+
+	column Points
+		dataType: int64
+		formatString: 0
+		lineageTag: 3b454804-acd6-4a25-8d14-eed0b902d225
+		summarizeBy: sum
+		sourceColumn: Points
 
 		annotation SummarizationSetBy = Automatic
 
@@ -46,7 +83,7 @@ table DimPlayers
 		mode: import
 		source = ```
 				let
-				    // 1. Static Base URL and RelativePath configuration (Refresh Safety Requirement)
+				    // 1. Static Base URL and RelativePath configuration
 				    BaseUrl = "https://api.nhle.com",
 				    Path = "stats/rest/en/skater/summary",
 				    
@@ -58,37 +95,33 @@ table DimPlayers
 				
 				    // 3. Error Resilience: Fetch JSON
 				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path, Query=QueryParams])) otherwise null,
-				    
-				    // Extract the 'data' array
 				    DataList = try Source[data] otherwise {},
-				    
-				    // Convert to Table
 				    PlayersTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
 				    
-				    // 4. Data Flattening: Expand the player records
+				    // THE UPGRADE: We are now extracting GamesPlayed, Goals, Assists, and Points directly from the NHL API
 				    ExpandedPlayers = try Table.ExpandRecordColumn(PlayersTable, "Column1", 
-				        {"playerId", "skaterFullName", "positionCode", "shootsCatches"}, 
-				        {"PlayerID", "PlayerName", "Position", "ShootsCatches"}
+				        {"playerId", "skaterFullName", "positionCode", "shootsCatches", "gamesPlayed", "goals", "assists", "points"}, 
+				        {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points"}
 				    ) otherwise PlayersTable,
 				
-				    // Synthesize the Headshot URL so Power BI can render images in visuals without extra API calls
+				    // Synthesize the Headshot URL 
 				    AddHeadshotURL = Table.AddColumn(ExpandedPlayers, "HeadshotURL", 
-				        each "https://assets.nhle.com/mugs/nhl/latest/ext/light/" & Text.From([PlayerID]) & ".png", 
-				        type text
-				    ),
+				        each "https://assets.nhle.com/mugs/nhl/latest/ext/light/" & Text.From([PlayerID]) & ".png", type text),
 				
-				    // 5. Memory Efficiency: Select only necessary columns
-				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "HeadshotURL"}, MissingField.Ignore),
-				
-				    // THE FIX: Remove duplicates caused by mid-season trades to ensure a 1-to-Many relationship works
+				    // Memory Efficiency & Deduplication
+				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "HeadshotURL"}, MissingField.Ignore),
 				    RemoveDuplicates = Table.Distinct(FinalColumns, {"PlayerID"}),
 				
-				    // 6. Data Typing: Cast for DAX engine optimization
+				    // Data Typing
 				    TypedData = Table.TransformColumnTypes(RemoveDuplicates, {
 				        {"PlayerID", Int64.Type}, 
 				        {"PlayerName", type text}, 
 				        {"Position", type text}, 
 				        {"ShootsCatches", type text},
+				        {"GamesPlayed", Int64.Type},
+				        {"Goals", Int64.Type},
+				        {"Assists", Int64.Type},
+				        {"Points", Int64.Type},
 				        {"HeadshotURL", type text}
 				    })
 				in

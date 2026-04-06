@@ -43,7 +43,7 @@
               },
               "queryRef": "DimTeams.Division",
               "nativeQueryRef": "Division",
-              "active": false
+              "active": true
             },
             {
               "field": {
@@ -58,7 +58,7 @@
               },
               "queryRef": "DimTeams.TeamName",
               "nativeQueryRef": "TeamName",
-              "active": false
+              "active": true
             }
           ]
         },
@@ -162,7 +162,32 @@
             "isPinned": true
           }
         ],
-        "root": {}
+        "root": {
+          "children": [
+            {
+              "identityValues": [
+                {
+                  "Literal": {
+                    "Value": "'Eastern'"
+                  }
+                }
+              ],
+              "isToggled": true,
+              "children": [
+                {
+                  "identityValues": [
+                    {
+                      "Literal": {
+                        "Value": "'Atlantic'"
+                      }
+                    }
+                  ],
+                  "isToggled": true
+                }
+              ]
+            }
+          ]
+        }
       }
     ],
     "objects": {

@@ -1,0 +1,158 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "1e7f30ec0a784a35a94c",
+  "position": {
+    "x": 0,
+    "y": 425.38152610441767,
+    "z": 2000,
+    "height": 275.02008032128515,
+    "width": 430.52208835341366,
+    "tabOrder": 2
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Player Goals"
+                }
+              },
+              "queryRef": "_Measures.Player Goals",
+              "nativeQueryRef": "Player Goals"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Player Assists"
+                }
+              },
+              "queryRef": "_Measures.Player Assists",
+              "nativeQueryRef": "Player Assists"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Player Points"
+                }
+              },
+              "queryRef": "_Measures.Player Points",
+              "nativeQueryRef": "Player Points"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Games Played"
+                }
+              },
+              "queryRef": "_Measures.Games Played",
+              "nativeQueryRef": "Games Played"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "Player Goals"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "9dccf5688a0d8d1329b1",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Player Goals"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "4e6bf74a1d601fa9d113",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Player Assists"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "7d5d773bd177a38bf885",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Player Points"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "25f3ff06b2d3fdff9a12",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Games Played"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

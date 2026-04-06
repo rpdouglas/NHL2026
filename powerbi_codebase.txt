@@ -181,7 +181,7 @@ annotation __PBI_TimeIntelligenceEnabled = 0
 
 annotation PBI_QueryOrder = ["DimGames","fxGetPlayByPlay","FactLivePlays","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","Query1","FactEdgeSkatingSpeeds","FactEdgeBurstDetails","game","FactHistoricalPlays"]
 
-annotation PBI_ProTooling = ["DevMode"]
+annotation PBI_ProTooling = ["DevMode","TMDL-Extension"]
 
 ref table DimGames
 ref table FactLivePlays
@@ -192,6 +192,7 @@ ref table FactEdgeSkatingSpeeds
 ref table FactEdgeBurstDetails
 ref table FactHistoricalPlays
 ref table FactPlayByPlay
+ref table _Measures
 
 ref cultureInfo en-US
 
@@ -703,146 +704,44 @@ table FactEdgeBurstDetails
 	lineageTag: f9823446-ee09-40ee-b8b8-b67bfae7fe60
 
 	column PlayerID
-		dataType: string
-		lineageTag: f34a2b91-59f0-4070-a16a-b904c44568b2
-		summarizeBy: none
+		dataType: int64
+		lineageTag: 63f51f3f-9c5e-4cd6-b4a1-3c722ac0a760
 		sourceColumn: PlayerID
 
-		annotation SummarizationSetBy = Automatic
-
 	column 'SkatingSpeedDetails.maxSkatingSpeed.imperial'
-		dataType: string
-		lineageTag: d86f4245-dc53-4607-a380-3e453826caab
-		summarizeBy: none
+		dataType: double
+		lineageTag: 0b1d0e6c-d515-429c-a615-ccf6687f9434
 		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.imperial
 
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.metric'
-		dataType: string
-		lineageTag: 2669ea18-3b3e-4fb7-a238-d0b39cbf7600
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.metric
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.percentile'
-		dataType: string
-		lineageTag: 577ced23-edc1-450e-ab30-d7e06d38b0e2
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.percentile
-
-		annotation SummarizationSetBy = Automatic
-
 	column 'SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial'
-		dataType: string
-		lineageTag: bcbd76e8-3186-4d6c-bfe8-d5746fbd65e1
-		summarizeBy: none
+		dataType: double
+		lineageTag: 0339ea95-458c-41b7-bca3-a1f743038bd9
 		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial
 
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.metric'
-		dataType: string
-		lineageTag: 0332ad78-318b-453e-957f-273da4cc1a98
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.metric
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName.default'
-		dataType: string
-		lineageTag: 2cf4d853-8d42-43fe-a1c6-1a2d031fa9bc
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName.default
+	column burstsOver22
+		dataType: int64
+		formatString: 0
+		lineageTag: 530e7c9d-d1ab-4387-b5fa-e27ccf98ff79
+		summarizeBy: sum
+		sourceColumn: burstsOver22
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.player.lastName'
-		dataType: string
-		lineageTag: 45ee8306-16ef-4b5b-9a4d-a545051f1925
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.player.lastName
+	column bursts20To22
+		dataType: int64
+		formatString: 0
+		lineageTag: fdf09fbc-3208-48c6-a7bf-8d42b6bccef4
+		summarizeBy: sum
+		sourceColumn: bursts20To22
 
 		annotation SummarizationSetBy = Automatic
 
-	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.gameDate'
-		dataType: string
-		lineageTag: f3330b11-5e93-4959-9090-9d83fc843ae6
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.gameDate
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.awayTeam'
-		dataType: string
-		lineageTag: 0f65d272-2f83-4de9-907b-0cda2bed97e8
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.awayTeam
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.homeTeam'
-		dataType: string
-		lineageTag: d9e38a73-f074-4358-8ae4-f8299aa84d49
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.homeTeam
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.gameOutcome'
-		dataType: string
-		lineageTag: 14827254-11bd-4a26-9059-c50207fed10f
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.gameOutcome
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.periodDescriptor'
-		dataType: string
-		lineageTag: 7a25119b-8e4b-440c-832b-98eb2f703250
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.periodDescriptor
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.timeInPeriod'
-		dataType: string
-		lineageTag: 4294ca64-6d57-464e-ad07-f4981518b343
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.timeInPeriod
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.maxSkatingSpeed.overlay.gameType'
-		dataType: string
-		lineageTag: 7232e105-21bd-4d69-b3e5-2fc9da4b6f1b
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.maxSkatingSpeed.overlay.gameType
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.burstsOver22'
-		dataType: string
-		lineageTag: 93ac8c46-7ce4-4472-ad43-722961846dfe
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.burstsOver22
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.bursts20To22'
-		dataType: string
-		lineageTag: 2d51fe06-fcd3-412f-9afd-c37fe0a278f5
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.bursts20To22
-
-		annotation SummarizationSetBy = Automatic
-
-	column 'SkatingSpeedDetails.bursts18To20'
-		dataType: string
-		lineageTag: 615b43b0-a5d2-451b-9aff-ea52509f615e
-		summarizeBy: none
-		sourceColumn: SkatingSpeedDetails.bursts18To20
+	column bursts18To20
+		dataType: int64
+		formatString: 0
+		lineageTag: dad6a708-8c4a-4918-9d27-a3910b50e756
+		summarizeBy: sum
+		sourceColumn: bursts18To20
 
 		annotation SummarizationSetBy = Automatic
 
@@ -852,18 +751,37 @@ table FactEdgeBurstDetails
 				let
 				    Source = Staging_EDGE,
 				    #"Removed Columns" = Table.RemoveColumns(Source,{"TopSkatingSpeeds"}),
-				    #"Expanded SkatingSpeedDetails" = Table.ExpandRecordColumn(#"Removed Columns", "SkatingSpeedDetails", {"maxSkatingSpeed", "burstsOver22", "bursts20To22", "bursts18To20"}, {"SkatingSpeedDetails.maxSkatingSpeed", "SkatingSpeedDetails.burstsOver22", "SkatingSpeedDetails.bursts20To22", "SkatingSpeedDetails.bursts18To20"}),
-				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails", "SkatingSpeedDetails.maxSkatingSpeed", {"imperial", "metric", "percentile", "leagueAvg", "overlay"}, {"SkatingSpeedDetails.maxSkatingSpeed.imperial", "SkatingSpeedDetails.maxSkatingSpeed.metric", "SkatingSpeedDetails.maxSkatingSpeed.percentile", "SkatingSpeedDetails.maxSkatingSpeed.leagueAvg", "SkatingSpeedDetails.maxSkatingSpeed.overlay"}),
-				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails.maxSkatingSpeed", "SkatingSpeedDetails.maxSkatingSpeed.overlay", {"player", "gameDate", "awayTeam", "homeTeam", "gameOutcome", "periodDescriptor", "timeInPeriod", "gameType"}, {"SkatingSpeedDetails.maxSkatingSpeed.overlay.player", "SkatingSpeedDetails.maxSkatingSpeed.overlay.gameDate", "SkatingSpeedDetails.maxSkatingSpeed.overlay.awayTeam", "SkatingSpeedDetails.maxSkatingSpeed.overlay.homeTeam", "SkatingSpeedDetails.maxSkatingSpeed.overlay.gameOutcome", "SkatingSpeedDetails.maxSkatingSpeed.overlay.periodDescriptor", "SkatingSpeedDetails.maxSkatingSpeed.overlay.timeInPeriod", "SkatingSpeedDetails.maxSkatingSpeed.overlay.gameType"}),
-				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay.player" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay", "SkatingSpeedDetails.maxSkatingSpeed.overlay.player", {"firstName", "lastName"}, {"SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName", "SkatingSpeedDetails.maxSkatingSpeed.overlay.player.lastName"}),
-				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay.player", "SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName", {"default"}, {"SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName.default"}),
-				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.leagueAvg" = Table.ExpandRecordColumn(#"Expanded SkatingSpeedDetails.maxSkatingSpeed.overlay.player.firstName", "SkatingSpeedDetails.maxSkatingSpeed.leagueAvg", {"imperial", "metric"}, {"SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial", "SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.metric"})
+				
+				    // Force the expansion of ALL nested fields
+				    #"Expanded" = Table.ExpandRecordColumn(#"Removed Columns", "SkatingSpeedDetails", {"maxSkatingSpeed", "burstsOver22", "bursts20To22", "bursts18To20"}),
+				
+				    // SURGICAL EXTRACTION: Use a safer method to grab only the 'count' value if it's a record
+				    GetCount = (val) => if val is record then try val[count] otherwise 0 else val,
+				
+				    AddOver22 = Table.TransformColumns(#"Expanded", {{"burstsOver22", each GetCount(_)}}),
+				    Add20To22 = Table.TransformColumns(AddOver22, {{"bursts20To22", each GetCount(_)}}),
+				    Add18To20 = Table.TransformColumns(Add20To22, {{"bursts18To20", each GetCount(_)}}),
+				
+				    // Handle Speeds
+				    #"ExpandedMax" = Table.ExpandRecordColumn(Add18To20, "maxSkatingSpeed", {"imperial", "leagueAvg"}),
+				    #"ExpandedAvg" = Table.ExpandRecordColumn(#"ExpandedMax", "leagueAvg", {"imperial"}, {"avg.imp"}),
+				
+				    // Final Strict Typing
+				    Typed = Table.TransformColumnTypes(#"ExpandedAvg", {
+				        {"PlayerID", Int64.Type},
+				        {"imperial", type number},
+				        {"avg.imp", type number},
+				        {"burstsOver22", Int64.Type},
+				        {"bursts20To22", Int64.Type},
+				        {"bursts18To20", Int64.Type}
+				    }),
+				
+				    FinalRenamed = Table.RenameColumns(Typed, {
+				        {"imperial", "SkatingSpeedDetails.maxSkatingSpeed.imperial"},
+				        {"avg.imp", "SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial"}
+				    })
 				in
-				    #"Expanded SkatingSpeedDetails.maxSkatingSpeed.leagueAvg"
-
-	annotation PBI_NavigationStepName = Navigation
-
-	annotation PBI_ResultType = Exception
+				    FinalRenamed
 
 
 
@@ -916,9 +834,9 @@ table FactEdgeSkatingSpeeds
 		annotation SummarizationSetBy = Automatic
 
 	column 'skatingSpeed.imperial'
-		dataType: string
+		dataType: double
 		lineageTag: 2fd2300a-6572-4b83-b66f-ce2ac517511f
-		summarizeBy: none
+		summarizeBy: sum
 		sourceColumn: skatingSpeed.imperial
 
 		annotation SummarizationSetBy = Automatic
@@ -1610,6 +1528,60 @@ table Query1
 
 
 // --------------------------------------------------------------------------
+// FILE: NHL.SemanticModel\definition\tables\_Measures.tmdl
+// --------------------------------------------------------------------------
+
+table _Measures
+	lineageTag: a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d
+
+	measure 'Team Points' = SUM('DimTeams'[Points])
+		formatString: 0
+		lineageTag: d4c3b2a1-f6e5-b8a7-d0c9-c6b5a4f3e2d1
+
+	measure 'Team Goal Diff' = SUM('DimTeams'[GoalDifferential])
+		formatString: +0;-0;0
+		lineageTag: 1a2b3c4d-5e6f-7a8b-9c0d-e1f2a3b4c5d6
+
+	measure 'Current Streak' =
+			IF(
+			    ISINSCOPE('DimTeams'[TeamName]),
+			    MAX('DimTeams'[StreakType]) & MAX('DimTeams'[StreakCount]),
+			    BLANK()
+			)
+		lineageTag: 9f8e7d6c-5b4a-3f2e-1d0c-b9a8f7e6d5c4
+
+	measure 'Player Max Speed (mph)' = AVERAGE('FactEdgeBurstDetails'[SkatingSpeedDetails.maxSkatingSpeed.imperial])
+		formatString: 0.00
+		lineageTag: 2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e
+
+	measure 'League Avg Max Speed (mph)' = AVERAGE('FactEdgeBurstDetails'[SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial])
+		formatString: 0.00
+		lineageTag: 3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f
+
+	measure 'Player Bursts > 22mph' = SUM('FactEdgeBurstDetails'[SkatingSpeedDetails.burstsOver22])
+		formatString: 0
+		lineageTag: 4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a
+
+	measure 'Player Bursts 20-22mph' = SUM('FactEdgeBurstDetails'[SkatingSpeedDetails.bursts20To22])
+		formatString: 0
+		lineageTag: 5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b
+
+	column Value
+		dataType: int64
+		isHidden
+		lineageTag: df0fe028-898e-436c-9506-03a97af5e407
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Value]
+
+	partition _Measures = calculated
+		mode: import
+		source = {BLANK()}
+
+
+
+
+// --------------------------------------------------------------------------
 // FILE: docs\CONTEXT_DUMP.md
 // --------------------------------------------------------------------------
 
@@ -1714,7 +1686,7 @@ graph TD
 
 ### `DimTeams`
 * **Purpose:** The Digital Rolodex for franchises. Built via a Left Outer Join of the legacy Stats API (for historical IDs) and the live Standings API.
-* **Fields:** `TeamID` (PK), `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`.
+* **Fields:** `TeamID` (PK), `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`, `GoalDifferential`, `StreakType`, `StreakCount`.
 
 ### `DimPlayers`
 * **Purpose:** Active roster dictionary.
@@ -1734,6 +1706,12 @@ graph TD
 * **Purpose:** Player telemetry for acceleration and league comparisons.
 * **Fields:** `PlayerID` (FK), `max.imperial`, `max.percentile`, `leagueAvg.imperial`, `burstsOver22`.
 
+## 4. DAX Measures (`_Measures` Table)
+* **Purpose:** Centralized repository for all explicit DAX calculations to prevent model scattering.
+* **Metrics:** * `Team Points`: `SUM('DimTeams'[Points])`
+  * `Team Goal Diff`: `SUM('DimTeams'[GoalDifferential])`
+  * `Current Streak`: Uses `ISINSCOPE` to restrict streak rendering to the lowest Team hierarchy level.
+
 
 
 // --------------------------------------------------------------------------
@@ -1750,7 +1728,7 @@ graph TD
 - [x] **Sprint 0.3:** Schema hardening, PK uniqueness, and 2025-2026 season rollover.
 
 ## 🟡 Sprint 1.0: The Visual Foundation (Active)
-- [ ] **PROJ-01:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the `DimTeams` table.
+- [x] **PROJ-01:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the `DimTeams` table.
 - [ ] **PROJ-02:** The EDGE Radar Plot. Build DAX measures calculating Player Speed/Bursts vs. League Average.
 - [ ] **PROJ-03:** Spatial Rink Mapping. Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`.
 
@@ -1956,29 +1934,15 @@ if __name__ == "__main__":
 
 import os
 
-def update_planning_docs():
-    # 1. Setup paths
+def sync_docs():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(script_dir, '..'))
     
-    # 2. Protection variable for markdown code blocks
     FENCE = chr(96) * 3
-    files_to_create = {}
+    files_to_update = {}
 
-    # --- FILE 1: ROADMAP.md ---
-    files_to_create['docs/ROADMAP.md'] = r"""# 🗺️ NHL Analytics Product Roadmap
-
-## 📅 Q2 2026: The Core Modules
-| Status | ID | Epic Name | Persona Focus | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `EPIC-01` | **The Visual Foundation** | All | Establish base visuals, SVG mapping, and core DAX metrics. |
-| ⚪ Planned | `EPIC-02` | **The Fantasy Console** | Manager | Deploy EDGE telemetry radar plots and value scatter charts. |
-| ⚪ Planned | `EPIC-03` | **The Coach's War Room** | Scout | Build the Expected Goals (xG) spatial engine using X/Y coordinates. |
-| ⚪ Planned | `EPIC-04` | **Automated Deployment** | Admin | Migrate to Power BI Service with scheduled daily API refreshes. |
-"""
-
-    # --- FILE 2: SPRINT_BOARD.md ---
-    files_to_create['docs/SPRINT_BOARD.md'] = r"""# 🏃 Active Sprint Board
+    # --- FILE 1: SPRINT_BOARD.md ---
+    files_to_update['docs/SPRINT_BOARD.md'] = r"""# 🏃 Active Sprint Board
 
 **Current Phase:** Sprint 1.0 (The Visual Foundation)
 
@@ -1988,7 +1952,7 @@ def update_planning_docs():
 - [x] **Sprint 0.3:** Schema hardening, PK uniqueness, and 2025-2026 season rollover.
 
 ## 🟡 Sprint 1.0: The Visual Foundation (Active)
-- [ ] **PROJ-01:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the `DimTeams` table.
+- [x] **PROJ-01:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the `DimTeams` table.
 - [ ] **PROJ-02:** The EDGE Radar Plot. Build DAX measures calculating Player Speed/Bursts vs. League Average.
 - [ ] **PROJ-03:** Spatial Rink Mapping. Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`.
 
@@ -1997,20 +1961,73 @@ def update_planning_docs():
 - [ ] **PROJ-05:** Trade Target Scatter Plot (Speed vs. Volume).
 """
 
-    # 3. Write the files safely to disk
-    for relative_path, content in files_to_create.items():
+    # --- FILE 2: SCHEMA_ARCHITECTURE.md ---
+    files_to_update['docs/SCHEMA_ARCHITECTURE.md'] = r"""# 🗄️ Schema Architecture & Data Graph
+
+**Storage Engine:** Power BI VertiPaq (In-Memory Columnar Database)
+**Format:** TMDL (Tabular Model Definition Language)
+
+## 1. High-Level Topology
+
+__FENCE__mermaid
+graph TD
+    DimGames --> FactPlayByPlay
+    DimTeams --> FactPlayByPlay
+    DimPlayers --> FactPlayByPlay
+    
+    DimTeams --> FactEdgeSkatingSpeeds
+    DimPlayers --> FactEdgeSkatingSpeeds
+    
+    DimPlayers --> FactEdgeBurstDetails
+    DimGames --> FactEdgeSkatingSpeeds
+__FENCE__
+
+## 2. Dimension Tables (Lookups)
+
+### `DimGames`
+* **Purpose:** Unified tracking of all games (Live API + Historical Kaggle).
+* **Fields:** `GameID` (PK), `Season`, `GameType`, `GameDate`, `HomeTeamID`, `AwayTeamID`.
+
+### `DimTeams`
+* **Purpose:** The Digital Rolodex for franchises. Built via a Left Outer Join of the legacy Stats API (for historical IDs) and the live Standings API.
+* **Fields:** `TeamID` (PK), `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`, `GoalDifferential`, `StreakType`, `StreakCount`.
+
+### `DimPlayers`
+* **Purpose:** Active roster dictionary.
+* **Fields:** `PlayerID` (PK), `PlayerName`, `Position`, `ShootsCatches`, `HeadshotURL`.
+
+## 3. Fact Tables (Events & Telemetry)
+
+### `FactPlayByPlay` (DAX UNION Table)
+* **Purpose:** The core event ledger. Unifies `FactLivePlays` and `FactHistoricalPlays`.
+* **Fields:** `GameID` (FK), `EventID`, `PeriodNumber`, `TimeInPeriod_Seconds`, `EventType`, `EventTeamID` (FK), `X_Coord`, `Y_Coord`, `ScoringPlayerID` (FK), `ShootingPlayerID` (FK).
+
+### `FactEdgeSkatingSpeeds`
+* **Purpose:** Player telemetry for top speeds.
+* **Fields:** `PlayerID` (FK), `skatingSpeed.imperial`, `skatingSpeed.metric`, `periodDescriptor.number`.
+
+### `FactEdgeBurstDetails`
+* **Purpose:** Player telemetry for acceleration and league comparisons.
+* **Fields:** `PlayerID` (FK), `max.imperial`, `max.percentile`, `leagueAvg.imperial`, `burstsOver22`.
+
+## 4. DAX Measures (`_Measures` Table)
+* **Purpose:** Centralized repository for all explicit DAX calculations to prevent model scattering.
+* **Metrics:** * `Team Points`: `SUM('DimTeams'[Points])`
+  * `Team Goal Diff`: `SUM('DimTeams'[GoalDifferential])`
+  * `Current Streak`: Uses `ISINSCOPE` to restrict streak rendering to the lowest Team hierarchy level.
+"""
+
+    for relative_path, content in files_to_update.items():
         full_path = os.path.join(project_root, relative_path)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        
         safe_content = content.replace('__FENCE__', FENCE)
-        
         with open(full_path, 'w', encoding='utf-8') as f:
             f.write(safe_content)
-        print(f"✅ Updated: {relative_path}")
+        print(f"✅ Synced: {relative_path}")
 
-    print("\n🚀 Project Roadmap and Sprint Board updated successfully!")
+    print("\n🚀 Post-Sprint Audit complete. Documentation is perfectly synced with the codebase!")
 
 if __name__ == "__main__":
-    update_planning_docs()
+    sync_docs()
 
 

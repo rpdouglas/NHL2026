@@ -1,0 +1,162 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "7d6741e7792ff147eba1",
+  "position": {
+    "x": 424.09638554216872,
+    "y": 28.273092369477911,
+    "z": 2,
+    "height": 526.90763052208843,
+    "width": 595.02008032128515,
+    "tabOrder": 2
+  },
+  "visual": {
+    "visualType": "RadarChart1446119667547",
+    "query": {
+      "queryState": {
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Player Max Speed (mph)"
+                }
+              },
+              "queryRef": "_Measures.Player Max Speed (mph)",
+              "nativeQueryRef": "Player Max Speed (mph)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "League Avg Max Speed (mph)"
+                }
+              },
+              "queryRef": "_Measures.League Avg Max Speed (mph)",
+              "nativeQueryRef": "League Avg Max Speed (mph)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Player Bursts > 22mph"
+                }
+              },
+              "queryRef": "_Measures.Player Bursts > 22mph",
+              "nativeQueryRef": "Player Bursts > 22mph"
+            }
+          ]
+        },
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimPlayers"
+                    }
+                  },
+                  "Property": "PlayerName"
+                }
+              },
+              "queryRef": "DimPlayers.PlayerName",
+              "nativeQueryRef": "PlayerName"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "Player Max Speed (mph)"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "ff7937957ba7eee0b502",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Player Max Speed (mph)"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "09099f3db6509fdf7b40",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "League Avg Max Speed (mph)"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "ae44f6bd99abf747445b",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Player Bursts > 22mph"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "ca51b9421185a77db8d4",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimPlayers"
+              }
+            },
+            "Property": "PlayerName"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}
