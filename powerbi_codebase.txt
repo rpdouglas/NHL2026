@@ -237,6 +237,36 @@ relationship 7de5cb31-0665-f4c1-27ae-2da6b6ea180e
 
 cultureInfo en-US
 
+	linguisticMetadata =
+			{
+			  "Version": "2.0.0",
+			  "Language": "en-US",
+			  "Entities": {
+			    "dimplayers.playername": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "DimPlayers",
+			          "ConceptualProperty": "PlayerName"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Player": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    }
+			  }
+			}
+		contentType: json
+
 
 
 
@@ -487,12 +517,20 @@ table DimPlayers
 
 		annotation SummarizationSetBy = Automatic
 
+	column CurrentTeamAbbrev
+		dataType: string
+		lineageTag: 52a1b9c3-4d5e-4f6a-b7c8-d9e0f1a2b3c4
+		summarizeBy: none
+		sourceColumn: CurrentTeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
 	partition DimPlayers = m
 		mode: import
 		source = ```
 				let
 				    // 1. Static Base URL and RelativePath configuration
-				    BaseUrl = "https://api.nhle.com",
+				    BaseUrl = "[https://api.nhle.com](https://api.nhle.com)",
 				    Path = "stats/rest/en/skater/summary",
 				    
 				    // 2. API Governance: Pull active skaters for the current 2025-2026 season
@@ -506,21 +544,25 @@ table DimPlayers
 				    DataList = try Source[data] otherwise {},
 				    PlayersTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
 				    
-				    // THE UPGRADE: We are now extracting GamesPlayed, Goals, Assists, and Points directly from the NHL API
+				    // THE UPGRADE: We added 'teamAbbrevs' to extract the raw team strings
 				    ExpandedPlayers = try Table.ExpandRecordColumn(PlayersTable, "Column1", 
-				        {"playerId", "skaterFullName", "positionCode", "shootsCatches", "gamesPlayed", "goals", "assists", "points"}, 
-				        {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points"}
+				        {"playerId", "skaterFullName", "positionCode", "shootsCatches", "gamesPlayed", "goals", "assists", "points", "teamAbbrevs"}, 
+				        {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "RawTeams"}
 				    ) otherwise PlayersTable,
 				
+				    // THE FIX: If a player was traded, 'RawTeams' looks like "MTL, WPG". We grab the first team (current) to ensure a clean join.
+				    AddCurrentTeam = Table.AddColumn(ExpandedPlayers, "CurrentTeamAbbrev", 
+				        each try Text.Trim(Text.Split([RawTeams], ","){0}) otherwise [RawTeams], type text),
+				
 				    // Synthesize the Headshot URL 
-				    AddHeadshotURL = Table.AddColumn(ExpandedPlayers, "HeadshotURL", 
-				        each "https://assets.nhle.com/mugs/nhl/latest/ext/light/" & Text.From([PlayerID]) & ".png", type text),
+				    AddHeadshotURL = Table.AddColumn(AddCurrentTeam, "HeadshotURL", 
+				        each "[https://assets.nhle.com/mugs/nhl/latest/ext/light/](https://assets.nhle.com/mugs/nhl/latest/ext/light/)" & Text.From([PlayerID]) & ".png", type text),
 				
 				    // Memory Efficiency & Deduplication
-				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "HeadshotURL"}, MissingField.Ignore),
+				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "CurrentTeamAbbrev", "HeadshotURL"}, MissingField.Ignore),
 				    RemoveDuplicates = Table.Distinct(FinalColumns, {"PlayerID"}),
 				
-				    // Data Typing
+				    // Strict Data Typing
 				    TypedData = Table.TransformColumnTypes(RemoveDuplicates, {
 				        {"PlayerID", Int64.Type}, 
 				        {"PlayerName", type text}, 
@@ -530,6 +572,7 @@ table DimPlayers
 				        {"Goals", Int64.Type},
 				        {"Assists", Int64.Type},
 				        {"Points", Int64.Type},
+				        {"CurrentTeamAbbrev", type text},
 				        {"HeadshotURL", type text}
 				    })
 				in
@@ -1696,11 +1739,10 @@ Visuals and measures must pass the "Persona Check" based on the user's analytica
 ## 📅 Q2 2026: The Core Modules
 | Status | ID | Epic Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `EPIC-01` | **The Visual Foundation** | All | Establish base visuals, SVG mapping, and core DAX metrics. |
-| ⚪ Planned | `EPIC-02` | **The Fantasy Console** | Manager | Deploy EDGE telemetry radar plots and value scatter charts. |
+| 🟡 **Active** | `EPIC-01` | **The Core Reporting Flow** | Casual Fan / Manager | Establish the Macro-to-Micro drill-through experience (League -> Team -> Player) using traditional box-score metrics. |
+| ⚪ Planned | `EPIC-02` | **The Fantasy Console (EDGE)** | Fantasy Manager | Deploy EDGE telemetry radar plots and speed scatter charts. |
 | ⚪ Planned | `EPIC-03` | **The Coach's War Room** | Scout | Build the Expected Goals (xG) spatial engine using X/Y coordinates. |
 | ⚪ Planned | `EPIC-04` | **Automated Deployment** | Admin | Migrate to Power BI Service with scheduled daily API refreshes. |
-
 
 
 // --------------------------------------------------------------------------
@@ -1769,22 +1811,25 @@ graph TD
 
 # 🏃 Active Sprint Board
 
-**Current Phase:** Sprint 1.0 (The Visual Foundation)
+**Current Phase:** Sprint 1.0 (The Core Reporting Flow)
 
 ## ✅ Completed Sprints
 - [x] **Sprint 0.1:** Core API connections established (Plays, Teams, Players, EDGE).
 - [x] **Sprint 0.2:** Lambda Architecture deployed (DAX UNION).
 - [x] **Sprint 0.3:** Schema hardening, PK uniqueness, and 2025-2026 season rollover.
+- [x] **PROJ-01:** The Standings Matrix. (League Level)
+- [x] **PROJ-01.5:** Traditional Stats Integration (G, A, P, GP extracted in DimPlayers).
 
-## 🟡 Sprint 1.0: The Visual Foundation (Active)
-- [x] **PROJ-01:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the `DimTeams` table.
-- [ ] **PROJ-02:** The EDGE Radar Plot. Build DAX measures calculating Player Speed/Bursts vs. League Average.
-- [ ] **PROJ-03:** Spatial Rink Mapping. Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`.
+## 🟡 Sprint 1.0: The Core Reporting Flow (Active)
+- [ ] **PROJ-02: The League Dashboard.** Assemble the front page using the PROJ-01 Standings Matrix and a "League Leaders" Top 5 table.
+- [ ] **PROJ-03: The Team Report.** Build the mid-level drill-through page. Requires mapping `CurrentTeamAbbrev` into `DimPlayers` to link the roster to the team entity.
+- [ ] **PROJ-04: The Player Scorecard.** Finalize the drill-through destination page using the Identity Banner and Traditional Stats KPIs.
 
-## 🧊 Product Backlog
-- [ ] **PROJ-04:** Expected Goals (xG) DAX Model (Distance from net calculation).
-- [ ] **PROJ-05:** Trade Target Scatter Plot (Speed vs. Volume).
-
+## 🧊 Product Backlog (Sprint 2.0 - Advanced Analytics)
+- [ ] **PROJ-05:** The EDGE Radar Plot (Re-integrate burst telemetry).
+- [ ] **PROJ-06:** Spatial Rink Mapping (Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`).
+- [ ] **PROJ-07:** Expected Goals (xG) Distance DAX Model.
+- [ ] **PROJ-08:** Trade Target Scatter Plot (Speed vs. Volume).
 
 
 // --------------------------------------------------------------------------

@@ -79,6 +79,14 @@ table DimPlayers
 
 		annotation SummarizationSetBy = Automatic
 
+	column CurrentTeamAbbrev
+		dataType: string
+		lineageTag: 52a1b9c3-4d5e-4f6a-b7c8-d9e0f1a2b3c4
+		summarizeBy: none
+		sourceColumn: CurrentTeamAbbrev
+
+		annotation SummarizationSetBy = Automatic
+
 	partition DimPlayers = m
 		mode: import
 		source = ```
@@ -98,21 +106,25 @@ table DimPlayers
 				    DataList = try Source[data] otherwise {},
 				    PlayersTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
 				    
-				    // THE UPGRADE: We are now extracting GamesPlayed, Goals, Assists, and Points directly from the NHL API
+				    // THE UPGRADE: We added 'teamAbbrevs' to extract the raw team strings
 				    ExpandedPlayers = try Table.ExpandRecordColumn(PlayersTable, "Column1", 
-				        {"playerId", "skaterFullName", "positionCode", "shootsCatches", "gamesPlayed", "goals", "assists", "points"}, 
-				        {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points"}
+				        {"playerId", "skaterFullName", "positionCode", "shootsCatches", "gamesPlayed", "goals", "assists", "points", "teamAbbrevs"}, 
+				        {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "RawTeams"}
 				    ) otherwise PlayersTable,
 				
+				    // THE FIX: If a player was traded, 'RawTeams' looks like "MTL, WPG". We grab the first team (current) to ensure a clean join.
+				    AddCurrentTeam = Table.AddColumn(ExpandedPlayers, "CurrentTeamAbbrev", 
+				        each try Text.Trim(Text.Split([RawTeams], ","){0}) otherwise [RawTeams], type text),
+				
 				    // Synthesize the Headshot URL 
-				    AddHeadshotURL = Table.AddColumn(ExpandedPlayers, "HeadshotURL", 
+				    AddHeadshotURL = Table.AddColumn(AddCurrentTeam, "HeadshotURL", 
 				        each "https://assets.nhle.com/mugs/nhl/latest/ext/light/" & Text.From([PlayerID]) & ".png", type text),
 				
 				    // Memory Efficiency & Deduplication
-				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "HeadshotURL"}, MissingField.Ignore),
+				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "CurrentTeamAbbrev", "HeadshotURL"}, MissingField.Ignore),
 				    RemoveDuplicates = Table.Distinct(FinalColumns, {"PlayerID"}),
 				
-				    // Data Typing
+				    // Strict Data Typing
 				    TypedData = Table.TransformColumnTypes(RemoveDuplicates, {
 				        {"PlayerID", Int64.Type}, 
 				        {"PlayerName", type text}, 
@@ -122,6 +134,7 @@ table DimPlayers
 				        {"Goals", Int64.Type},
 				        {"Assists", Int64.Type},
 				        {"Points", Int64.Type},
+				        {"CurrentTeamAbbrev", type text},
 				        {"HeadshotURL", type text}
 				    })
 				in
