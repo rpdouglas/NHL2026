@@ -1,0 +1,49 @@
+{
+    "name": "NHL Midnight Ice",
+    "dataColors": [
+        "#00E5FF", 
+        "#FF003F", 
+        "#FFD700", 
+        "#8B9BB4", 
+        "#FFFFFF"
+    ],
+    "background": "#121820",
+    "foreground": "#FFFFFF",
+    "tableAccent": "#00E5FF",
+    "visualStyles": {
+        "*": {
+            "*": {
+                "background": [{"show": true, "color": {"solid": {"color": "#1A222C"}}, "transparency": 0}],
+                "visualHeader": [{"show": false}],
+                "border": [{"show": true, "color": {"solid": {"color": "#2A3645"}}, "radius": 8}],
+                "dropShadow": [{"show": true, "angle": 90, "blur": 8, "color": {"solid": {"color": "#000000"}}, "transparency": 70}]
+            }
+        },
+        "page": {
+            "*": {
+                "background": [{"solid": {"color": "#121820"}, "transparency": 0}],
+                "outspace": [{"solid": {"color": "#090C10"}}]
+            }
+        },
+        "card": {
+            "*": {
+                "labels": [{"color": {"solid": {"color": "#8B9BB4"}}, "fontSize": 12, "fontFamily": "Segoe UI Semibold"}],
+                "categoryAxis": [{"show": true, "color": {"solid": {"color": "#FFFFFF"}}, "fontSize": 24, "fontFamily": "Segoe UI Bold"}]
+            }
+        },
+        "tableEx": {
+            "*": {
+                "grid": [{"gridVertical": false, "gridHorizontal": true, "gridHorizontalColor": {"solid": {"color": "#2A3645"}}}],
+                "columnHeaders": [{"fontColor": {"solid": {"color": "#8B9BB4"}}, "backColor": {"solid": {"color": "#1A222C"}}, "fontFamily": "Segoe UI Bold"}],
+                "values": [
+                    {
+                        "fontColorPrimary": {"solid": {"color": "#FFFFFF"}}, 
+                        "backColorPrimary": {"solid": {"color": "#1A222C"}}, 
+                        "fontColorSecondary": {"solid": {"color": "#FFFFFF"}}, 
+                        "backColorSecondary": {"solid": {"color": "#121820"}}
+                    }
+                ]
+            }
+        }
+    }
+}

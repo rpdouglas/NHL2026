@@ -15062,10 +15062,11 @@ Visuals and measures must pass the "Persona Check" based on the user's analytica
 ## 📅 Q2 2026: The Core Modules
 | Status | ID | Epic Name | Persona Focus | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| 🟡 **Active** | `EPIC-01` | **The Core Reporting Flow** | Casual Fan / Manager | Establish the Macro-to-Micro drill-through experience (League -> Team -> Player) using traditional box-score metrics. |
-| ⚪ Planned | `EPIC-02` | **The Fantasy Console (EDGE)** | Fantasy Manager | Deploy EDGE telemetry radar plots and speed scatter charts. |
+| ✅ **Complete** | `EPIC-01` | **The Core Reporting Flow** | Casual Fan / Manager | Establish the Macro-to-Micro drill-through experience (League -> Team -> Player) using traditional box-score metrics. |
+| 🟡 **Active** | `EPIC-02` | **The Fantasy Console (EDGE)** | Fantasy Manager | Deploy EDGE telemetry radar plots and speed scatter charts. |
 | ⚪ Planned | `EPIC-03` | **The Coach's War Room** | Scout | Build the Expected Goals (xG) spatial engine using X/Y coordinates. |
 | ⚪ Planned | `EPIC-04` | **Automated Deployment** | Admin | Migrate to Power BI Service with scheduled daily API refreshes. |
+
 
 
 // --------------------------------------------------------------------------
@@ -15078,18 +15079,16 @@ Visuals and measures must pass the "Persona Check" based on the user's analytica
 **Format:** TMDL (Tabular Model Definition Language)
 
 ## 1. High-Level Topology
+*(Updated to reflect strict cascading filters and removal of ambiguous paths)*
 
 ```mermaid
 graph TD
     DimGames --> FactPlayByPlay
-    DimTeams --> FactPlayByPlay
     DimPlayers --> FactPlayByPlay
     
     DimTeams --> DimPlayers
     
-    DimTeams --> FactEdgeSkatingSpeeds
     DimPlayers --> FactEdgeSkatingSpeeds
-    
     DimPlayers --> FactEdgeBurstDetails
     DimGames --> FactEdgeSkatingSpeeds
 ```
@@ -15101,22 +15100,22 @@ graph TD
 * **Fields:** `GameID` (PK), `Season`, `GameType`, `GameDate`, `HomeTeamID`, `AwayTeamID`.
 
 ### `DimTeams`
-* **Purpose:** The Digital Rolodex for franchises. Built via a Left Outer Join of the legacy Stats API and the live Standings API.
+* **Purpose:** The Digital Rolodex for franchises. 
 * **Fields:** `TeamID` (PK), `FranchiseID`, `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`, `GoalDifferential`, `StreakType`, `StreakCount`.
 
 ### `DimPlayers`
 * **Purpose:** Active roster dictionary.
-* **Fields:** `PlayerID` (PK), `PlayerName`, `Position`, `ShootsCatches`, `GamesPlayed`, `Goals`, `Assists`, `Points`, `CurrentTeamAbbrev` (FK), `HeadshotURL`.
+* **Fields:** `PlayerID` (PK), `PlayerName`, `Position`, `ShootsCatches`, `GamesPlayed`, `Goals`, `Assists`, `Points`, `CurrentTeamAbbrev` (FK to DimTeams), `HeadshotURL`.
 
 ## 3. Fact Tables (Events & Telemetry)
 
 ### `FactPlayByPlay` (DAX UNION Table)
 * **Purpose:** The core event ledger. Unifies `FactLivePlays` and `FactHistoricalPlays`.
-* **Fields:** `GameID` (FK), `EventID`, `PeriodNumber`, `TimeInPeriod_Seconds`, `EventType`, `EventTeamID` (FK), `X_Coord`, `Y_Coord`, `ScoringPlayerID` (FK), `ShootingPlayerID` (FK), `HittingPlayerID` (FK), `HitteePlayerID` (FK).
+* **Fields:** `GameID` (FK), `EventID`, `PeriodNumber`, `TimeInPeriod_Seconds`, `EventType`, `EventTeamID`, `X_Coord`, `Y_Coord`, `ScoringPlayerID` (FK), `ShootingPlayerID` (FK), `HittingPlayerID` (FK), `HitteePlayerID` (FK).
 
 ### `FactEdgeSkatingSpeeds`
 * **Purpose:** Player telemetry for top speeds.
-* **Fields:** `PlayerID` (FK), `skatingSpeed.imperial`, `skatingSpeed.metric`, `periodDescriptor.number`, `homeTeam.abbrev` (FK).
+* **Fields:** `PlayerID` (FK), `skatingSpeed.imperial`, `skatingSpeed.metric`, `periodDescriptor.number`, `homeTeam.abbrev`.
 
 ### `FactEdgeBurstDetails`
 * **Purpose:** Player telemetry for acceleration and league comparisons.
@@ -15134,23 +15133,20 @@ graph TD
 
 # 🏃 Active Sprint Board
 
-**Current Phase:** Sprint 1.0 (The Core Reporting Flow)
+**Current Phase:** Sprint 2.0 (Advanced Analytics & EDGE)
 
 ## ✅ Completed Sprints
-- [x] **Sprint 0.1:** Core API connections established (Plays, Teams, Players, EDGE).
-- [x] **Sprint 0.2:** Lambda Architecture deployed (DAX UNION).
-- [x] **Sprint 0.3:** Schema hardening, PK uniqueness, and 2025-2026 season rollover.
-- [x] **PROJ-01:** The Standings Matrix. (League Level)
-- [x] **PROJ-01.5:** Traditional Stats Integration (G, A, P, GP extracted in DimPlayers).
-- [x] **PROJ-02: The League Dashboard.** Assemble the front page using the PROJ-01 Standings Matrix and a "League Leaders" Top 5 table.
+- [x] **Sprint 0.1 - 0.3:** Data plumbing, Lambda architecture, and PK hardening.
+- [x] **Sprint 1.0: The Core Reporting Flow.** - [x] PROJ-01: Standings Matrix
+  - [x] PROJ-02: League Dashboard
+  - [x] PROJ-03: Team Report (Drill-through base)
+  - [x] PROJ-04: Player Scorecard (Target page)
 
-## 🟡 Sprint 1.0: The Core Reporting Flow (Active)
-- [ ] **PROJ-03: The Team Report.** Build the mid-level drill-through page. Requires mapping `CurrentTeamAbbrev` into `DimPlayers` to link the roster to the team entity.
-- [ ] **PROJ-04: The Player Scorecard.** Finalize the drill-through destination page using the Identity Banner and Traditional Stats KPIs.
+## 🟡 Sprint 2.0: Advanced Analytics (Active)
+- [ ] **PROJ-05: The EDGE Radar Plot.** Re-integrate burst telemetry DAX measures into the Player Scorecard.
+- [ ] **PROJ-06: Spatial Rink Mapping.** Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`.
 
-## 🧊 Product Backlog (Sprint 2.0 - Advanced Analytics)
-- [ ] **PROJ-05:** The EDGE Radar Plot (Re-integrate burst telemetry).
-- [ ] **PROJ-06:** Spatial Rink Mapping (Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`).
+## 🧊 Product Backlog (Sprint 3.0)
 - [ ] **PROJ-07:** Expected Goals (xG) Distance DAX Model.
 - [ ] **PROJ-08:** Trade Target Scatter Plot (Speed vs. Volume).
 
@@ -15362,110 +15358,45 @@ def sync_docs():
     # --- FILE 1: SPRINT_BOARD.md ---
     files_to_update['docs/SPRINT_BOARD.md'] = r"""# 🏃 Active Sprint Board
 
-**Current Phase:** Sprint 1.0 (The Core Reporting Flow)
+**Current Phase:** Sprint 2.0 (Advanced Analytics & EDGE)
 
 ## ✅ Completed Sprints
-- [x] **Sprint 0.1:** Core API connections established (Plays, Teams, Players, EDGE).
-- [x] **Sprint 0.2:** Lambda Architecture deployed (DAX UNION).
-- [x] **Sprint 0.3:** Schema hardening, PK uniqueness, and 2025-2026 season rollover.
-- [x] **PROJ-01:** The Standings Matrix. (League Level)
-- [x] **PROJ-01.5:** Traditional Stats Integration (G, A, P, GP extracted in DimPlayers).
-- [x] **PROJ-02: The League Dashboard.** Assemble the front page using the PROJ-01 Standings Matrix and a "League Leaders" Top 5 table.
+- [x] **Sprint 0.1 - 0.3:** Data plumbing, Lambda architecture, and PK hardening.
+- [x] **Sprint 1.0: The Core Reporting Flow.** - [x] PROJ-01: Standings Matrix
+  - [x] PROJ-02: League Dashboard
+  - [x] PROJ-03: Team Report (Drill-through base)
+  - [x] PROJ-04: Player Scorecard (Target page)
 
-## 🟡 Sprint 1.0: The Core Reporting Flow (Active)
-- [ ] **PROJ-03: The Team Report.** Build the mid-level drill-through page. Requires mapping `CurrentTeamAbbrev` into `DimPlayers` to link the roster to the team entity.
-- [ ] **PROJ-04: The Player Scorecard.** Finalize the drill-through destination page using the Identity Banner and Traditional Stats KPIs.
+## 🟡 Sprint 2.0: Advanced Analytics (Active)
+- [ ] **PROJ-05: The EDGE Radar Plot.** Re-integrate burst telemetry DAX measures into the Player Scorecard.
+- [ ] **PROJ-06: Spatial Rink Mapping.** Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`.
 
-## 🧊 Product Backlog (Sprint 2.0 - Advanced Analytics)
-- [ ] **PROJ-05:** The EDGE Radar Plot (Re-integrate burst telemetry).
-- [ ] **PROJ-06:** Spatial Rink Mapping (Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`).
+## 🧊 Product Backlog (Sprint 3.0)
 - [ ] **PROJ-07:** Expected Goals (xG) Distance DAX Model.
 - [ ] **PROJ-08:** Trade Target Scatter Plot (Speed vs. Volume).
 """
 
-    # --- FILE 2: SCHEMA_ARCHITECTURE.md ---
-    files_to_update['docs/SCHEMA_ARCHITECTURE.md'] = r"""# 🗄️ Schema Architecture & Data Graph
+    # --- FILE 2: ROADMAP.md ---
+    files_to_update['docs/ROADMAP.md'] = r"""# 🗺️ NHL Analytics Product Roadmap
 
-**Storage Engine:** Power BI VertiPaq (In-Memory Columnar Database)
-**Format:** TMDL (Tabular Model Definition Language)
-
-## 1. High-Level Topology
-
-__FENCE__mermaid
-graph TD
-    DimGames --> FactPlayByPlay
-    DimTeams --> FactPlayByPlay
-    DimPlayers --> FactPlayByPlay
-    
-    DimTeams --> DimPlayers
-    
-    DimTeams --> FactEdgeSkatingSpeeds
-    DimPlayers --> FactEdgeSkatingSpeeds
-    
-    DimPlayers --> FactEdgeBurstDetails
-    DimGames --> FactEdgeSkatingSpeeds
-__FENCE__
-
-## 2. Dimension Tables (Lookups)
-
-### `DimGames`
-* **Purpose:** Unified tracking of all games (Live API + Historical Kaggle).
-* **Fields:** `GameID` (PK), `Season`, `GameType`, `GameDate`, `HomeTeamID`, `AwayTeamID`.
-
-### `DimTeams`
-* **Purpose:** The Digital Rolodex for franchises. Built via a Left Outer Join of the legacy Stats API and the live Standings API.
-* **Fields:** `TeamID` (PK), `FranchiseID`, `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`, `GoalDifferential`, `StreakType`, `StreakCount`.
-
-### `DimPlayers`
-* **Purpose:** Active roster dictionary.
-* **Fields:** `PlayerID` (PK), `PlayerName`, `Position`, `ShootsCatches`, `GamesPlayed`, `Goals`, `Assists`, `Points`, `CurrentTeamAbbrev` (FK), `HeadshotURL`.
-
-## 3. Fact Tables (Events & Telemetry)
-
-### `FactPlayByPlay` (DAX UNION Table)
-* **Purpose:** The core event ledger. Unifies `FactLivePlays` and `FactHistoricalPlays`.
-* **Fields:** `GameID` (FK), `EventID`, `PeriodNumber`, `TimeInPeriod_Seconds`, `EventType`, `EventTeamID` (FK), `X_Coord`, `Y_Coord`, `ScoringPlayerID` (FK), `ShootingPlayerID` (FK), `HittingPlayerID` (FK), `HitteePlayerID` (FK).
-
-### `FactEdgeSkatingSpeeds`
-* **Purpose:** Player telemetry for top speeds.
-* **Fields:** `PlayerID` (FK), `skatingSpeed.imperial`, `skatingSpeed.metric`, `periodDescriptor.number`, `homeTeam.abbrev` (FK).
-
-### `FactEdgeBurstDetails`
-* **Purpose:** Player telemetry for acceleration and league comparisons.
-* **Fields:** `PlayerID` (FK), `SkatingSpeedDetails.maxSkatingSpeed.imperial`, `SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial`, `burstsOver22`, `bursts20To22`, `bursts18To20`.
-
-## 4. DAX Measures (`_Measures` Table)
-* **Purpose:** Centralized repository for all explicit DAX calculations to prevent model scattering.
-* **Metrics:** Covered in `MEASURE_DICTIONARY.md`
-"""
-
-    # --- FILE 3: MEASURE_DICTIONARY.md ---
-    files_to_update['docs/MEASURE_DICTIONARY.md'] = r"""# 📏 DAX Measure Dictionary
-
-| Measure Name | Table | Logic | Persona Focus |
-| :--- | :--- | :--- | :--- |
-| `Team Points` | `_Measures` | `SUM('DimTeams'[Points])` | Casual Fan |
-| `Team Goal Diff` | `_Measures` | `SUM('DimTeams'[GoalDifferential])` | Casual Fan |
-| `Current Streak` | `_Measures` | Extracts streak contextually at Team hierarchy | Casual Fan |
-| `Player Goals` | `_Measures` | `SUM('DimPlayers'[Goals])` | Casual Fan / Manager |
-| `Player Assists` | `_Measures` | `SUM('DimPlayers'[Assists])` | Casual Fan / Manager |
-| `Player Points` | `_Measures` | `SUM('DimPlayers'[Points])` | Casual Fan / Manager |
-| `Games Played` | `_Measures` | `SUM('DimPlayers'[GamesPlayed])` | Casual Fan / Manager |
-| `Player Max Speed (mph)` | `_Measures` | `AVERAGE` of EDGE max speed | Fantasy Manager |
-| `League Avg Max Speed` | `_Measures` | `AVERAGE` of EDGE league avg speed | Fantasy Manager |
-| `Player Bursts > 22mph` | `_Measures` | `SUM` of bursts over 22mph | Fantasy Manager |
-| `Player Bursts 20-22mph` | `_Measures` | `SUM` of bursts 20-22mph | Fantasy Manager |
+## 📅 Q2 2026: The Core Modules
+| Status | ID | Epic Name | Persona Focus | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ✅ **Complete** | `EPIC-01` | **The Core Reporting Flow** | Casual Fan / Manager | Establish the Macro-to-Micro drill-through experience (League -> Team -> Player) using traditional box-score metrics. |
+| 🟡 **Active** | `EPIC-02` | **The Fantasy Console (EDGE)** | Fantasy Manager | Deploy EDGE telemetry radar plots and speed scatter charts. |
+| ⚪ Planned | `EPIC-03` | **The Coach's War Room** | Scout | Build the Expected Goals (xG) spatial engine using X/Y coordinates. |
+| ⚪ Planned | `EPIC-04` | **Automated Deployment** | Admin | Migrate to Power BI Service with scheduled daily API refreshes. |
 """
 
     for relative_path, content in files_to_update.items():
         full_path = os.path.join(project_root, relative_path)
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        safe_content = content.replace('__FENCE__', FENCE)
-        with open(full_path, 'w', encoding='utf-8') as f:
-            f.write(safe_content)
-        print(f"✅ Synced: {relative_path}")
+        if os.path.exists(full_path):
+            safe_content = content.replace('__FENCE__', FENCE)
+            with open(full_path, 'w', encoding='utf-8') as f:
+                f.write(safe_content)
+            print(f"✅ Synced: {relative_path}")
 
-    print("\n🚀 Post-Sprint Audit complete. Documentation is perfectly synced with the codebase!")
+    print("\n🚀 Post-Sprint Audit complete. Sprint 1.0 is officially closed.")
 
 if __name__ == "__main__":
     sync_docs()
