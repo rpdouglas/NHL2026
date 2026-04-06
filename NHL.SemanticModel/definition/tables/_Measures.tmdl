@@ -1,0 +1,41 @@
+table _Measures
+	lineageTag: 328dacd0-43e1-49b0-89a3-4c0ee0ed5ab2
+
+	measure 'Team Points' = ```
+			
+						SUM('DimTeams'[Points])
+			```
+		formatString: 0
+		lineageTag: c5cd7da9-eb53-4e63-a7e1-508b2ce56efe
+
+	measure 'Team Goal Diff' = SUM('DimTeams'[GoalDifferential])
+		formatString: 0
+		lineageTag: b6d4c9d7-4ec0-4af4-abca-a86f81a85dab
+
+	measure 'Current Streak' = ```
+			
+						IF(
+						    ISINSCOPE('DimTeams'[TeamName]), 
+						    MAX('DimTeams'[StreakType]) & MAX('DimTeams'[StreakCount]), 
+						    BLANK()
+						)
+			```
+		lineageTag: a7202a20-846d-4370-8701-606e2afa356d
+
+	column Column
+		formatString: 0
+		lineageTag: bc2304a1-4935-47a1-8759-7ba8f0ca1a8b
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Column]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures = calculated
+		mode: import
+		source = Row("Column", BLANK())
+
+	annotation PBI_Id = 2146d91f1b114cc988227f1e5408b70c
+
+	annotation 436ba87b-9c83-4389-a31b-ebd06a36be98 = {"Expression":""}
+

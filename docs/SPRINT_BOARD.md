@@ -8,7 +8,7 @@
 - [x] **Sprint 0.3:** Schema hardening, PK uniqueness, and 2025-2026 season rollover.
 
 ## 🟡 Sprint 1.0: The Visual Foundation (Active)
-- [ ] **PROJ-01:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the `DimTeams` table.
+- [x] **PROJ-01:** The Standings Matrix. Build a hierarchical matrix visual (Conference -> Division -> Team) using the `DimTeams` table.
 - [ ] **PROJ-02:** The EDGE Radar Plot. Build DAX measures calculating Player Speed/Bursts vs. League Average.
 - [ ] **PROJ-03:** Spatial Rink Mapping. Configure the custom SVG visual to plot `X_Coord` and `Y_Coord` from `FactPlayByPlay`.
 

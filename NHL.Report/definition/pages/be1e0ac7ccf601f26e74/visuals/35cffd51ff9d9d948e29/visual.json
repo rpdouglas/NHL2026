@@ -1,0 +1,342 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "35cffd51ff9d9d948e29",
+  "position": {
+    "x": 10.281124497991968,
+    "y": 0,
+    "z": 0,
+    "height": 393.25301204819277,
+    "width": 461.36546184738961,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTeams"
+                    }
+                  },
+                  "Property": "Conference"
+                }
+              },
+              "queryRef": "DimTeams.Conference",
+              "nativeQueryRef": "Conference",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTeams"
+                    }
+                  },
+                  "Property": "Division"
+                }
+              },
+              "queryRef": "DimTeams.Division",
+              "nativeQueryRef": "Division",
+              "active": false
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTeams"
+                    }
+                  },
+                  "Property": "TeamName"
+                }
+              },
+              "queryRef": "DimTeams.TeamName",
+              "nativeQueryRef": "TeamName",
+              "active": false
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Team Points"
+                }
+              },
+              "queryRef": "_Measures.Team Points",
+              "nativeQueryRef": "Team Points"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Team Goal Diff"
+                }
+              },
+              "queryRef": "_Measures.Team Goal Diff",
+              "nativeQueryRef": "Team Goal Diff"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Current Streak"
+                }
+              },
+              "queryRef": "_Measures.Current Streak",
+              "nativeQueryRef": "Current Streak"
+            }
+          ]
+        }
+      }
+    },
+    "expansionStates": [
+      {
+        "roles": [
+          "Rows"
+        ],
+        "levels": [
+          {
+            "queryRefs": [
+              "DimTeams.Conference"
+            ],
+            "isCollapsed": true,
+            "identityKeys": [
+              {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTeams"
+                    }
+                  },
+                  "Property": "Conference"
+                }
+              }
+            ],
+            "isPinned": true
+          },
+          {
+            "queryRefs": [
+              "DimTeams.Division"
+            ],
+            "isCollapsed": true,
+            "identityKeys": [
+              {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTeams"
+                    }
+                  },
+                  "Property": "Division"
+                }
+              }
+            ],
+            "isPinned": true
+          },
+          {
+            "queryRefs": [
+              "DimTeams.TeamName"
+            ],
+            "isCollapsed": true,
+            "isPinned": true
+          }
+        ],
+        "root": {}
+      }
+    ],
+    "objects": {
+      "values": [
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Conditional": {
+                      "Cases": [
+                        {
+                          "Condition": {
+                            "Comparison": {
+                              "ComparisonKind": 3,
+                              "Left": {
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "_Measures"
+                                    }
+                                  },
+                                  "Property": "Team Goal Diff"
+                                }
+                              },
+                              "Right": {
+                                "Literal": {
+                                  "Value": "0D"
+                                }
+                              }
+                            }
+                          },
+                          "Value": {
+                            "Literal": {
+                              "Value": "'#EB0C0C'"
+                            }
+                          }
+                        },
+                        {
+                          "Condition": {
+                            "Comparison": {
+                              "ComparisonKind": 2,
+                              "Left": {
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "_Measures"
+                                    }
+                                  },
+                                  "Property": "Team Goal Diff"
+                                }
+                              },
+                              "Right": {
+                                "Literal": {
+                                  "Value": "0D"
+                                }
+                              }
+                            }
+                          },
+                          "Value": {
+                            "Literal": {
+                              "Value": "'#11F84F'"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Team Goal Diff"
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "5a1ab084f158461e7476",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimTeams"
+              }
+            },
+            "Property": "Conference"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "c4bb88736a2796750fa6",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimTeams"
+              }
+            },
+            "Property": "Division"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "40ccca064ae56641001e",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DimTeams"
+              }
+            },
+            "Property": "TeamName"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "cc57566c429091b674b5",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Team Points"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "e1908118077cd3c0bac9",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Team Goal Diff"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "971b2642cde125787f88",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Current Streak"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

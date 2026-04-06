@@ -26,7 +26,7 @@ graph TD
 
 ### `DimTeams`
 * **Purpose:** The Digital Rolodex for franchises. Built via a Left Outer Join of the legacy Stats API (for historical IDs) and the live Standings API.
-* **Fields:** `TeamID` (PK), `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`.
+* **Fields:** `TeamID` (PK), `TeamName`, `TeamAbbrev`, `TeamLogoURL`, `Conference`, `Division`, `LeagueRank`, `Points`, `GoalDifferential`, `StreakType`, `StreakCount`.
 
 ### `DimPlayers`
 * **Purpose:** Active roster dictionary.
@@ -45,3 +45,9 @@ graph TD
 ### `FactEdgeBurstDetails`
 * **Purpose:** Player telemetry for acceleration and league comparisons.
 * **Fields:** `PlayerID` (FK), `max.imperial`, `max.percentile`, `leagueAvg.imperial`, `burstsOver22`.
+
+## 4. DAX Measures (`_Measures` Table)
+* **Purpose:** Centralized repository for all explicit DAX calculations to prevent model scattering.
+* **Metrics:** * `Team Points`: `SUM('DimTeams'[Points])`
+  * `Team Goal Diff`: `SUM('DimTeams'[GoalDifferential])`
+  * `Current Streak`: Uses `ISINSCOPE` to restrict streak rendering to the lowest Team hierarchy level.
