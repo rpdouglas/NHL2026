@@ -1,35 +1,38 @@
 # 🏒 NHL 2026: Advanced Telemetry & Analytics Platform
 
-**NHL 2026** is a high-performance Power BI solution designed to provide deep insights into NHL team performance and player telemetry. By combining live NHL Web API data with massive historical datasets, it offers a "Lambda-style" architecture for seamless data unification.
+**NHL 2026** is a high-performance Power BI solution providing deep insights into NHL team performance and player telemetry. It combines live NHL Web API data with massive historical datasets using a sophisticated Lambda-style architecture.
 
 ## 🏗️ Technical Stack
 * **Format:** Tabular Model Definition Language (TMDL)
 * **Engine:** Power BI VertiPaq (In-Memory Columnar)
-* **Logic:** DAX (Metrics) + M (Power Query API Consumption)
-* **Data Sources:** Live NHL API (`v1/gamecenter`, `v1/edge`), Kaggle Historical Datasets
+* **Logic:** DAX (Metrics) + M (API Consumption)
+* **Data Sources:** NHL API (`v1/gamecenter`, `v1/edge`), Kaggle Historical Datasets
 
 ## 🧠 Architectural Pillars
-* **Lambda Architecture (Y-Intersection):** Live and historical plays are extracted independently and merged via DAX `UNION` for maximum performance.
-* **Strict Star Schema:** Fact tables never connect to other Fact tables; all filters flow from Dimensions.
-* **API Governance:** Implements implicit rate limiting (300ms delays) and record sanitization to ensure robust API ingestion.
-* **Performance First:** "Auto Date/Time" is disabled, and large files utilize Early Filtering (>= 2021) to minimize RAM footprint.
+* **Lambda Architecture (Y-Intersection):** Independent extraction of live and historical plays unified via DAX `UNION` for maximum efficiency.
+* **Strict Star Schema:** 1-to-Many relationships flowing from Dimensions to Facts to ensure model stability.
+* **Memory Efficiency:** "Auto Date/Time" disabled and early filtering (>= 2021 season) applied to large datasets to prevent RAM timeouts.
+* **Explicit Data Typing:** Strict adherence to `Table.TransformColumnTypes` in M to prevent implicit conversion errors.
 
-## 🗄️ Data Model
-The model centers around three core dimension tables:
-* **DimGames:** Unified game ledger (Live + Historical).
-* **DimTeams:** Franchise details, conference/division hierarchy, and current standings.
-* **DimPlayers:** Roster management and player-specific bio data.
+## 🗄️ Data Model Topology
+The model follows a rigorous hierarchy designed for drill-through exploration:
+* **DimGames:** Unified tracking for all game types.
+* **DimTeams:** The digital rolodex for franchise data and standings.
+* **DimPlayers:** The link between rosters and advanced telemetry facts.
+* **FactPlayByPlay:** The unified event ledger for all on-ice actions.
+* **FactEdge (Speeds/Bursts):** High-velocity telemetry for player speed and acceleration.
 
-These filter specialized Fact tables including **FactPlayByPlay**, **FactEdgeSkatingSpeeds**, and **FactEdgeBurstDetails**.
+## 🗺️ NHL Analytics Product Roadmap
 
-## 📏 Key Metrics
-| Category | Measures |
-| :--- | :--- |
-| **Team Performance** | Points, Goal Differential, Current Streak, Wins/Losses |
-| **Player Stats** | Goals, Assists, Total Points, Games Played |
-| **EDGE Telemetry** | Max Speed (mph), League Avg Speed, Bursts > 22mph |
+### 📅 Q2 2026: The Core Modules
+| Status | ID | Epic Name | Persona Focus | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| ✅ **Complete** | `EPIC-01` | **The Core Reporting Flow** | Casual Fan / Manager | Establish the Macro-to-Micro drill-through experience (League -> Team -> Player) using traditional box-score metrics. |
+| 🟡 **Active** | `EPIC-02` | **The Fantasy Console (EDGE)** | Fantasy Manager | Deploy EDGE telemetry radar plots and speed scatter charts. |
+| ⚪ Planned | `EPIC-03` | **The Coach's War Room** | Scout | Build the Expected Goals (xG) spatial engine using X/Y coordinates. |
+| ⚪ Planned | `EPIC-04` | **Automated Deployment** | Admin | Migrate to Power BI Service with scheduled daily API refreshes. |
 
 ## 🚀 Getting Started
-1.  Ensure you have **Power BI Desktop** (latest version) and **Developer Mode** enabled.
-2.  The project is stored in TMDL format. Open the `.pbip` file to load the model.
-3.  Historical data requires `game.csv` and `game_plays.csv` to be located in the paths specified in the Power Query parameters.
+1.  Ensure you have **Power BI Desktop** installed with **Developer Mode** enabled.
+2.  Open the `.pbip` file to load the TMDL-based model.
+3.  Configure your local file paths for historical CSV data in the Power Query parameters.
