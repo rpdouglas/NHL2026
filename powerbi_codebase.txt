@@ -19,61 +19,60 @@ database
 expression fxGetPlayByPlay = ```
 		(GameID as text) =>
 		let
-		    // 1. Static Base URL and RelativePath configuration
+		    // 1. Base API config
 		    BaseUrl = "https://api-web.nhle.com",
-		    Path = "v1/gamecenter/" & Text.From(GameID) & "/play-by-play",
+		    Path = "v1/gamecenter/" & Text.Trim(GameID) & "/play-by-play",
 		
-		    // 2. Error Resilience: Fetch JSON and gracefully handle 404s
-		    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
+		    // 2. Fetch JSON with a User-Agent header to prevent silent server blocking
+		    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path, Headers=[#"User-Agent"="PowerBI"]])) otherwise null,
 		
-		    // Extract the 'plays' array. Fallback to an empty list if the game hasn't started
-		    PlaysList = try Source[plays] otherwise {},
-		
-		    // THE FIX: Explicitly name the column {"Column1"} so empty lists don't break the expansion
+		    // 3. Extract plays safely
+		    PlaysList = if Source <> null and Record.HasFields(Source, "plays") then Source[plays] else {},
 		    PlaysTable = Table.FromList(PlaysList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
 		
-		    // 3. Data Flattening: Expand the root event record
-		    ExpandedPlays = try Table.ExpandRecordColumn(PlaysTable, "Column1", 
-		        {"eventId", "periodDescriptor", "timeInPeriod", "typeDescKey", "details"}, 
-		        {"EventID", "PeriodRecord", "TimeInPeriod", "EventType", "DetailsRecord"}
-		    ) otherwise PlaysTable,
+		    // 4. Branch logic: If empty, return strict schema. If populated, parse safely.
+		    Result = if Table.IsEmpty(PlaysTable) then
+		        #table(
+		            type table [GameID=text, EventID=text, PeriodNumber=Int64.Type, TimeInPeriod_Seconds=Int64.Type, EventType=text, EventTeamID=Int64.Type, X_Coord=number, Y_Coord=number, ScoringPlayerID=Int64.Type, ShootingPlayerID=Int64.Type, HittingPlayerID=Int64.Type, HitteePlayerID=Int64.Type],
+		            {}
+		        )
+		    else let
+		        // FIX: Sanitize nodes to ensure they are records before expanding.
+		        // This prevents dirty API data (like []) from destroying the entire column schema.
+		        SanitizedRoot = Table.TransformColumns(PlaysTable, {{"Column1", each if _ is record then _ else null}}),
+		        ExpandedPlays = Table.ExpandRecordColumn(SanitizedRoot, "Column1", 
+		            {"eventId", "periodDescriptor", "timeInPeriod", "typeDescKey", "details"}, 
+		            {"EventID", "PeriodRecord", "TimeInPeriod", "EventType", "DetailsRecord"}
+		        ),
 		
-		    // Expand Period Data
-		    ExpandedPeriod = try Table.ExpandRecordColumn(ExpandedPlays, "PeriodRecord", 
-		        {"number"}, 
-		        {"PeriodNumber"}
-		    ) otherwise ExpandedPlays,
+		        SanitizedPeriod = Table.TransformColumns(ExpandedPlays, {{"PeriodRecord", each if _ is record then _ else null}}),
+		        ExpandedPeriod = Table.ExpandRecordColumn(SanitizedPeriod, "PeriodRecord", {"number"}, {"PeriodNumber"}),
 		
-		    // Expand Event Details (Extracting Coordinates and Player IDs)
-		    ExpandedDetails = try Table.ExpandRecordColumn(ExpandedPeriod, "DetailsRecord", 
-		        {"xCoord", "yCoord", "eventOwnerTeamId", "scoringPlayerId", "shootingPlayerId", "hittingPlayerId", "hitteePlayerId"}, 
-		        {"X_Coord", "Y_Coord", "EventTeamID", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
-		    ) otherwise ExpandedPeriod,
+		        SanitizedDetails = Table.TransformColumns(ExpandedPeriod, {{"DetailsRecord", each if _ is record then _ else null}}),
+		        ExpandedDetails = Table.ExpandRecordColumn(SanitizedDetails, "DetailsRecord", 
+		            {"xCoord", "yCoord", "eventOwnerTeamId", "scoringPlayerId", "shootingPlayerId", "hittingPlayerId", "hitteePlayerId"}, 
+		            {"X_Coord", "Y_Coord", "EventTeamID", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
+		        ),
 		
-		    // 4. Data Typing & Transformation: Convert MM:SS to total numeric seconds
-		    // We add a check to make sure the column exists before trying to split it, just in case the table is entirely empty
-		    SplitTime = if Table.HasColumns(ExpandedDetails, {"TimeInPeriod"}) then 
-		                    Table.SplitColumn(ExpandedDetails, "TimeInPeriod", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}) 
-		                else Table.AddColumn(Table.AddColumn(ExpandedDetails, "Minute", each null), "Second", each null),
-		                
-		    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
-		    
-		    // Calculate total seconds, handling nulls gracefully
-		    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", 
-		        each if [Minute] <> null and [Second] <> null then ([Minute] * 60) + [Second] else null, 
-		        Int64.Type
-		    ),
+		        // 5. Time calculation safely handling nulls
+		        SplitTime = Table.SplitColumn(ExpandedDetails, "TimeInPeriod", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
+		        ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
+		        AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", 
+		            each if [Minute] <> null and [Second] <> null then ([Minute] * 60) + [Second] else null, 
+		            Int64.Type
+		        ),
 		
-		    // Attach the GameID to the dataset so it can link back to the DimGameTracker in your Star Schema
-		    AddGameID = Table.AddColumn(AddSeconds, "GameID", each GameID, type text),
+		        AddGameID = Table.AddColumn(AddSeconds, "GameID", each GameID, type text),
 		
-		    // 5. Memory Efficiency: Select only necessary dimensions and facts for the Star Schema
-		    // We use MissingField.Ignore so it doesn't crash if an empty game didn't generate these columns
-		    FinalColumns = Table.SelectColumns(AddGameID, 
-		        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, MissingField.Ignore
-		    )
+		        // 6. Strict column selection mapping ensuring all columns pass through
+		        FinalColumns = Table.SelectColumns(AddGameID, 
+		            {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, 
+		            MissingField.UseNull
+		        )
+		    in
+		        FinalColumns
 		in
-		    FinalColumns
+		    Result
 		```
 	lineageTag: aad82752-9c50-4b4d-85e4-623bf62c6939
 
@@ -179,7 +178,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 0
 
-annotation PBI_QueryOrder = ["DimGames","fxGetPlayByPlay","FactLivePlays","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","Query1","FactEdgeSkatingSpeeds","FactEdgeBurstDetails","game","FactHistoricalPlays"]
+annotation PBI_QueryOrder = ["DimGames","fxGetPlayByPlay","FactLivePlays","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","FactEdgeSkatingSpeeds","FactEdgeBurstDetails","game","FactHistoricalPlays"]
 
 annotation PBI_ProTooling = ["DevMode","TMDL-Extension"]
 
@@ -187,7 +186,6 @@ ref table DimGames
 ref table FactLivePlays
 ref table DimTeams
 ref table DimPlayers
-ref table Query1
 ref table FactEdgeSkatingSpeeds
 ref table FactEdgeBurstDetails
 ref table FactHistoricalPlays
@@ -223,6 +221,11 @@ relationship 4705664c-842c-2872-e80b-00ac6b534b9c
 relationship f2817f3f-ed1b-faf4-8e93-83b7d6e5241e
 	fromColumn: DimPlayers.CurrentTeamAbbrev
 	toColumn: DimTeams.TeamAbbrev
+
+relationship ab889a60-b993-e15e-15ab-217366e9c7c9
+	isActive: false
+	fromColumn: FactPlayByPlay.PlayerID
+	toColumn: DimPlayers.PlayerID
 
 
 
@@ -297,16 +300,6 @@ cultureInfo en-US
 			              "Agent": "Thesaurus"
 			            },
 			            "Weight": 0.727
-			          }
-			        },
-			        {
-			          "Player": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
 			          }
 			        }
 			      ]
@@ -5097,191 +5090,6 @@ cultureInfo en-US
 			              "Agent": "Thesaurus"
 			            },
 			            "Weight": 0.484
-			          }
-			        }
-			      ]
-			    },
-			    "query_1": {
-			      "Definition": {
-			        "Binding": {
-			          "ConceptualEntity": "Query1"
-			        }
-			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "query 1": {
-			            "State": "Generated"
-			          }
-			        },
-			        {
-			          "Query1": {
-			            "Type": "Noun",
-			            "State": "Generated",
-			            "Weight": 0.99
-			          }
-			        }
-			      ]
-			    },
-			    "query_1.name": {
-			      "Definition": {
-			        "Binding": {
-			          "ConceptualEntity": "Query1",
-			          "ConceptualProperty": "Name"
-			        }
-			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "name": {
-			            "State": "Generated"
-			          }
-			        },
-			        {
-			          "title": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.714
-			          }
-			        },
-			        {
-			          "label": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.714
-			          }
-			        },
-			        {
-			          "tag": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.714
-			          }
-			        }
-			      ],
-			      "NameType": "Name"
-			    },
-			    "query_1.value": {
-			      "Definition": {
-			        "Binding": {
-			          "ConceptualEntity": "Query1",
-			          "ConceptualProperty": "Value"
-			        }
-			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "value": {
-			            "State": "Generated"
-			          }
-			        },
-			        {
-			          "assessment": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.491
-			          }
-			        },
-			        {
-			          "worth": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "price": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "cost": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "charge": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "rate": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "importance": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.466
-			          }
-			        },
-			        {
-			          "significance": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.466
-			          }
-			        },
-			        {
-			          "usefulness": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.466
-			          }
-			        },
-			        {
-			          "consequence": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.466
 			          }
 			        }
 			      ]
@@ -10628,9 +10436,237 @@ cultureInfo en-US
 			          }
 			        }
 			      ]
+			    },
+			    "fact_live_play.player_ID": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "FactLivePlays",
+			          "ConceptualProperty": "PlayerID"
+			        }
+			      },
+			      "State": "Generated",
+			      "Visibility": {
+			        "Value": "Hidden"
+			      },
+			      "Terms": [
+			        {
+			          "player ID": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "PlayerID": {
+			            "Type": "Noun",
+			            "State": "Generated",
+			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player identification": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identity": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identifier": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player credential": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.727
+			          }
+			        }
+			      ]
+			    },
+			    "fact_historical_play.player_ID": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "FactHistoricalPlays",
+			          "ConceptualProperty": "PlayerID"
+			        }
+			      },
+			      "State": "Generated",
+			      "Visibility": {
+			        "Value": "Hidden"
+			      },
+			      "Terms": [
+			        {
+			          "player ID": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "PlayerID": {
+			            "Type": "Noun",
+			            "State": "Generated",
+			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player identification": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identity": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identifier": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player credential": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.727
+			          }
+			        }
+			      ]
+			    },
+			    "fact_play_by_play.player_ID": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "FactPlayByPlay",
+			          "ConceptualProperty": "PlayerID"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "player ID": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "PlayerID": {
+			            "Type": "Noun",
+			            "State": "Generated",
+			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player identification": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identity": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identifier": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player credential": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.727
+			          }
+			        }
+			      ]
 			    }
 			  },
 			  "Relationships": {
+			    "dim_player_has_entity__measure_player_points": {
+			      "Binding": {
+			        "ConceptualEntity": "DimPlayers"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "dim_player": {
+			          "Target": {
+			            "Entity": "dim_player"
+			          }
+			        },
+			        "entity__measure.player_points": {
+			          "Target": {
+			            "Entity": "entity__measure.player_points"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Attribute": {
+			            "Subject": {
+			              "Role": "dim_player"
+			            },
+			            "Object": {
+			              "Role": "entity__measure.player_points"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "dim_players_have_player_points"
+			        }
+			      ]
+			    },
 			    "dim_player_has_entity__measure_player_assists": {
 			      "Binding": {
 			        "ConceptualEntity": "DimPlayers"
@@ -11949,85 +11985,6 @@ cultureInfo en-US
 			        }
 			      ]
 			    },
-			    "query_1_has_value": {
-			      "Binding": {
-			        "ConceptualEntity": "Query1"
-			      },
-			      "State": "Generated",
-			      "Roles": {
-			        "query_1": {
-			          "Target": {
-			            "Entity": "query_1"
-			          }
-			        },
-			        "query_1.value": {
-			          "Target": {
-			            "Entity": "query_1.value"
-			          }
-			        }
-			      },
-			      "Phrasings": [
-			        {
-			          "Attribute": {
-			            "Subject": {
-			              "Role": "query_1"
-			            },
-			            "Object": {
-			              "Role": "query_1.value"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.99,
-			          "ID": "query_1_have_values"
-			        }
-			      ]
-			    },
-			    "query_1_has_name": {
-			      "Binding": {
-			        "ConceptualEntity": "Query1"
-			      },
-			      "State": "Generated",
-			      "Roles": {
-			        "query_1": {
-			          "Target": {
-			            "Entity": "query_1"
-			          }
-			        },
-			        "query_1.name": {
-			          "Target": {
-			            "Entity": "query_1.name"
-			          }
-			        }
-			      },
-			      "Phrasings": [
-			        {
-			          "Attribute": {
-			            "Subject": {
-			              "Role": "query_1"
-			            },
-			            "Object": {
-			              "Role": "query_1.name"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.99,
-			          "ID": "query_1_have_names"
-			        },
-			        {
-			          "Name": {
-			            "Subject": {
-			              "Role": "query_1"
-			            },
-			            "Name": {
-			              "Role": "query_1.name"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.99,
-			          "ID": "names_are_names_IDs_of_query_1"
-			        }
-			      ]
-			    },
 			    "dim_player_has_point": {
 			      "Binding": {
 			        "ConceptualEntity": "DimPlayers"
@@ -13243,39 +13200,6 @@ cultureInfo en-US
 			        }
 			      ]
 			    },
-			    "dim_player_has_entity__measure_player_points": {
-			      "Binding": {
-			        "ConceptualEntity": "DimPlayers"
-			      },
-			      "State": "Generated",
-			      "Roles": {
-			        "dim_player": {
-			          "Target": {
-			            "Entity": "dim_player"
-			          }
-			        },
-			        "entity__measure.player_points": {
-			          "Target": {
-			            "Entity": "entity__measure.player_points"
-			          }
-			        }
-			      },
-			      "Phrasings": [
-			        {
-			          "Attribute": {
-			            "Subject": {
-			              "Role": "dim_player"
-			            },
-			            "Object": {
-			              "Role": "entity__measure.player_points"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.99,
-			          "ID": "dim_players_have_player_points"
-			        }
-			      ]
-			    },
 			    "dim_player_has_entity__measure_games_played": {
 			      "Binding": {
 			        "ConceptualEntity": "DimPlayers"
@@ -13306,6 +13230,39 @@ cultureInfo en-US
 			          "State": "Generated",
 			          "Weight": 0.99,
 			          "ID": "dim_players_have_games_played"
+			        }
+			      ]
+			    },
+			    "fact_play_by_play_has_player_ID": {
+			      "Binding": {
+			        "ConceptualEntity": "FactPlayByPlay"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "fact_play_by_play": {
+			          "Target": {
+			            "Entity": "fact_play_by_play"
+			          }
+			        },
+			        "fact_play_by_play.player_ID": {
+			          "Target": {
+			            "Entity": "fact_play_by_play.player_ID"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Attribute": {
+			            "Subject": {
+			              "Role": "fact_play_by_play"
+			            },
+			            "Object": {
+			              "Role": "fact_play_by_play.player_ID"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "fact_play_by_play_have_player_ID"
 			        }
 			      ]
 			    },
@@ -13676,20 +13633,38 @@ table DimGames
 		mode: import
 		source = ```
 				let
-				    // --- BRANCH A: LIVE GAMES ---
+				    // --- BRANCH A: LIVE GAMES (FULL 2025-2026 SEASON) ---
 				    BaseUrl = "https://api-web.nhle.com",
-				    Path = "v1/score/now",
-				    Source = try Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])) otherwise null,
-				    GamesList = try Source[games] otherwise {},
-				    GamesTable = Table.FromList(GamesList, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
-				    ExpandedGames = Table.ExpandRecordColumn(GamesTable, "Column1", 
+				    
+				    // 1. Create a master list of all 32 NHL Teams (Including UTA for Utah)
+				    TeamsList = {"ANA", "BOS", "BUF", "CAR", "CBJ", "CGY", "CHI", "COL", "DAL", "DET", "EDM", "FLA", "LAK", "MIN", "MTL", "NJD", "NSH", "NYI", "NYR", "OTT", "PHI", "PIT", "SEA", "SJS", "STL", "TBL", "TOR", "UTA", "VAN", "VGK", "WPG", "WSH"},
+				    TeamsTable = Table.FromList(TeamsList, Splitter.SplitByNothing(), {"TeamAbbrev"}, null, ExtraValues.Error),
+				
+				    // 2. Fetch the full 2025-2026 schedule for EVERY team
+				    FetchSchedules = Table.AddColumn(TeamsTable, "ScheduleData", each
+				        try Json.Document(Web.Contents(BaseUrl, [RelativePath="v1/club-schedule-season/" & [TeamAbbrev] & "/20252026", Headers=[#"User-Agent"="PowerBI"]])) otherwise null
+				    ),
+				
+				    // 3. Filter out any API hiccups, then expand the 'games' array
+				    RemoveNullSchedules = Table.SelectRows(FetchSchedules, each ([ScheduleData] <> null and Record.HasFields([ScheduleData], "games"))),
+				    ExpandedGamesList = Table.ExpandRecordColumn(RemoveNullSchedules, "ScheduleData", {"games"}, {"games"}),
+				    ExpandedGamesArray = Table.ExpandListColumn(ExpandedGamesList, "games"),
+				
+				    // 4. Safely expand the individual game records
+				    RemoveBlankGames = Table.SelectRows(ExpandedGamesArray, each [games] <> null),
+				    ExpandedGames = Table.ExpandRecordColumn(RemoveBlankGames, "games", 
 				        {"id", "season", "gameType", "gameDate", "gameState", "homeTeam", "awayTeam"}, 
 				        {"GameID", "Season", "GameType", "GameDate", "GameState", "HomeTeamRecord", "AwayTeamRecord"}
 				    ),
-				    ExpandedHome = try Table.ExpandRecordColumn(ExpandedGames, "HomeTeamRecord", {"id", "abbrev", "score"}, {"HomeTeamID", "HomeTeamAbbrev", "HomeScore"}) otherwise ExpandedGames,
-				    ExpandedAway = try Table.ExpandRecordColumn(ExpandedHome, "AwayTeamRecord", {"id", "abbrev", "score"}, {"AwayTeamID", "AwayTeamAbbrev", "AwayScore"}) otherwise ExpandedHome,
-				    
-				    // Select and type the live data. GameType is cast to text because Kaggle stores it as text ("R", "P", etc.)
+				
+				    // 5. Safely expand Home and Away team details (Future games might not have a 'score' node yet, this prevents crashing)
+				    SanitizedHome = Table.TransformColumns(ExpandedGames, {{"HomeTeamRecord", each if _ is record then _ else null}}),
+				    ExpandedHome = Table.ExpandRecordColumn(SanitizedHome, "HomeTeamRecord", {"id", "abbrev", "score"}, {"HomeTeamID", "HomeTeamAbbrev", "HomeScore"}),
+				
+				    SanitizedAway = Table.TransformColumns(ExpandedHome, {{"AwayTeamRecord", each if _ is record then _ else null}}),
+				    ExpandedAway = Table.ExpandRecordColumn(SanitizedAway, "AwayTeamRecord", {"id", "abbrev", "score"}, {"AwayTeamID", "AwayTeamAbbrev", "AwayScore"}),
+				
+				    // 6. Select and format the Live Branch columns
 				    LiveGames = Table.SelectColumns(ExpandedAway, {"GameID", "Season", "GameType", "GameDate", "GameState", "HomeTeamID", "HomeTeamAbbrev", "HomeScore", "AwayTeamID", "AwayTeamAbbrev", "AwayScore"}, MissingField.Ignore),
 				    CleanedLive = Table.TransformColumnTypes(LiveGames, {
 				        {"GameID", Int64.Type}, {"Season", Int64.Type}, {"GameType", type text}, {"GameDate", type date}, 
@@ -13717,12 +13692,13 @@ table DimGames
 				        {"AwayTeamID", Int64.Type}
 				    }),
 				    
-				    // --- THE FIX: ENFORCE PRIMARY KEY UNIQUENESS ---
-				    // This physically removes any duplicate rows generated by dirty historical Kaggle data,
-				    // ensuring DimGames acts as a flawless 1-to-Many Dimension table.
-				    RemovedDuplicates = Table.Distinct(TypedData, {"GameID"})
+				    // --- ENFORCE PRIMARY KEY UNIQUENESS ---
+				    // This physically removes the duplicate games generated by querying all 32 teams 
+				    // and ensures DimGames acts as a flawless 1-to-Many Dimension table.
+				    RemovedDuplicates = Table.Distinct(TypedData, {"GameID"}),
+				    #"Sorted Rows" = Table.Sort(RemovedDuplicates,{{"GameID", Order.Descending}})
 				in
-				    RemovedDuplicates
+				    #"Sorted Rows"
 				```
 
 	annotation PBI_NavigationStepName = Navigation
@@ -13844,19 +13820,20 @@ table DimPlayers
 				    DataList = try Source[data] otherwise {},
 				    PlayersTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
 				    
-				    // THE UPGRADE: We added 'teamAbbrevs' to extract the raw team strings
+				    // Expand the core player attributes
 				    ExpandedPlayers = try Table.ExpandRecordColumn(PlayersTable, "Column1", 
 				        {"playerId", "skaterFullName", "positionCode", "shootsCatches", "gamesPlayed", "goals", "assists", "points", "teamAbbrevs"}, 
 				        {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "RawTeams"}
 				    ) otherwise PlayersTable,
 				
-				    // THE FIX: If a player was traded, 'RawTeams' looks like "MTL, WPG". We grab the first team (current) to ensure a clean join.
+				    // Extract the current team (handling traded players gracefully)
 				    AddCurrentTeam = Table.AddColumn(ExpandedPlayers, "CurrentTeamAbbrev", 
 				        each try Text.Trim(Text.Split([RawTeams], ","){0}) otherwise [RawTeams], type text),
 				
-				    // Synthesize the Headshot URL 
+				    // --- THE ASSET SERVER FIX ---
+				    // Construct the new mandatory CDN path utilizing the Season and Team Abbreviation
 				    AddHeadshotURL = Table.AddColumn(AddCurrentTeam, "HeadshotURL", 
-				        each "https://assets.nhle.com/mugs/nhl/latest/ext/light/" & Text.From([PlayerID]) & ".png", type text),
+				        each "https://assets.nhle.com/mugs/nhl/20252026/" & [CurrentTeamAbbrev] & "/" & Text.From([PlayerID]) & ".png", type text),
 				
 				    // Memory Efficiency & Deduplication
 				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "CurrentTeamAbbrev", "HeadshotURL"}, MissingField.Ignore),
@@ -14316,7 +14293,7 @@ table FactEdgeSkatingSpeeds
 
 	annotation PBI_NavigationStepName = Navigation
 
-	annotation PBI_ResultType = Table
+	annotation PBI_ResultType = Exception
 
 
 
@@ -14473,6 +14450,15 @@ table FactHistoricalPlays
 
 		annotation SummarizationSetBy = Automatic
 
+	column PlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: abe7a7a4-b34f-470a-9145-038684d7d0c1
+		summarizeBy: count
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
 	partition FactHistoricalPlays = m
 		mode: import
 		source = ```
@@ -14481,59 +14467,46 @@ table FactHistoricalPlays
 				    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game_plays.csv"),[Delimiter=",", Columns=18, Encoding=1252, QuoteStyle=QuoteStyle.None]),
 				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
 				    
-				    // 2. Early Filtering (Keeps 2021 season onwards)
-				    FilteredHistory = Table.SelectRows(PromotedHeaders, each try Number.From([game_id]) >= 2021000000 otherwise false),
-				    
 				    // 3. Rename columns
-				    RenamedColumns = Table.RenameColumns(FilteredHistory,{
-				        {"game_id", "GameID"}, 
-				        {"play_id", "EventID"}, 
-				        {"period", "PeriodNumber"}, 
-				        {"event", "EventType"}, 
-				        {"team_id_for", "EventTeamID"}, 
-				        {"x", "X_Coord"}, 
-				        {"y", "Y_Coord"}
+				    RenamedColumns = Table.RenameColumns(PromotedHeaders,{
+				        {"game_id", "GameID"}, {"play_id", "EventID"}, {"period", "PeriodNumber"}, 
+				        {"event", "EventType"}, {"team_id_for", "EventTeamID"}, {"x", "X_Coord"}, {"y", "Y_Coord"}
 				    }, MissingField.Ignore),
 				    
+				    #"Filtered Rows" = Table.SelectRows(RenamedColumns, each ([EventType] <> "Game End" and [EventType] <> "Game Official" and [EventType] <> "Game Scheduled" and [EventType] <> "Period End" and [EventType] <> "Period Official" and [EventType] <> "Period Ready" and [EventType] <> "Period Start" and [EventType] <> "Shootout Complete" and [EventType] <> "Stoppage") and ([X_Coord] <> "NA")),
+				    
 				    // 4. Time Conversion
-				    SplitTime = Table.SplitColumn(RenamedColumns, "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
+				    SplitTime = Table.SplitColumn(#"Filtered Rows", "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
 				    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
 				    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", each try ([Minute] * 60) + [Second] otherwise null, Int64.Type),
 				    
 				    // 5. Select unified columns
 				    FinalColumns = Table.SelectColumns(AddSeconds, 
-				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"},
-				        MissingField.Ignore
+				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"}, MissingField.Ignore
 				    ),
 				
 				    // 6. Scrub "NA"
 				    CleanedNAs = Table.ReplaceValue(FinalColumns, "NA", null, Replacer.ReplaceValue, {"EventTeamID", "X_Coord", "Y_Coord"}),
 				    
-				    // 7. FIX: Inject the 4 missing Player ID columns so the count matches FactLivePlays (12 columns)
+				    // 7. Inject missing columns including our new PlayerID
 				    AddScoring = Table.AddColumn(CleanedNAs, "ScoringPlayerID", each null, Int64.Type),
 				    AddShooting = Table.AddColumn(AddScoring, "ShootingPlayerID", each null, Int64.Type),
 				    AddHitting = Table.AddColumn(AddShooting, "HittingPlayerID", each null, Int64.Type),
 				    AddHittee = Table.AddColumn(AddHitting, "HitteePlayerID", each null, Int64.Type),
+				    AddPlayerID = Table.AddColumn(AddHittee, "PlayerID", each null, Int64.Type),
 				
-				    // 8. FIX: Force the exact column order so DAX UNION aligns them perfectly
-				    ReorderedColumns = Table.ReorderColumns(AddHittee, 
-				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
+				    // 8. Force exact column order to match FactLivePlays perfectly
+				    ReorderedColumns = Table.ReorderColumns(AddPlayerID, 
+				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "PlayerID", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
 				    ),
 				
-				    // 9. Strict Data Typing (Matching FactLivePlays exactly)
+				    // 9. Strict Data Typing
 				    TypedData = Table.TransformColumnTypes(ReorderedColumns,{
-				        {"GameID", Int64.Type}, 
-				        {"EventID", type text}, 
-				        {"PeriodNumber", Int64.Type}, 
-				        {"TimeInPeriod_Seconds", Int64.Type}, 
-				        {"EventType", type text}, 
-				        {"EventTeamID", Int64.Type}, 
-				        {"X_Coord", type number}, 
-				        {"Y_Coord", type number},
-				        {"ScoringPlayerID", Int64.Type},
-				        {"ShootingPlayerID", Int64.Type},
-				        {"HittingPlayerID", Int64.Type},
-				        {"HitteePlayerID", Int64.Type}
+				        {"GameID", Int64.Type}, {"EventID", type text}, {"PeriodNumber", Int64.Type}, 
+				        {"TimeInPeriod_Seconds", Int64.Type}, {"EventType", type text}, {"EventTeamID", Int64.Type}, 
+				        {"X_Coord", type number}, {"Y_Coord", type number}, {"PlayerID", Int64.Type}, 
+				        {"ScoringPlayerID", Int64.Type}, {"ShootingPlayerID", Int64.Type}, 
+				        {"HittingPlayerID", Int64.Type}, {"HitteePlayerID", Int64.Type}
 				    })
 				in
 				    TypedData
@@ -14700,39 +14673,57 @@ table FactLivePlays
 
 		annotation SummarizationSetBy = Automatic
 
+	column PlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: 930604f6-f666-42cd-9a1a-791490ec8181
+		summarizeBy: count
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
 	partition FactLivePlays = m
 		mode: import
 		source = ```
 				let
 				    SourceTracker = DimGames,
+				    #"Filtered Rows" = Table.SelectRows(SourceTracker, each ([Season] = 20252026)),
 				    
-				    // FIX: Filter to ONLY the 2025-2026 season games
-				    FilteredCurrentSeason = Table.SelectRows(SourceTracker, each ([Season] = 20252026)),
-				    
-				    IsolatedGameID = Table.SelectColumns(FilteredCurrentSeason, {"GameID"}),
+				    IsolatedGameID = Table.SelectColumns(#"Filtered Rows", {"GameID"}),
 				    ChangedTypeStr = Table.TransformColumnTypes(IsolatedGameID, {{"GameID", type text}}),
+				    
+				    // Invoke the API for each GameID
 				    InvokedAPI = Table.AddColumn(ChangedTypeStr, "LivePlays", each fxGetPlayByPlay([GameID])),
+				    
+				    // Expand the JSON response from the API
 				    ExpandedLivePlays = Table.ExpandTableColumn(InvokedAPI, "LivePlays", 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
 				    ),
-				    CleanedLive = Table.TransformColumnTypes(ExpandedLivePlays, {{"EventID", type text}, {"EventTeamID", type text}}),
-				    TypedData = Table.TransformColumnTypes(CleanedLive, {
-				        {"GameID", Int64.Type},
-				        {"EventID", type text},               
-				        {"PeriodNumber", Int64.Type},
-				        {"TimeInPeriod_Seconds", Int64.Type},
-				        {"EventType", type text},
-				        {"EventTeamID", Int64.Type},          
-				        {"X_Coord", type number},
-				        {"Y_Coord", type number},
-				        {"ScoringPlayerID", Int64.Type},
-				        {"ShootingPlayerID", Int64.Type},
-				        {"HittingPlayerID", Int64.Type},
-				        {"HitteePlayerID", Int64.Type}
-				    })
+				    
+				    TypedData = Table.TransformColumnTypes(ExpandedLivePlays, {
+				        {"GameID", Int64.Type}, {"EventID", type text}, {"PeriodNumber", Int64.Type},
+				        {"TimeInPeriod_Seconds", Int64.Type}, {"EventType", type text}, {"EventTeamID", Int64.Type},          
+				        {"X_Coord", type number}, {"Y_Coord", type number}, {"ScoringPlayerID", Int64.Type},
+				        {"ShootingPlayerID", Int64.Type}, {"HittingPlayerID", Int64.Type}, {"HitteePlayerID", Int64.Type}
+				    }),
+				    
+				    #"Filtered Rows1" = Table.SelectRows(TypedData, each ([EventType] <> null and [EventType] <> "game-end" and [EventType] <> "period-end" and [EventType] <> "period-start" and [EventType] <> "shootout-complete" and [EventType] <> "stoppage")),
+				
+				    // THE FIX: Coalesce the specific IDs into one master PlayerID column
+				    AddPlayerID = Table.AddColumn(#"Filtered Rows1", "PlayerID", each 
+				        if [ScoringPlayerID] <> null then [ScoringPlayerID]
+				        else if [ShootingPlayerID] <> null then [ShootingPlayerID]
+				        else if [HittingPlayerID] <> null then [HittingPlayerID]
+				        else if [HitteePlayerID] <> null then [HitteePlayerID]
+				        else null, Int64.Type
+				    ),
+				
+				    // Lock in the exact column order for the DAX UNION
+				    FinalSchema = Table.ReorderColumns(AddPlayerID, {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "PlayerID", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}),
+				    #"Filtered Rows2" = Table.SelectRows(FinalSchema, each ([PlayerID] <> null))
 				in
-				    TypedData
+				    #"Filtered Rows2"
 				```
 
 	changedProperty = IsHidden
@@ -14847,59 +14838,19 @@ table FactPlayByPlay
 
 		annotation SummarizationSetBy = Automatic
 
+	column PlayerID
+		lineageTag: 11aa29c1-ea3e-4687-b594-3cd3c6186a89
+		summarizeBy: count
+		isNameInferred
+		sourceColumn: FactLivePlays[PlayerID]
+
+		annotation SummarizationSetBy = Automatic
+
 	partition FactPlayByPlay = calculated
 		mode: import
 		source = UNION('FactLivePlays', 'FactHistoricalPlays')
 
 	annotation PBI_Id = 88a25703504849dda771e1429e17cc43
-
-
-
-
-// --------------------------------------------------------------------------
-// FILE: NHL.SemanticModel\definition\tables\Query1.tmdl
-// --------------------------------------------------------------------------
-
-table Query1
-	lineageTag: 880a518b-715b-4848-bc7c-f8cdb5b85bf1
-
-	column Name
-		dataType: string
-		lineageTag: f4cc1dae-41a4-40f1-a0d1-fc224b1bd56d
-		summarizeBy: none
-		sourceColumn: Name
-
-		annotation SummarizationSetBy = Automatic
-
-	column Value
-		dataType: string
-		lineageTag: 3298e794-6059-4016-b5df-14a31764cb88
-		summarizeBy: none
-		sourceColumn: Value
-
-		annotation SummarizationSetBy = Automatic
-
-	partition Query1 = m
-		mode: import
-		source = ```
-				let
-				    // 1. Diagnostic Test for a known player with heavy ice time (Connor McDavid)
-				    PlayerID = "8478402", 
-				    BaseUrl = "https://api-web.nhle.com",
-				    Path = "v1/edge/skater-skating-speed-detail/" & PlayerID & "/20242025/2",
-				
-				    // 2. Fetch the raw JSON WITHOUT try...otherwise to expose the true payload
-				    Source = Json.Document(Web.Contents(BaseUrl, [RelativePath=Path])),
-				
-				    // 3. Convert the Record to a Table so you can clearly read the Keys and Values
-				    ConvertedToTable = try Record.ToTable(Source) otherwise Source
-				in
-				    ConvertedToTable
-				```
-
-	annotation PBI_NavigationStepName = Navigation
-
-	annotation PBI_ResultType = Table
 
 
 
@@ -14958,6 +14909,54 @@ table _Measures
 	measure 'Games Played' = SUM('DimPlayers'[GamesPlayed])
 		formatString: 0
 		lineageTag: d3b4eedb-5a04-4e14-bb27-58fcbaa47ea7
+
+	measure 'Total Games Played' =
+			
+			CALCULATE(
+			    DISTINCTCOUNT(DimGames[GameID]),
+			    DimGames[GameState] = "FINAL" || DimGames[GameState] = "OFF"
+			)
+		formatString: 0
+		lineageTag: 69802e14-18f6-41a3-80ad-c3c667605fd1
+
+	measure 'Team Wins' = ```
+			
+					VAR SelectedTeam = SELECTEDVALUE(DimTeams[TeamAbbrev])
+					RETURN
+					CALCULATE(
+					    COUNTROWS(DimGames),
+					    (DimGames[HomeTeamAbbrev] = SelectedTeam && DimGames[HomeScore] > DimGames[AwayScore]) ||
+					    (DimGames[AwayTeamAbbrev] = SelectedTeam && DimGames[AwayScore] > DimGames[HomeScore])
+					)
+			```
+		formatString: 0
+		lineageTag: 94c9a502-0e3d-4c16-a153-a749ac2af8bb
+
+	measure 'Team Losses' = ```
+			
+					VAR SelectedTeam = SELECTEDVALUE(DimTeams[TeamAbbrev])
+					RETURN
+					CALCULATE(
+					    COUNTROWS(DimGames),
+					    (DimGames[HomeTeamAbbrev] = SelectedTeam && DimGames[HomeScore] < DimGames[AwayScore]) ||
+					    (DimGames[AwayTeamAbbrev] = SelectedTeam && DimGames[AwayScore] < DimGames[HomeScore])
+					)
+			```
+		formatString: 0
+		lineageTag: 568a9445-ea2e-460f-82c6-395178899731
+
+	measure 'Team Ties' = ```
+			
+					VAR SelectedTeam = SELECTEDVALUE(DimTeams[TeamAbbrev])
+					RETURN
+					CALCULATE(
+					    COUNTROWS(DimGames),
+					    (DimGames[HomeTeamAbbrev] = SelectedTeam && DimGames[HomeScore] = DimGames[AwayScore]) ||
+					    (DimGames[AwayTeamAbbrev] = SelectedTeam && DimGames[AwayScore] = DimGames[HomeScore])
+					)
+			```
+		formatString: 0
+		lineageTag: 53811775-a520-44bb-8f9d-2a8c311d30a7
 
 	column Value
 		dataType: int64

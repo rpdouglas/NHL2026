@@ -49,6 +49,59 @@ table _Measures
 		formatString: 0
 		lineageTag: d3b4eedb-5a04-4e14-bb27-58fcbaa47ea7
 
+	measure 'Total Games Played' =
+			
+			CALCULATE(
+			    DISTINCTCOUNT(DimGames[GameID]),
+			    DimGames[GameState] = "FINAL" || DimGames[GameState] = "OFF"
+			)
+		formatString: 0
+		lineageTag: 69802e14-18f6-41a3-80ad-c3c667605fd1
+
+	measure 'Team Wins' = ```
+			
+					VAR SelectedTeam = SELECTEDVALUE(DimTeams[TeamAbbrev])
+					RETURN
+					CALCULATE(
+					    COUNTROWS(DimGames),
+					    (DimGames[HomeTeamAbbrev] = SelectedTeam && DimGames[HomeScore] > DimGames[AwayScore]) ||
+					    (DimGames[AwayTeamAbbrev] = SelectedTeam && DimGames[AwayScore] > DimGames[HomeScore])
+					)
+			```
+		formatString: 0
+		lineageTag: 94c9a502-0e3d-4c16-a153-a749ac2af8bb
+
+	measure 'Team Losses' = ```
+			
+					VAR SelectedTeam = SELECTEDVALUE(DimTeams[TeamAbbrev])
+					RETURN
+					CALCULATE(
+					    COUNTROWS(DimGames),
+					    (DimGames[HomeTeamAbbrev] = SelectedTeam && DimGames[HomeScore] < DimGames[AwayScore]) ||
+					    (DimGames[AwayTeamAbbrev] = SelectedTeam && DimGames[AwayScore] < DimGames[HomeScore])
+					)
+			```
+		formatString: 0
+		lineageTag: 568a9445-ea2e-460f-82c6-395178899731
+
+	measure 'Team Ties' = ```
+			
+					VAR SelectedTeam = SELECTEDVALUE(DimTeams[TeamAbbrev])
+					RETURN
+					CALCULATE(
+					    COUNTROWS(DimGames),
+					    (DimGames[HomeTeamAbbrev] = SelectedTeam && DimGames[HomeScore] = DimGames[AwayScore]) ||
+					    (DimGames[AwayTeamAbbrev] = SelectedTeam && DimGames[AwayScore] = DimGames[HomeScore])
+					)
+			```
+		formatString: 0
+		lineageTag: 53811775-a520-44bb-8f9d-2a8c311d30a7
+
+	measure 'Points Percentage' = DIVIDE(SUM(DimPlayers[Goals]), ([Games Played] * 2))
+		lineageTag: 57c3a5fd-1ea5-4c3b-b391-0eead5aabaea
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
 	column Value
 		dataType: int64
 		isHidden

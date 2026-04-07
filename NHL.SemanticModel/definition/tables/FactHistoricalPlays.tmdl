@@ -146,6 +146,15 @@ table FactHistoricalPlays
 
 		annotation SummarizationSetBy = Automatic
 
+	column PlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: abe7a7a4-b34f-470a-9145-038684d7d0c1
+		summarizeBy: count
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
 	partition FactHistoricalPlays = m
 		mode: import
 		source = ```
@@ -154,59 +163,46 @@ table FactHistoricalPlays
 				    Source = Csv.Document(File.Contents("C:\Users\herblize\Downloads\archive\game_plays.csv"),[Delimiter=",", Columns=18, Encoding=1252, QuoteStyle=QuoteStyle.None]),
 				    PromotedHeaders = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
 				    
-				    // 2. Early Filtering (Keeps 2021 season onwards)
-				    FilteredHistory = Table.SelectRows(PromotedHeaders, each try Number.From([game_id]) >= 2021000000 otherwise false),
-				    
 				    // 3. Rename columns
-				    RenamedColumns = Table.RenameColumns(FilteredHistory,{
-				        {"game_id", "GameID"}, 
-				        {"play_id", "EventID"}, 
-				        {"period", "PeriodNumber"}, 
-				        {"event", "EventType"}, 
-				        {"team_id_for", "EventTeamID"}, 
-				        {"x", "X_Coord"}, 
-				        {"y", "Y_Coord"}
+				    RenamedColumns = Table.RenameColumns(PromotedHeaders,{
+				        {"game_id", "GameID"}, {"play_id", "EventID"}, {"period", "PeriodNumber"}, 
+				        {"event", "EventType"}, {"team_id_for", "EventTeamID"}, {"x", "X_Coord"}, {"y", "Y_Coord"}
 				    }, MissingField.Ignore),
 				    
+				    #"Filtered Rows" = Table.SelectRows(RenamedColumns, each ([EventType] <> "Game End" and [EventType] <> "Game Official" and [EventType] <> "Game Scheduled" and [EventType] <> "Period End" and [EventType] <> "Period Official" and [EventType] <> "Period Ready" and [EventType] <> "Period Start" and [EventType] <> "Shootout Complete" and [EventType] <> "Stoppage") and ([X_Coord] <> "NA")),
+				    
 				    // 4. Time Conversion
-				    SplitTime = Table.SplitColumn(RenamedColumns, "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
+				    SplitTime = Table.SplitColumn(#"Filtered Rows", "periodTime", Splitter.SplitTextByDelimiter(":", QuoteStyle.Csv), {"Minute", "Second"}),
 				    ChangedTimeTypes = Table.TransformColumnTypes(SplitTime, {{"Minute", Int64.Type}, {"Second", Int64.Type}}),
 				    AddSeconds = Table.AddColumn(ChangedTimeTypes, "TimeInPeriod_Seconds", each try ([Minute] * 60) + [Second] otherwise null, Int64.Type),
 				    
 				    // 5. Select unified columns
 				    FinalColumns = Table.SelectColumns(AddSeconds, 
-				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"},
-				        MissingField.Ignore
+				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord"}, MissingField.Ignore
 				    ),
 				
 				    // 6. Scrub "NA"
 				    CleanedNAs = Table.ReplaceValue(FinalColumns, "NA", null, Replacer.ReplaceValue, {"EventTeamID", "X_Coord", "Y_Coord"}),
 				    
-				    // 7. FIX: Inject the 4 missing Player ID columns so the count matches FactLivePlays (12 columns)
+				    // 7. Inject missing columns including our new PlayerID
 				    AddScoring = Table.AddColumn(CleanedNAs, "ScoringPlayerID", each null, Int64.Type),
 				    AddShooting = Table.AddColumn(AddScoring, "ShootingPlayerID", each null, Int64.Type),
 				    AddHitting = Table.AddColumn(AddShooting, "HittingPlayerID", each null, Int64.Type),
 				    AddHittee = Table.AddColumn(AddHitting, "HitteePlayerID", each null, Int64.Type),
+				    AddPlayerID = Table.AddColumn(AddHittee, "PlayerID", each null, Int64.Type),
 				
-				    // 8. FIX: Force the exact column order so DAX UNION aligns them perfectly
-				    ReorderedColumns = Table.ReorderColumns(AddHittee, 
-				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
+				    // 8. Force exact column order to match FactLivePlays perfectly
+				    ReorderedColumns = Table.ReorderColumns(AddPlayerID, 
+				        {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "PlayerID", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
 				    ),
 				
-				    // 9. Strict Data Typing (Matching FactLivePlays exactly)
+				    // 9. Strict Data Typing
 				    TypedData = Table.TransformColumnTypes(ReorderedColumns,{
-				        {"GameID", Int64.Type}, 
-				        {"EventID", type text}, 
-				        {"PeriodNumber", Int64.Type}, 
-				        {"TimeInPeriod_Seconds", Int64.Type}, 
-				        {"EventType", type text}, 
-				        {"EventTeamID", Int64.Type}, 
-				        {"X_Coord", type number}, 
-				        {"Y_Coord", type number},
-				        {"ScoringPlayerID", Int64.Type},
-				        {"ShootingPlayerID", Int64.Type},
-				        {"HittingPlayerID", Int64.Type},
-				        {"HitteePlayerID", Int64.Type}
+				        {"GameID", Int64.Type}, {"EventID", type text}, {"PeriodNumber", Int64.Type}, 
+				        {"TimeInPeriod_Seconds", Int64.Type}, {"EventType", type text}, {"EventTeamID", Int64.Type}, 
+				        {"X_Coord", type number}, {"Y_Coord", type number}, {"PlayerID", Int64.Type}, 
+				        {"ScoringPlayerID", Int64.Type}, {"ShootingPlayerID", Int64.Type}, 
+				        {"HittingPlayerID", Int64.Type}, {"HitteePlayerID", Int64.Type}
 				    })
 				in
 				    TypedData

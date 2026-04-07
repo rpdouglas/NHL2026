@@ -1,16 +1,16 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
-  "name": "52a824821df6987b0bf6",
+  "name": "9a3b1f18872befe625fd",
   "position": {
-    "x": 10,
-    "y": 290,
-    "z": 0,
-    "height": 280,
-    "width": 280,
-    "tabOrder": 0
+    "x": 294.85714285714283,
+    "y": 260.57142857142856,
+    "z": 8000,
+    "height": 459.42857142857144,
+    "width": 272,
+    "tabOrder": 8000
   },
   "visual": {
-    "visualType": "slicer",
+    "visualType": "advancedSlicerVisual",
     "query": {
       "queryState": {
         "Values": {
@@ -20,34 +20,20 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "DimPlayers"
+                      "Entity": "FactPlayByPlay"
                     }
                   },
-                  "Property": "PlayerName"
+                  "Property": "EventType"
                 }
               },
-              "queryRef": "DimPlayers.PlayerName",
-              "nativeQueryRef": "PlayerName",
-              "active": true
+              "queryRef": "FactPlayByPlay.EventType",
+              "nativeQueryRef": "EventType"
             }
           ]
         }
       }
     },
     "objects": {
-      "data": [
-        {
-          "properties": {
-            "mode": {
-              "expr": {
-                "Literal": {
-                  "Value": "'Dropdown'"
-                }
-              }
-            }
-          }
-        }
-      ],
       "general": [
         {
           "properties": {
@@ -56,8 +42,8 @@
                 "Version": 2,
                 "From": [
                   {
-                    "Name": "d",
-                    "Entity": "DimPlayers",
+                    "Name": "f",
+                    "Entity": "FactPlayByPlay",
                     "Type": 0
                   }
                 ],
@@ -70,10 +56,10 @@
                             "Column": {
                               "Expression": {
                                 "SourceRef": {
-                                  "Source": "d"
+                                  "Source": "f"
                                 }
                               },
-                              "Property": "PlayerName"
+                              "Property": "EventType"
                             }
                           }
                         ],
@@ -81,7 +67,7 @@
                           [
                             {
                               "Literal": {
-                                "Value": "'Connor McDavid'"
+                                "Value": "'blocked-shot'"
                               }
                             }
                           ]
@@ -90,6 +76,32 @@
                     }
                   }
                 ]
+              }
+            }
+          }
+        }
+      ],
+      "layout": [
+        {
+          "properties": {
+            "orientation": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "overFlow": [
+        {
+          "properties": {
+            "overFlowDirection": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
               }
             }
           }

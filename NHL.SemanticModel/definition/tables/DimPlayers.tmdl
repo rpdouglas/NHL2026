@@ -106,19 +106,20 @@ table DimPlayers
 				    DataList = try Source[data] otherwise {},
 				    PlayersTable = Table.FromList(DataList, Splitter.SplitByNothing(), {"Column1"}, null, ExtraValues.Error),
 				    
-				    // THE UPGRADE: We added 'teamAbbrevs' to extract the raw team strings
+				    // Expand the core player attributes
 				    ExpandedPlayers = try Table.ExpandRecordColumn(PlayersTable, "Column1", 
 				        {"playerId", "skaterFullName", "positionCode", "shootsCatches", "gamesPlayed", "goals", "assists", "points", "teamAbbrevs"}, 
 				        {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "RawTeams"}
 				    ) otherwise PlayersTable,
 				
-				    // THE FIX: If a player was traded, 'RawTeams' looks like "MTL, WPG". We grab the first team (current) to ensure a clean join.
+				    // Extract the current team (handling traded players gracefully)
 				    AddCurrentTeam = Table.AddColumn(ExpandedPlayers, "CurrentTeamAbbrev", 
 				        each try Text.Trim(Text.Split([RawTeams], ","){0}) otherwise [RawTeams], type text),
 				
-				    // Synthesize the Headshot URL 
+				    // --- THE ASSET SERVER FIX ---
+				    // Construct the new mandatory CDN path utilizing the Season and Team Abbreviation
 				    AddHeadshotURL = Table.AddColumn(AddCurrentTeam, "HeadshotURL", 
-				        each "https://assets.nhle.com/mugs/nhl/latest/ext/light/" & Text.From([PlayerID]) & ".png", type text),
+				        each "https://assets.nhle.com/mugs/nhl/20252026/" & [CurrentTeamAbbrev] & "/" & Text.From([PlayerID]) & ".png", type text),
 				
 				    // Memory Efficiency & Deduplication
 				    FinalColumns = Table.SelectColumns(AddHeadshotURL, {"PlayerID", "PlayerName", "Position", "ShootsCatches", "GamesPlayed", "Goals", "Assists", "Points", "CurrentTeamAbbrev", "HeadshotURL"}, MissingField.Ignore),

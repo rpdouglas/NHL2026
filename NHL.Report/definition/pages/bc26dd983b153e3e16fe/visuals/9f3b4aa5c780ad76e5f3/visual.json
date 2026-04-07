@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
-  "name": "1e7f30ec0a784a35a94c",
+  "name": "9f3b4aa5c780ad76e5f3",
   "position": {
-    "x": 0,
-    "y": 425.38152610441767,
-    "z": 2000,
-    "height": 275.02008032128515,
-    "width": 430.52208835341366,
-    "tabOrder": 2
+    "x": 690.1204819277109,
+    "y": 181.20481927710844,
+    "z": 3003,
+    "height": 133.6546184738956,
+    "width": 533.33333333333337,
+    "tabOrder": 2004
   },
   "visual": {
     "visualType": "cardVisual",
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Player Goals"
+                  "Property": "Team Points"
                 }
               },
-              "queryRef": "_Measures.Player Goals",
-              "nativeQueryRef": "Player Goals"
+              "queryRef": "_Measures.Team Points",
+              "nativeQueryRef": "Team Points"
             },
             {
               "field": {
@@ -37,11 +37,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Player Assists"
+                  "Property": "Team Wins"
                 }
               },
-              "queryRef": "_Measures.Player Assists",
-              "nativeQueryRef": "Player Assists"
+              "queryRef": "_Measures.Team Wins",
+              "nativeQueryRef": "Team Wins"
             },
             {
               "field": {
@@ -51,11 +51,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Player Points"
+                  "Property": "Team Losses"
                 }
               },
-              "queryRef": "_Measures.Player Points",
-              "nativeQueryRef": "Player Points"
+              "queryRef": "_Measures.Team Losses",
+              "nativeQueryRef": "Team Losses"
             },
             {
               "field": {
@@ -65,11 +65,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Games Played"
+                  "Property": "Team Ties"
                 }
               },
-              "queryRef": "_Measures.Games Played",
-              "nativeQueryRef": "Games Played"
+              "queryRef": "_Measures.Team Ties",
+              "nativeQueryRef": "Team Ties"
             }
           ]
         }
@@ -84,7 +84,7 @@
                     "Entity": "_Measures"
                   }
                 },
-                "Property": "Player Goals"
+                "Property": "Team Points"
               }
             },
             "direction": "Descending"
@@ -93,12 +93,34 @@
         "isDefaultSort": true
       }
     },
+    "objects": {
+      "layout": [
+        {
+          "properties": {
+            "contentOrder": {
+              "expr": {
+                "Literal": {
+                  "Value": "'callout_image_referenceLabel'"
+                }
+              }
+            },
+            "calloutSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "30D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "drillFilterOtherVisuals": true
   },
   "filterConfig": {
     "filters": [
       {
-        "name": "9dccf5688a0d8d1329b1",
+        "name": "aa4466e9b013c633c714",
         "field": {
           "Measure": {
             "Expression": {
@@ -106,13 +128,13 @@
                 "Entity": "_Measures"
               }
             },
-            "Property": "Player Goals"
+            "Property": "Team Wins"
           }
         },
         "type": "Advanced"
       },
       {
-        "name": "4e6bf74a1d601fa9d113",
+        "name": "fe0462e2bf3b21254609",
         "field": {
           "Measure": {
             "Expression": {
@@ -120,13 +142,13 @@
                 "Entity": "_Measures"
               }
             },
-            "Property": "Player Assists"
+            "Property": "Team Losses"
           }
         },
         "type": "Advanced"
       },
       {
-        "name": "7d5d773bd177a38bf885",
+        "name": "08d8d388ebcff3249854",
         "field": {
           "Measure": {
             "Expression": {
@@ -134,13 +156,13 @@
                 "Entity": "_Measures"
               }
             },
-            "Property": "Player Points"
+            "Property": "Team Ties"
           }
         },
         "type": "Advanced"
       },
       {
-        "name": "25f3ff06b2d3fdff9a12",
+        "name": "73647b8dca03e81d7d6b",
         "field": {
           "Measure": {
             "Expression": {
@@ -148,7 +170,7 @@
                 "Entity": "_Measures"
               }
             },
-            "Property": "Games Played"
+            "Property": "Team Points"
           }
         },
         "type": "Advanced"

@@ -9,7 +9,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 0
 
-annotation PBI_QueryOrder = ["DimGames","fxGetPlayByPlay","FactLivePlays","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","Query1","FactEdgeSkatingSpeeds","FactEdgeBurstDetails","game","FactHistoricalPlays"]
+annotation PBI_QueryOrder = ["DimGames","fxGetPlayByPlay","FactLivePlays","DimTeams","DimPlayers","fxGetPlayerEDGE","Staging_EDGE","FactEdgeSkatingSpeeds","FactEdgeBurstDetails","game","FactHistoricalPlays"]
 
 annotation PBI_ProTooling = ["DevMode","TMDL-Extension"]
 
@@ -17,12 +17,12 @@ ref table DimGames
 ref table FactLivePlays
 ref table DimTeams
 ref table DimPlayers
-ref table Query1
 ref table FactEdgeSkatingSpeeds
 ref table FactEdgeBurstDetails
 ref table FactHistoricalPlays
 ref table FactPlayByPlay
 ref table _Measures
+ref table DimDate
 
 ref cultureInfo en-US
 

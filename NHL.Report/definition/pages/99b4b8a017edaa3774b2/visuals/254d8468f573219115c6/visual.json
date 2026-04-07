@@ -4,9 +4,10 @@
   "position": {
     "x": 591.16465863453823,
     "y": 337.99196787148594,
-    "z": 3,
+    "z": 2000,
     "height": 280.16064257028114,
-    "width": 497.34939759036149
+    "width": 497.34939759036149,
+    "tabOrder": 2000
   },
   "visual": {
     "visualType": "tableEx",
@@ -92,65 +93,5 @@
       }
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "4ca58815b65988e80491",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "DimPlayers"
-              }
-            },
-            "Property": "PlayerName"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "71f364c917fd5d1ddee7",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "League Avg Max Speed (mph)"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "782db993aabed53105eb",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Player Bursts > 22mph"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "4f6d804d3d88ed362bb3",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Player Max Speed (mph)"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

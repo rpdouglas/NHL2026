@@ -49,7 +49,7 @@
                     [
                       {
                         "Literal": {
-                          "Value": "'Albert Johansson'"
+                          "Value": "'Cole Caufield'"
                         }
                       }
                     ]
@@ -70,8 +70,6 @@
       {
         "name": "951be8d6583a117d3b23",
         "boundFilter": "403a71558b902fd95e8c",
-        "asAggregation": false,
-        "qnaSingleSelectRequired": false,
         "fieldExpr": {
           "Column": {
             "Expression": {
@@ -83,7 +81,6 @@
           }
         }
       }
-    ],
-    "acceptsFilterContext": "None"
+    ]
   }
 }

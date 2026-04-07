@@ -1,16 +1,16 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
-  "name": "52a824821df6987b0bf6",
+  "name": "04433c7b309ed2f9d152",
   "position": {
-    "x": 10,
-    "y": 290,
-    "z": 0,
-    "height": 280,
-    "width": 280,
-    "tabOrder": 0
+    "x": 647.710843373494,
+    "y": 336.706827309237,
+    "z": 3004,
+    "height": 91.244979919678727,
+    "width": 619.43775100401615,
+    "tabOrder": 2005
   },
   "visual": {
-    "visualType": "slicer",
+    "visualType": "advancedSlicerVisual",
     "query": {
       "queryState": {
         "Values": {
@@ -20,28 +20,34 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "DimPlayers"
+                      "Entity": "FactPlayByPlay"
                     }
                   },
-                  "Property": "PlayerName"
+                  "Property": "EventType"
                 }
               },
-              "queryRef": "DimPlayers.PlayerName",
-              "nativeQueryRef": "PlayerName",
-              "active": true
+              "queryRef": "FactPlayByPlay.EventType",
+              "nativeQueryRef": "EventType"
             }
           ]
         }
       }
     },
     "objects": {
-      "data": [
+      "layout": [
         {
           "properties": {
-            "mode": {
+            "rowCount": {
               "expr": {
                 "Literal": {
-                  "Value": "'Dropdown'"
+                  "Value": "4L"
+                }
+              }
+            },
+            "columnCount": {
+              "expr": {
+                "Literal": {
+                  "Value": "4L"
                 }
               }
             }
@@ -56,8 +62,8 @@
                 "Version": 2,
                 "From": [
                   {
-                    "Name": "d",
-                    "Entity": "DimPlayers",
+                    "Name": "f",
+                    "Entity": "FactPlayByPlay",
                     "Type": 0
                   }
                 ],
@@ -70,10 +76,10 @@
                             "Column": {
                               "Expression": {
                                 "SourceRef": {
-                                  "Source": "d"
+                                  "Source": "f"
                                 }
                               },
-                              "Property": "PlayerName"
+                              "Property": "EventType"
                             }
                           }
                         ],
@@ -81,7 +87,7 @@
                           [
                             {
                               "Literal": {
-                                "Value": "'Connor McDavid'"
+                                "Value": "'missed-shot'"
                               }
                             }
                           ]
@@ -97,5 +103,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "d4a8af6b5568ddfaa67f",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "FactPlayByPlay"
+              }
+            },
+            "Property": "EventType"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
   }
 }

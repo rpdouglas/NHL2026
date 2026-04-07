@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "621138b2ed30d18feb41",
   "position": {
-    "x": 745.38152610441773,
-    "y": 38.554216867469883,
-    "z": 2001,
-    "height": 275.02008032128515,
-    "width": 349.55823293172693,
-    "tabOrder": 3
+    "x": 19.428571428571427,
+    "y": 467.42857142857144,
+    "z": 0,
+    "height": 213.71428571428572,
+    "width": 261.71428571428572,
+    "tabOrder": 0
   },
   "visual": {
     "visualType": "gauge",
@@ -70,37 +70,5 @@
       }
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "a4e1682d7c5dc02d8f25",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "Player Max Speed (mph)"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "7a1823dfb25018886aef",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "_Measures"
-              }
-            },
-            "Property": "League Avg Max Speed (mph)"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

@@ -97,6 +97,14 @@ table FactPlayByPlay
 
 		annotation SummarizationSetBy = Automatic
 
+	column PlayerID
+		lineageTag: 11aa29c1-ea3e-4687-b594-3cd3c6186a89
+		summarizeBy: count
+		isNameInferred
+		sourceColumn: FactLivePlays[PlayerID]
+
+		annotation SummarizationSetBy = Automatic
+
 	partition FactPlayByPlay = calculated
 		mode: import
 		source = UNION('FactLivePlays', 'FactHistoricalPlays')

@@ -1,0 +1,128 @@
+table DimDate
+	lineageTag: 3823ee11-8c0d-4f2e-82c7-5cb7060f93b5
+
+	column Date
+		formatString: General Date
+		lineageTag: 5577a5db-e8a2-430d-a383-5e920c3be421
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+		annotation SummarizationSetBy = Automatic
+
+	column DateKey
+		lineageTag: 625b692d-f92c-4037-a83e-12d2c29871b4
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [DateKey]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year
+		formatString: 0
+		lineageTag: 34ca991e-18c6-469c-829d-97597cf19621
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Year]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		lineageTag: e65c347c-9f78-47c1-b455-1ea6fdcfbfeb
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Quarter]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Num'
+		formatString: 0
+		lineageTag: 1be96b6e-47b8-4a27-89e4-3cb89bbc276f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Month Num]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Name'
+		lineageTag: 20afb449-6107-42d6-acc4-96b1a8c157ec
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Month Name]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Short'
+		lineageTag: d97aa16c-bd06-46fa-afb2-488a0ac9f927
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Month Short]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Week Num'
+		formatString: 0
+		lineageTag: 59f29b02-112c-4942-8fd0-33ee6e456905
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Week Num]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day Name'
+		lineageTag: 0d1d271a-223c-4337-ba89-9d7d5c2a7a84
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Day Name]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day of Week Num'
+		formatString: 0
+		lineageTag: ce94da6b-c765-42eb-b412-fa22255d3ed5
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Day of Week Num]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Weekend'
+		lineageTag: b029c992-a5e6-4ab8-995c-7f4df900609d
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Is Weekend]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Season
+		lineageTag: 2b4b123b-6831-4424-bdbf-7ce9bc81ca84
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Season]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimDate = calculated
+		mode: import
+		source =
+				
+				VAR StartDate = DATE(2024, 9, 1) -- Adjust to your earliest season data
+				VAR EndDate = DATE(2026, 6, 30)   -- Adjust to your latest projected data
+				RETURN
+				ADDCOLUMNS (
+				    CALENDAR (StartDate, EndDate),
+				    "DateKey", FORMAT ( [Date], "YYYYMMDD" ),
+				    "Year", YEAR ( [Date] ),
+				    "Quarter", "Q" & FORMAT ( [Date], "Q" ),
+				    "Month Num", MONTH ( [Date] ),
+				    "Month Name", FORMAT ( [Date], "MMMM" ),
+				    "Month Short", FORMAT ( [Date], "MMM" ),
+				    "Week Num", WEEKNUM ( [Date] ),
+				    "Day Name", FORMAT ( [Date], "dddd" ),
+				    "Day of Week Num", WEEKDAY ( [Date], 2 ), -- 1 = Monday
+				    "Is Weekend", IF ( WEEKDAY ( [Date], 2 ) > 5, "Weekend", "Weekday" ),
+				    "Season", IF( MONTH([Date]) >= 9, YEAR([Date]) & YEAR([Date]) + 1, YEAR([Date]) - 1 & YEAR([Date]) )
+				)
+
+	annotation PBI_Id = 73169ceb921743fe99c8f2ea7ac23ba5
+

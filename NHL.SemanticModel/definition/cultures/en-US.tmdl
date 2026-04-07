@@ -65,16 +65,6 @@ cultureInfo en-US
 			            },
 			            "Weight": 0.727
 			          }
-			        },
-			        {
-			          "Player": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
 			        }
 			      ]
 			    },
@@ -4864,191 +4854,6 @@ cultureInfo en-US
 			              "Agent": "Thesaurus"
 			            },
 			            "Weight": 0.484
-			          }
-			        }
-			      ]
-			    },
-			    "query_1": {
-			      "Definition": {
-			        "Binding": {
-			          "ConceptualEntity": "Query1"
-			        }
-			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "query 1": {
-			            "State": "Generated"
-			          }
-			        },
-			        {
-			          "Query1": {
-			            "Type": "Noun",
-			            "State": "Generated",
-			            "Weight": 0.99
-			          }
-			        }
-			      ]
-			    },
-			    "query_1.name": {
-			      "Definition": {
-			        "Binding": {
-			          "ConceptualEntity": "Query1",
-			          "ConceptualProperty": "Name"
-			        }
-			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "name": {
-			            "State": "Generated"
-			          }
-			        },
-			        {
-			          "title": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.714
-			          }
-			        },
-			        {
-			          "label": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.714
-			          }
-			        },
-			        {
-			          "tag": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.714
-			          }
-			        }
-			      ],
-			      "NameType": "Name"
-			    },
-			    "query_1.value": {
-			      "Definition": {
-			        "Binding": {
-			          "ConceptualEntity": "Query1",
-			          "ConceptualProperty": "Value"
-			        }
-			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "value": {
-			            "State": "Generated"
-			          }
-			        },
-			        {
-			          "assessment": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.491
-			          }
-			        },
-			        {
-			          "worth": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "price": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "cost": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "charge": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "rate": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.476
-			          }
-			        },
-			        {
-			          "importance": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.466
-			          }
-			        },
-			        {
-			          "significance": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.466
-			          }
-			        },
-			        {
-			          "usefulness": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.466
-			          }
-			        },
-			        {
-			          "consequence": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.466
 			          }
 			        }
 			      ]
@@ -10395,9 +10200,237 @@ cultureInfo en-US
 			          }
 			        }
 			      ]
+			    },
+			    "fact_live_play.player_ID": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "FactLivePlays",
+			          "ConceptualProperty": "PlayerID"
+			        }
+			      },
+			      "State": "Generated",
+			      "Visibility": {
+			        "Value": "Hidden"
+			      },
+			      "Terms": [
+			        {
+			          "player ID": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "PlayerID": {
+			            "Type": "Noun",
+			            "State": "Generated",
+			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player identification": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identity": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identifier": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player credential": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.727
+			          }
+			        }
+			      ]
+			    },
+			    "fact_historical_play.player_ID": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "FactHistoricalPlays",
+			          "ConceptualProperty": "PlayerID"
+			        }
+			      },
+			      "State": "Generated",
+			      "Visibility": {
+			        "Value": "Hidden"
+			      },
+			      "Terms": [
+			        {
+			          "player ID": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "PlayerID": {
+			            "Type": "Noun",
+			            "State": "Generated",
+			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player identification": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identity": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identifier": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player credential": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.727
+			          }
+			        }
+			      ]
+			    },
+			    "fact_play_by_play.player_ID": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "FactPlayByPlay",
+			          "ConceptualProperty": "PlayerID"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "player ID": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "PlayerID": {
+			            "Type": "Noun",
+			            "State": "Generated",
+			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player identification": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identity": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player identifier": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.75
+			          }
+			        },
+			        {
+			          "player credential": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.727
+			          }
+			        }
+			      ]
 			    }
 			  },
 			  "Relationships": {
+			    "dim_player_has_entity__measure_player_points": {
+			      "Binding": {
+			        "ConceptualEntity": "DimPlayers"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "dim_player": {
+			          "Target": {
+			            "Entity": "dim_player"
+			          }
+			        },
+			        "entity__measure.player_points": {
+			          "Target": {
+			            "Entity": "entity__measure.player_points"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Attribute": {
+			            "Subject": {
+			              "Role": "dim_player"
+			            },
+			            "Object": {
+			              "Role": "entity__measure.player_points"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "dim_players_have_player_points"
+			        }
+			      ]
+			    },
 			    "dim_player_has_entity__measure_player_assists": {
 			      "Binding": {
 			        "ConceptualEntity": "DimPlayers"
@@ -11716,85 +11749,6 @@ cultureInfo en-US
 			        }
 			      ]
 			    },
-			    "query_1_has_value": {
-			      "Binding": {
-			        "ConceptualEntity": "Query1"
-			      },
-			      "State": "Generated",
-			      "Roles": {
-			        "query_1": {
-			          "Target": {
-			            "Entity": "query_1"
-			          }
-			        },
-			        "query_1.value": {
-			          "Target": {
-			            "Entity": "query_1.value"
-			          }
-			        }
-			      },
-			      "Phrasings": [
-			        {
-			          "Attribute": {
-			            "Subject": {
-			              "Role": "query_1"
-			            },
-			            "Object": {
-			              "Role": "query_1.value"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.99,
-			          "ID": "query_1_have_values"
-			        }
-			      ]
-			    },
-			    "query_1_has_name": {
-			      "Binding": {
-			        "ConceptualEntity": "Query1"
-			      },
-			      "State": "Generated",
-			      "Roles": {
-			        "query_1": {
-			          "Target": {
-			            "Entity": "query_1"
-			          }
-			        },
-			        "query_1.name": {
-			          "Target": {
-			            "Entity": "query_1.name"
-			          }
-			        }
-			      },
-			      "Phrasings": [
-			        {
-			          "Attribute": {
-			            "Subject": {
-			              "Role": "query_1"
-			            },
-			            "Object": {
-			              "Role": "query_1.name"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.99,
-			          "ID": "query_1_have_names"
-			        },
-			        {
-			          "Name": {
-			            "Subject": {
-			              "Role": "query_1"
-			            },
-			            "Name": {
-			              "Role": "query_1.name"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.99,
-			          "ID": "names_are_names_IDs_of_query_1"
-			        }
-			      ]
-			    },
 			    "dim_player_has_point": {
 			      "Binding": {
 			        "ConceptualEntity": "DimPlayers"
@@ -13010,39 +12964,6 @@ cultureInfo en-US
 			        }
 			      ]
 			    },
-			    "dim_player_has_entity__measure_player_points": {
-			      "Binding": {
-			        "ConceptualEntity": "DimPlayers"
-			      },
-			      "State": "Generated",
-			      "Roles": {
-			        "dim_player": {
-			          "Target": {
-			            "Entity": "dim_player"
-			          }
-			        },
-			        "entity__measure.player_points": {
-			          "Target": {
-			            "Entity": "entity__measure.player_points"
-			          }
-			        }
-			      },
-			      "Phrasings": [
-			        {
-			          "Attribute": {
-			            "Subject": {
-			              "Role": "dim_player"
-			            },
-			            "Object": {
-			              "Role": "entity__measure.player_points"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.99,
-			          "ID": "dim_players_have_player_points"
-			        }
-			      ]
-			    },
 			    "dim_player_has_entity__measure_games_played": {
 			      "Binding": {
 			        "ConceptualEntity": "DimPlayers"
@@ -13073,6 +12994,39 @@ cultureInfo en-US
 			          "State": "Generated",
 			          "Weight": 0.99,
 			          "ID": "dim_players_have_games_played"
+			        }
+			      ]
+			    },
+			    "fact_play_by_play_has_player_ID": {
+			      "Binding": {
+			        "ConceptualEntity": "FactPlayByPlay"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "fact_play_by_play": {
+			          "Target": {
+			            "Entity": "fact_play_by_play"
+			          }
+			        },
+			        "fact_play_by_play.player_ID": {
+			          "Target": {
+			            "Entity": "fact_play_by_play.player_ID"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Attribute": {
+			            "Subject": {
+			              "Role": "fact_play_by_play"
+			            },
+			            "Object": {
+			              "Role": "fact_play_by_play.player_ID"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "fact_play_by_play_have_player_ID"
 			        }
 			      ]
 			    },

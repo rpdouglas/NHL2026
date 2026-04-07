@@ -146,39 +146,57 @@ table FactLivePlays
 
 		annotation SummarizationSetBy = Automatic
 
+	column PlayerID
+		dataType: int64
+		formatString: 0
+		lineageTag: 930604f6-f666-42cd-9a1a-791490ec8181
+		summarizeBy: count
+		sourceColumn: PlayerID
+
+		annotation SummarizationSetBy = Automatic
+
 	partition FactLivePlays = m
 		mode: import
 		source = ```
 				let
 				    SourceTracker = DimGames,
+				    #"Filtered Rows" = Table.SelectRows(SourceTracker, each ([Season] = 20252026)),
 				    
-				    // FIX: Filter to ONLY the 2025-2026 season games
-				    FilteredCurrentSeason = Table.SelectRows(SourceTracker, each ([Season] = 20252026)),
-				    
-				    IsolatedGameID = Table.SelectColumns(FilteredCurrentSeason, {"GameID"}),
+				    IsolatedGameID = Table.SelectColumns(#"Filtered Rows", {"GameID"}),
 				    ChangedTypeStr = Table.TransformColumnTypes(IsolatedGameID, {{"GameID", type text}}),
+				    
+				    // Invoke the API for each GameID
 				    InvokedAPI = Table.AddColumn(ChangedTypeStr, "LivePlays", each fxGetPlayByPlay([GameID])),
+				    
+				    // Expand the JSON response from the API
 				    ExpandedLivePlays = Table.ExpandTableColumn(InvokedAPI, "LivePlays", 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}, 
 				        {"EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}
 				    ),
-				    CleanedLive = Table.TransformColumnTypes(ExpandedLivePlays, {{"EventID", type text}, {"EventTeamID", type text}}),
-				    TypedData = Table.TransformColumnTypes(CleanedLive, {
-				        {"GameID", Int64.Type},
-				        {"EventID", type text},               
-				        {"PeriodNumber", Int64.Type},
-				        {"TimeInPeriod_Seconds", Int64.Type},
-				        {"EventType", type text},
-				        {"EventTeamID", Int64.Type},          
-				        {"X_Coord", type number},
-				        {"Y_Coord", type number},
-				        {"ScoringPlayerID", Int64.Type},
-				        {"ShootingPlayerID", Int64.Type},
-				        {"HittingPlayerID", Int64.Type},
-				        {"HitteePlayerID", Int64.Type}
-				    })
+				    
+				    TypedData = Table.TransformColumnTypes(ExpandedLivePlays, {
+				        {"GameID", Int64.Type}, {"EventID", type text}, {"PeriodNumber", Int64.Type},
+				        {"TimeInPeriod_Seconds", Int64.Type}, {"EventType", type text}, {"EventTeamID", Int64.Type},          
+				        {"X_Coord", type number}, {"Y_Coord", type number}, {"ScoringPlayerID", Int64.Type},
+				        {"ShootingPlayerID", Int64.Type}, {"HittingPlayerID", Int64.Type}, {"HitteePlayerID", Int64.Type}
+				    }),
+				    
+				    #"Filtered Rows1" = Table.SelectRows(TypedData, each ([EventType] <> null and [EventType] <> "game-end" and [EventType] <> "period-end" and [EventType] <> "period-start" and [EventType] <> "shootout-complete" and [EventType] <> "stoppage")),
+				
+				    // THE FIX: Coalesce the specific IDs into one master PlayerID column
+				    AddPlayerID = Table.AddColumn(#"Filtered Rows1", "PlayerID", each 
+				        if [ScoringPlayerID] <> null then [ScoringPlayerID]
+				        else if [ShootingPlayerID] <> null then [ShootingPlayerID]
+				        else if [HittingPlayerID] <> null then [HittingPlayerID]
+				        else if [HitteePlayerID] <> null then [HitteePlayerID]
+				        else null, Int64.Type
+				    ),
+				
+				    // Lock in the exact column order for the DAX UNION
+				    FinalSchema = Table.ReorderColumns(AddPlayerID, {"GameID", "EventID", "PeriodNumber", "TimeInPeriod_Seconds", "EventType", "EventTeamID", "X_Coord", "Y_Coord", "PlayerID", "ScoringPlayerID", "ShootingPlayerID", "HittingPlayerID", "HitteePlayerID"}),
+				    #"Filtered Rows2" = Table.SelectRows(FinalSchema, each ([PlayerID] <> null))
 				in
-				    TypedData
+				    #"Filtered Rows2"
 				```
 
 	changedProperty = IsHidden

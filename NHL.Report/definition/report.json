@@ -11,7 +11,7 @@
       "type": "SharedResources"
     },
     "customTheme": {
-      "name": "NHL_Midnight_Ice26120520375269907.json",
+      "name": "NHL_Midnight_Ice_v405896940196473199.json",
       "reportVersionAtImport": {
         "visual": "2.7.0",
         "report": "3.2.0",
@@ -33,10 +33,24 @@
           }
         }
       }
+    ],
+    "outspacePane": [
+      {
+        "properties": {
+          "expanded": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        }
+      }
     ]
   },
   "publicCustomVisuals": [
-    "RadarChart1446119667547"
+    "RadarChart1446119667547",
+    "advanceCardE03760C5AB684758B56AA29F9E6C257B"
   ],
   "resourcePackages": [
     {
@@ -55,9 +69,19 @@
       "type": "RegisteredResources",
       "items": [
         {
-          "name": "NHL_Midnight_Ice26120520375269907.json",
-          "path": "NHL_Midnight_Ice26120520375269907.json",
+          "name": "34590420786415230618801.png",
+          "path": "34590420786415230618801.png",
+          "type": "Image"
+        },
+        {
+          "name": "NHL_Midnight_Ice_v405896940196473199.json",
+          "path": "NHL_Midnight_Ice_v405896940196473199.json",
           "type": "CustomTheme"
+        },
+        {
+          "name": "NHL-Logo35783790957311157.png",
+          "path": "NHL-Logo35783790957311157.png",
+          "type": "Image"
         }
       ]
     }

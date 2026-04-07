@@ -19,3 +19,12 @@ relationship f2817f3f-ed1b-faf4-8e93-83b7d6e5241e
 	fromColumn: DimPlayers.CurrentTeamAbbrev
 	toColumn: DimTeams.TeamAbbrev
 
+relationship ab889a60-b993-e15e-15ab-217366e9c7c9
+	isActive: false
+	fromColumn: FactPlayByPlay.PlayerID
+	toColumn: DimPlayers.PlayerID
+
+relationship 6218d91e-b291-91ff-577d-29a333ed07f9
+	fromColumn: DimGames.GameDate
+	toColumn: DimDate.Date
+

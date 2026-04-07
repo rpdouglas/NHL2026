@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "dd63e1655bb8d50108ab",
   "position": {
-    "x": 60.401606425702816,
-    "y": 280.16064257028114,
-    "z": 2,
-    "height": 388.11244979919678,
-    "width": 604.01606425702812,
-    "tabOrder": 2
+    "x": 24,
+    "y": 149.71428571428572,
+    "z": 2000,
+    "height": 555.42857142857144,
+    "width": 602.28571428571433,
+    "tabOrder": 1000
   },
   "visual": {
     "visualType": "tableEx",
@@ -101,6 +101,23 @@
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Measures"
+                  }
+                },
+                "Property": "Player Goals"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
       }
     },
     "drillFilterOtherVisuals": true
@@ -108,7 +125,7 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "2e61844cdec3e55d7ca5",
+        "name": "4d565b22e926e8577ef0",
         "field": {
           "Column": {
             "Expression": {
@@ -122,7 +139,7 @@
         "type": "Categorical"
       },
       {
-        "name": "6441f5895fb4ca31cf8e",
+        "name": "36ccedef2211d8f5ec36",
         "field": {
           "Column": {
             "Expression": {
@@ -136,7 +153,7 @@
         "type": "Categorical"
       },
       {
-        "name": "f8cbd16af6be8e88a797",
+        "name": "b79dc69b291fd6c0841c",
         "field": {
           "Column": {
             "Expression": {
@@ -150,7 +167,7 @@
         "type": "Categorical"
       },
       {
-        "name": "35e7c7b25a97f71b6752",
+        "name": "306543b1f37bf92bfb27",
         "field": {
           "Measure": {
             "Expression": {
@@ -164,7 +181,7 @@
         "type": "Advanced"
       },
       {
-        "name": "de7e73b6b5d395a7c1c9",
+        "name": "ee1da10ce88e373f9017",
         "field": {
           "Measure": {
             "Expression": {
@@ -178,7 +195,7 @@
         "type": "Advanced"
       },
       {
-        "name": "5cac78b6a052b6ba0f10",
+        "name": "d18bbc8d8de9db3f0138",
         "field": {
           "Measure": {
             "Expression": {

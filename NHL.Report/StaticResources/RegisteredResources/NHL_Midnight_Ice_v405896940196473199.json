@@ -1,5 +1,5 @@
 {
-  "name": "NHL Midnight Ice",
+  "name": "NHL Midnight Ice v4",
   "dataColors": [
     "#00E5FF",
     "#FF003F",
@@ -546,6 +546,63 @@
               "color": "#090C10"
             }
           }
+        ],
+        "outspacePane": [
+          {
+            "backgroundColor": {
+              "solid": {
+                "color": "#090C10"
+              }
+            },
+            "foregroundColor": {
+              "solid": {
+                "color": "#8B9BB4"
+              }
+            },
+            "borderColor": {
+              "solid": {
+                "color": "#2A3645"
+              }
+            }
+          }
+        ],
+        "filterCard": [
+          {
+            "$id": "Applied",
+            "backgroundColor": {
+              "solid": {
+                "color": "#1A222C"
+              }
+            },
+            "foregroundColor": {
+              "solid": {
+                "color": "#00E5FF"
+              }
+            },
+            "borderColor": {
+              "solid": {
+                "color": "#00E5FF"
+              }
+            }
+          },
+          {
+            "$id": "Available",
+            "backgroundColor": {
+              "solid": {
+                "color": "#1A222C"
+              }
+            },
+            "foregroundColor": {
+              "solid": {
+                "color": "#FFFFFF"
+              }
+            },
+            "borderColor": {
+              "solid": {
+                "color": "#2A3645"
+              }
+            }
+          }
         ]
       }
     },
@@ -560,6 +617,16 @@
             },
             "fontSize": 12,
             "fontFamily": "Segoe UI Semibold"
+          }
+        ],
+        "calloutValue": [
+          {
+            "color": {
+              "solid": {
+                "color": "#FFFFFF"
+              }
+            },
+            "fontFamily": "Segoe UI Bold"
           }
         ],
         "categoryAxis": [

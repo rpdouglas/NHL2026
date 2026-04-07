@@ -49,7 +49,7 @@
                     [
                       {
                         "Literal": {
-                          "Value": "'Detroit Red Wings'"
+                          "Value": "'Montréal Canadiens'"
                         }
                       }
                     ]
@@ -70,8 +70,6 @@
       {
         "name": "12c7e9ecc83bd222b01b",
         "boundFilter": "2708f4802f77fcca1e85",
-        "asAggregation": false,
-        "qnaSingleSelectRequired": false,
         "fieldExpr": {
           "Column": {
             "Expression": {
