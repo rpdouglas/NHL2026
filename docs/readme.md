@@ -33,6 +33,7 @@ The model follows a rigorous hierarchy designed for drill-through exploration:
 | ⚪ Planned | `EPIC-04` | **Automated Deployment** | Admin | Migrate to Power BI Service with scheduled daily API refreshes. |
 
 ## 🚀 Getting Started
-1.  Ensure you have **Power BI Desktop** installed with **Developer Mode** enabled.
-2.  Open the `.pbip` file to load the TMDL-based model.
-3.  Configure your local file paths for historical CSV data in the Power Query parameters.
+1.  **Download Historical Data:** [Download required CSVs here](https://1drv.ms/f/c/0fbc4df580d347d2/IgBbib2nMKDIT4H2W_thzPaVAfhd6EqCMYOoCvH9OQz-67U?e=TwvInD).
+2.  Ensure you have **Power BI Desktop** installed with **Developer Mode** enabled.
+3.  Open the `.pbip` file to load the TMDL-based model.
+4.  Configure your local file paths for the downloaded historical CSV data in the Power Query parameters.
