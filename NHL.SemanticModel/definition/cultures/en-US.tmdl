@@ -20,10 +20,22 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "name": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "PlayerName": {
 			            "Type": "Noun",
 			            "State": "Generated",
 			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
 			          }
 			        },
 			        {
@@ -65,8 +77,69 @@ cultureInfo en-US
 			            },
 			            "Weight": 0.727
 			          }
+			        },
+			        {
+			          "actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "performer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "entertainer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "trouper": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "thespian": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "play-actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
 			        }
-			      ]
+			      ],
+			      "NameType": "Name"
 			    },
 			    "dim_game": {
 			      "Definition": {
@@ -2107,6 +2180,12 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "scoring player": {
 			            "State": "Generated",
 			            "Weight": 0.97
@@ -2193,23 +2272,23 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "scoring thespian": {
+			          "actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        },
 			        {
-			          "scoring play-actor": {
+			          "performer": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        }
 			      ]
@@ -2236,6 +2315,12 @@ cultureInfo en-US
 			            "Type": "Noun",
 			            "State": "Generated",
 			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
 			          }
 			        },
 			        {
@@ -2325,23 +2410,23 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "shooting thespian": {
+			          "actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        },
 			        {
-			          "shooting play-actor": {
+			          "performer": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        }
 			      ]
@@ -2368,6 +2453,12 @@ cultureInfo en-US
 			            "Type": "Noun",
 			            "State": "Generated",
 			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
 			          }
 			        },
 			        {
@@ -2457,23 +2548,23 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "hitting thespian": {
+			          "actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        },
 			        {
-			          "hitting play-actor": {
+			          "performer": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        }
 			      ]
@@ -3910,6 +4001,12 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "dim actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
@@ -3950,6 +4047,46 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "performer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "entertainer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "trouper": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
 			          "dim thespian": {
 			            "Type": "Noun",
 			            "State": "Suggested",
@@ -3967,36 +4104,6 @@ cultureInfo en-US
 			              "Agent": "Thesaurus"
 			            },
 			            "Weight": 0.485
-			          }
-			        },
-			        {
-			          "dim competitor": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.475
-			          }
-			        },
-			        {
-			          "dim contestant": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.475
-			          }
-			        },
-			        {
-			          "dim participant": {
-			            "Type": "Noun",
-			            "State": "Suggested",
-			            "Source": {
-			              "Agent": "Thesaurus"
-			            },
-			            "Weight": 0.461
 			          }
 			        }
 			      ]
@@ -4016,10 +4123,22 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "ID": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "PlayerID": {
 			            "Type": "Noun",
 			            "State": "Generated",
 			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
 			          }
 			        },
 			        {
@@ -4061,8 +4180,69 @@ cultureInfo en-US
 			            },
 			            "Weight": 0.727
 			          }
+			        },
+			        {
+			          "actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "performer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "entertainer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "trouper": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "thespian": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "play-actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
 			        }
-			      ]
+			      ],
+			      "NameType": "Identifier"
 			    },
 			    "dim_player.position": {
 			      "Definition": {
@@ -4401,6 +4581,16 @@ cultureInfo en-US
 			              "Agent": "Thesaurus"
 			            },
 			            "Weight": 0.571
+			          }
+			        },
+			        {
+			          "Headshot": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
 			          }
 			        }
 			      ]
@@ -5023,6 +5213,12 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "player identification": {
 			            "Type": "Noun",
 			            "State": "Suggested",
@@ -5060,6 +5256,66 @@ cultureInfo en-US
 			              "Agent": "Thesaurus"
 			            },
 			            "Weight": 0.727
+			          }
+			        },
+			        {
+			          "actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "performer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "entertainer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "trouper": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "thespian": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "play-actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
 			          }
 			        }
 			      ]
@@ -6138,6 +6394,12 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "player identification": {
 			            "Type": "Noun",
 			            "State": "Suggested",
@@ -6175,6 +6437,66 @@ cultureInfo en-US
 			              "Agent": "Thesaurus"
 			            },
 			            "Weight": 0.727
+			          }
+			        },
+			        {
+			          "actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "performer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "entertainer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "trouper": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "thespian": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "play-actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
 			          }
 			        }
 			      ]
@@ -7285,6 +7607,12 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "scoring player": {
 			            "State": "Generated",
 			            "Weight": 0.97
@@ -7371,23 +7699,23 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "scoring thespian": {
+			          "actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        },
 			        {
-			          "scoring play-actor": {
+			          "performer": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        }
 			      ]
@@ -7414,6 +7742,12 @@ cultureInfo en-US
 			            "Type": "Noun",
 			            "State": "Generated",
 			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
 			          }
 			        },
 			        {
@@ -7503,23 +7837,23 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "shooting thespian": {
+			          "actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        },
 			        {
-			          "shooting play-actor": {
+			          "performer": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        }
 			      ]
@@ -7546,6 +7880,12 @@ cultureInfo en-US
 			            "Type": "Noun",
 			            "State": "Generated",
 			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
 			          }
 			        },
 			        {
@@ -7635,23 +7975,23 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "hitting thespian": {
+			          "actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        },
 			        {
-			          "hitting play-actor": {
+			          "performer": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        }
 			      ]
@@ -8608,6 +8948,12 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "scoring player": {
 			            "State": "Generated",
 			            "Weight": 0.97
@@ -8694,23 +9040,23 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "scoring thespian": {
+			          "actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        },
 			        {
-			          "scoring play-actor": {
+			          "performer": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        }
 			      ]
@@ -8737,6 +9083,12 @@ cultureInfo en-US
 			            "Type": "Noun",
 			            "State": "Generated",
 			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
 			          }
 			        },
 			        {
@@ -8826,23 +9178,23 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "shooting thespian": {
+			          "actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        },
 			        {
-			          "shooting play-actor": {
+			          "performer": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        }
 			      ]
@@ -8866,6 +9218,12 @@ cultureInfo en-US
 			            "Type": "Noun",
 			            "State": "Generated",
 			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
 			          }
 			        },
 			        {
@@ -8955,23 +9313,23 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "hitting thespian": {
+			          "actor": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        },
 			        {
-			          "hitting play-actor": {
+			          "performer": {
 			            "Type": "Noun",
 			            "State": "Suggested",
 			            "Source": {
 			              "Agent": "Thesaurus"
 			            },
-			            "Weight": 0.485
+			            "Weight": 0.491
 			          }
 			        }
 			      ]
@@ -10226,6 +10584,12 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "player identification": {
 			            "Type": "Noun",
 			            "State": "Suggested",
@@ -10263,6 +10627,66 @@ cultureInfo en-US
 			              "Agent": "Thesaurus"
 			            },
 			            "Weight": 0.727
+			          }
+			        },
+			        {
+			          "actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "performer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "entertainer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "trouper": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "thespian": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "play-actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
 			          }
 			        }
 			      ]
@@ -10292,6 +10716,12 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "player identification": {
 			            "Type": "Noun",
 			            "State": "Suggested",
@@ -10329,6 +10759,66 @@ cultureInfo en-US
 			              "Agent": "Thesaurus"
 			            },
 			            "Weight": 0.727
+			          }
+			        },
+			        {
+			          "actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "performer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "entertainer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "trouper": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "thespian": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "play-actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
 			          }
 			        }
 			      ]
@@ -10355,6 +10845,12 @@ cultureInfo en-US
 			          }
 			        },
 			        {
+			          "player": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
 			          "player identification": {
 			            "Type": "Noun",
 			            "State": "Suggested",
@@ -10393,44 +10889,553 @@ cultureInfo en-US
 			            },
 			            "Weight": 0.727
 			          }
+			        },
+			        {
+			          "actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "performer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "entertainer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "trouper": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "thespian": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "play-actor": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        }
+			      ]
+			    },
+			    "entity__measure.total_games_played": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Total Games Played"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "total games played": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "aggregate game played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.591
+			          }
+			        },
+			        {
+			          "overall game played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.591
+			          }
+			        },
+			        {
+			          "total competition played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.508
+			          }
+			        },
+			        {
+			          "total tournament played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.508
+			          }
+			        },
+			        {
+			          "total sport played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.492
+			          }
+			        },
+			        {
+			          "total cup played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.492
+			          }
+			        },
+			        {
+			          "total meet played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.492
+			          }
+			        },
+			        {
+			          "total knockout played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.492
+			          }
+			        },
+			        {
+			          "total playoff played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.482
+			          }
+			        },
+			        {
+			          "total pastime played": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.458
+			          }
+			        }
+			      ]
+			    },
+			    "entity__measure.team_wins": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Team Wins"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "team wins": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "wins": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
+			          "team success": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.5
+			          }
+			        },
+			        {
+			          "team landslide": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.5
+			          }
+			        },
+			        {
+			          "team conquest": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.5
+			          }
+			        },
+			        {
+			          "success": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "landslide": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "conquest": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "team victory": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.485
+			          }
+			        },
+			        {
+			          "team triumph": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.485
+			          }
+			        },
+			        {
+			          "victory": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "triumph": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        }
+			      ]
+			    },
+			    "entity__measure.team_losses": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Team Losses"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "team losses": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "losses": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
+			          "team fatality": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.5
+			          }
+			        },
+			        {
+			          "team victim": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.5
+			          }
+			        },
+			        {
+			          "team sufferer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.5
+			          }
+			        },
+			        {
+			          "fatality": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "victim": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "sufferer": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.491
+			          }
+			        },
+			        {
+			          "team wounded": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.485
+			          }
+			        },
+			        {
+			          "team dead": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.485
+			          }
+			        },
+			        {
+			          "wounded": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "dead": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        }
+			      ]
+			    },
+			    "entity__measure.team_ties": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Measures",
+			          "ConceptualProperty": "Team Ties"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "team ties": {
+			            "State": "Generated"
+			          }
+			        },
+			        {
+			          "ties": {
+			            "State": "Generated",
+			            "Weight": 0.97
+			          }
+			        },
+			        {
+			          "team draw": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.485
+			          }
+			        },
+			        {
+			          "team stalemate": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.485
+			          }
+			        },
+			        {
+			          "draw": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "stalemate": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.476
+			          }
+			        },
+			        {
+			          "team connection": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.475
+			          }
+			        },
+			        {
+			          "team relation": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.475
+			          }
+			        },
+			        {
+			          "connection": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.466
+			          }
+			        },
+			        {
+			          "relation": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.466
+			          }
+			        },
+			        {
+			          "team bond": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.461
+			          }
+			        },
+			        {
+			          "team link": {
+			            "Type": "Noun",
+			            "State": "Suggested",
+			            "Source": {
+			              "Agent": "Thesaurus"
+			            },
+			            "Weight": 0.461
+			          }
 			        }
 			      ]
 			    }
 			  },
 			  "Relationships": {
-			    "dim_player_has_entity__measure_player_points": {
-			      "Binding": {
-			        "ConceptualEntity": "DimPlayers"
-			      },
-			      "State": "Generated",
-			      "Roles": {
-			        "dim_player": {
-			          "Target": {
-			            "Entity": "dim_player"
-			          }
-			        },
-			        "entity__measure.player_points": {
-			          "Target": {
-			            "Entity": "entity__measure.player_points"
-			          }
-			        }
-			      },
-			      "Phrasings": [
-			        {
-			          "Attribute": {
-			            "Subject": {
-			              "Role": "dim_player"
-			            },
-			            "Object": {
-			              "Role": "entity__measure.player_points"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.99,
-			          "ID": "dim_players_have_player_points"
-			        }
-			      ]
-			    },
 			    "dim_player_has_entity__measure_player_assists": {
 			      "Binding": {
 			        "ConceptualEntity": "DimPlayers"
@@ -12010,6 +13015,19 @@ cultureInfo en-US
 			          "State": "Generated",
 			          "Weight": 0.99,
 			          "ID": "dim_players_have_player_ID"
+			        },
+			        {
+			          "Name": {
+			            "Subject": {
+			              "Role": "dim_player"
+			            },
+			            "Name": {
+			              "Role": "dim_player.player_ID"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "player_ID_are_names_IDs_of_dim_players"
 			        }
 			      ]
 			    },
@@ -12843,37 +13861,17 @@ cultureInfo en-US
 			          "ID": "dim_players_have_player_names"
 			        },
 			        {
-			          "Verb": {
+			          "Name": {
 			            "Subject": {
-			              "Role": "dim_player.player_name"
-			            },
-			            "Verbs": [
-			              {
-			                "Play": {
-			                  "State": "Generated"
-			                }
-			              }
-			            ],
-			            "Object": {
 			              "Role": "dim_player"
-			            }
-			          },
-			          "State": "Generated",
-			          "Weight": 0.75,
-			          "ID": "player_names_Play_dim_players"
-			        },
-			        {
-			          "Attribute": {
-			            "Subject": {
-			              "Role": "dim_player.player_name"
 			            },
-			            "Object": {
-			              "Role": "dim_player"
+			            "Name": {
+			              "Role": "dim_player.player_name"
 			            }
 			          },
 			          "State": "Generated",
 			          "Weight": 0.99,
-			          "ID": "player_names_have_dim_players"
+			          "ID": "player_names_are_names_IDs_of_dim_players"
 			        }
 			      ]
 			    },
@@ -12964,6 +13962,71 @@ cultureInfo en-US
 			        }
 			      ]
 			    },
+			    "dim_player_play": {
+			      "Binding": {
+			        "ConceptualEntity": "DimPlayers"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "dim_player": {
+			          "Target": {
+			            "Entity": "dim_player"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Verb": {
+			            "Subject": {
+			              "Role": "dim_player"
+			            },
+			            "Verbs": [
+			              {
+			                "play": {
+			                  "State": "Generated"
+			                }
+			              }
+			            ]
+			          },
+			          "State": "Generated",
+			          "Weight": 0.75,
+			          "ID": "dim_players_play"
+			        }
+			      ]
+			    },
+			    "dim_player_has_entity__measure_player_points": {
+			      "Binding": {
+			        "ConceptualEntity": "DimPlayers"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "dim_player": {
+			          "Target": {
+			            "Entity": "dim_player"
+			          }
+			        },
+			        "entity__measure.player_points": {
+			          "Target": {
+			            "Entity": "entity__measure.player_points"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Attribute": {
+			            "Subject": {
+			              "Role": "dim_player"
+			            },
+			            "Object": {
+			              "Role": "entity__measure.player_points"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "dim_players_have_player_points"
+			        }
+			      ]
+			    },
 			    "dim_player_has_entity__measure_games_played": {
 			      "Binding": {
 			        "ConceptualEntity": "DimPlayers"
@@ -13027,6 +14090,138 @@ cultureInfo en-US
 			          "State": "Generated",
 			          "Weight": 0.99,
 			          "ID": "fact_play_by_play_have_player_ID"
+			        }
+			      ]
+			    },
+			    "dim_game_has_entity__measure_total_games_played": {
+			      "Binding": {
+			        "ConceptualEntity": "DimGames"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "dim_game": {
+			          "Target": {
+			            "Entity": "dim_game"
+			          }
+			        },
+			        "entity__measure.total_games_played": {
+			          "Target": {
+			            "Entity": "entity__measure.total_games_played"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Attribute": {
+			            "Subject": {
+			              "Role": "dim_game"
+			            },
+			            "Object": {
+			              "Role": "entity__measure.total_games_played"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "dim_games_have_total_games_played"
+			        }
+			      ]
+			    },
+			    "dim_game_has_entity__measure_team_wins": {
+			      "Binding": {
+			        "ConceptualEntity": "DimGames"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "dim_game": {
+			          "Target": {
+			            "Entity": "dim_game"
+			          }
+			        },
+			        "entity__measure.team_wins": {
+			          "Target": {
+			            "Entity": "entity__measure.team_wins"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Attribute": {
+			            "Subject": {
+			              "Role": "dim_game"
+			            },
+			            "Object": {
+			              "Role": "entity__measure.team_wins"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "dim_games_have_team_wins"
+			        }
+			      ]
+			    },
+			    "dim_game_has_entity__measure_team_losses": {
+			      "Binding": {
+			        "ConceptualEntity": "DimGames"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "dim_game": {
+			          "Target": {
+			            "Entity": "dim_game"
+			          }
+			        },
+			        "entity__measure.team_losses": {
+			          "Target": {
+			            "Entity": "entity__measure.team_losses"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Attribute": {
+			            "Subject": {
+			              "Role": "dim_game"
+			            },
+			            "Object": {
+			              "Role": "entity__measure.team_losses"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "dim_games_have_team_losses"
+			        }
+			      ]
+			    },
+			    "dim_game_has_entity__measure_team_ties": {
+			      "Binding": {
+			        "ConceptualEntity": "DimGames"
+			      },
+			      "State": "Generated",
+			      "Roles": {
+			        "dim_game": {
+			          "Target": {
+			            "Entity": "dim_game"
+			          }
+			        },
+			        "entity__measure.team_ties": {
+			          "Target": {
+			            "Entity": "entity__measure.team_ties"
+			          }
+			        }
+			      },
+			      "Phrasings": [
+			        {
+			          "Attribute": {
+			            "Subject": {
+			              "Role": "dim_game"
+			            },
+			            "Object": {
+			              "Role": "entity__measure.team_ties"
+			            }
+			          },
+			          "State": "Generated",
+			          "Weight": 0.99,
+			          "ID": "dim_games_have_team_ties"
 			        }
 			      ]
 			    },

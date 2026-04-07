@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "DimPlayers.PlayerName",
-              "nativeQueryRef": "PlayerName"
+              "nativeQueryRef": "Player Name",
+              "displayName": "Player Name"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "DimPlayers.HeadshotURL",
-              "nativeQueryRef": "HeadshotURL"
+              "nativeQueryRef": "Headshot",
+              "displayName": "Headshot"
             },
             {
               "field": {

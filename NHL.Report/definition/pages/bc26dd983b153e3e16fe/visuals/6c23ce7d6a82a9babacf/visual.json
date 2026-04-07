@@ -74,6 +74,21 @@
         "isDefaultSort": true
       }
     },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "drillFilterOtherVisuals": true
   },
   "filterConfig": {
@@ -90,7 +105,63 @@
             "Property": "Date"
           }
         },
-        "type": "Categorical"
+        "type": "RelativeDate",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "d",
+              "Entity": "DimDate",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Between": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "d"
+                        }
+                      },
+                      "Property": "Date"
+                    }
+                  },
+                  "LowerBound": {
+                    "DateSpan": {
+                      "Expression": {
+                        "DateAdd": {
+                          "Expression": {
+                            "DateAdd": {
+                              "Expression": {
+                                "Now": {}
+                              },
+                              "Amount": 1,
+                              "TimeUnit": 0
+                            }
+                          },
+                          "Amount": -2,
+                          "TimeUnit": 2
+                        }
+                      },
+                      "TimeUnit": 0
+                    }
+                  },
+                  "UpperBound": {
+                    "DateSpan": {
+                      "Expression": {
+                        "Now": {}
+                      },
+                      "TimeUnit": 0
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
       },
       {
         "name": "c2e875396b6fc0df48ef",

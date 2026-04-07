@@ -3,10 +3,12 @@ table _Measures
 
 	measure 'Team Points' = SUM('DimTeams'[Points])
 		formatString: 0
+		displayFolder: Team Stats
 		lineageTag: d4c3b2a1-f6e5-b8a7-d0c9-c6b5a4f3e2d1
 
 	measure 'Team Goal Diff' = SUM('DimTeams'[GoalDifferential])
 		formatString: +0;-0;0
+		displayFolder: Team Stats
 		lineageTag: 1a2b3c4d-5e6f-7a8b-9c0d-e1f2a3b4c5d6
 
 	measure 'Current Streak' =
@@ -19,6 +21,7 @@ table _Measures
 
 	measure 'Player Max Speed (mph)' = AVERAGE('FactEdgeBurstDetails'[SkatingSpeedDetails.maxSkatingSpeed.imperial])
 		formatString: 0.00
+		displayFolder: Player Stats
 		lineageTag: 2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e
 
 	measure 'League Avg Max Speed (mph)' = AVERAGE('FactEdgeBurstDetails'[SkatingSpeedDetails.maxSkatingSpeed.leagueAvg.imperial])
@@ -27,22 +30,27 @@ table _Measures
 
 	measure 'Player Bursts > 22mph' = SUM('FactEdgeBurstDetails'[burstsOver22])
 		formatString: 0
+		displayFolder: Player Stats
 		lineageTag: 4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a
 
 	measure 'Player Bursts 20-22mph' = SUM('FactEdgeBurstDetails'[bursts20To22])
 		formatString: 0
+		displayFolder: Player Stats
 		lineageTag: 5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b
 
 	measure 'Player Goals' = SUM('DimPlayers'[Goals])
 		formatString: 0
+		displayFolder: Player Stats
 		lineageTag: a7570938-979f-4e80-a29b-4cd7d2519b6a
 
 	measure 'Player Assists' = SUM('DimPlayers'[Assists])
 		formatString: 0
+		displayFolder: Player Stats
 		lineageTag: 4a6c7476-e3cf-43ad-af51-77e2bd493ad9
 
 	measure 'Player Points' = SUM('DimPlayers'[Points])
 		formatString: 0
+		displayFolder: Player Stats
 		lineageTag: a6b93a6b-824f-457e-ae21-896744b9d35a
 
 	measure 'Games Played' = SUM('DimPlayers'[GamesPlayed])
@@ -56,6 +64,7 @@ table _Measures
 			    DimGames[GameState] = "FINAL" || DimGames[GameState] = "OFF"
 			)
 		formatString: 0
+		displayFolder: Team Stats
 		lineageTag: 69802e14-18f6-41a3-80ad-c3c667605fd1
 
 	measure 'Team Wins' = ```
@@ -69,6 +78,7 @@ table _Measures
 					)
 			```
 		formatString: 0
+		displayFolder: Team Stats
 		lineageTag: 94c9a502-0e3d-4c16-a153-a749ac2af8bb
 
 	measure 'Team Losses' = ```
@@ -82,6 +92,7 @@ table _Measures
 					)
 			```
 		formatString: 0
+		displayFolder: Team Stats
 		lineageTag: 568a9445-ea2e-460f-82c6-395178899731
 
 	measure 'Team Ties' = ```
@@ -95,6 +106,7 @@ table _Measures
 					)
 			```
 		formatString: 0
+		displayFolder: Team Stats
 		lineageTag: 53811775-a520-44bb-8f9d-2a8c311d30a7
 
 	measure 'Points Percentage' = DIVIDE(SUM(DimPlayers[Goals]), ([Games Played] * 2))
